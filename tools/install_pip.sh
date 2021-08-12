@@ -111,14 +111,6 @@ function configure_pypi_alternative_url {
 
 }
 
-# Setuptools 8 implements PEP 440, and 8.0.4 adds a warning triggered any time
-# pkg_resources inspects the list of installed Python packages if there are
-# non-compliant version numbers in the egg-info (for example, from distro
-# system packaged Python libraries). This is off by default after 8.2 but can
-# be enabled by uncommenting the lines below.
-#PYTHONWARNINGS=$PYTHONWARNINGS,always::RuntimeWarning:pkg_resources
-#export PYTHONWARNINGS
-
 # Show starting versions
 get_versions
 
@@ -135,19 +127,9 @@ if is_fedora && [[ ${DISTRO} == f* ]]; then
     # installed; this *should* remain separate under /usr/local and not break
     # if python3-pip is later installed.
     # For general sanity, we just use the packaged pip.  It should be
-    # recent enough anyway.
-    install_package python3-pip
-elif is_fedora || is_suse; then
-    # Python in suse/centos depends on the python-pip package; because
-    # of the split "system-python" uninstalling python3-pip also
-    # uninstalls the user python3 package which is bad and leaves us
-    # without a python to use.  Just install over.
-    install_get_pip
+    # recent enough anyway.  This is included via rpms/general
+    continue
 else
-    # Remove packaged pip, and install the latest upstream.
-    if is_package_installed python3-pip ; then
-        uninstall_package python3-pip
-    fi
     install_get_pip
 fi
 
