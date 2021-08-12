@@ -155,8 +155,23 @@ function fixup_ovn_centos {
     yum_install centos-release-openstack-victoria
 }
 
+function fixup_ubuntu {
+    if ! is_ubuntu; then
+        return
+    fi
+
+    # Since pip10, pip will refuse to uninstall files from packages
+    # that were created with distutils (rather than more modern
+    # setuptools).  This is because it technically doesn't have a
+    # manifest of what to remove.  However, in most cases, simply
+    # overwriting works.  So this hacks around those packages that
+    # have been dragged in by some other system dependency
+    sudo rm -rf /usr/lib/python3/dist-packages/PyYAML-*.egg-info
+}
+
 function fixup_all {
     fixup_keystone
+    fixup_ubuntu
     fixup_fedora
     fixup_suse
 }

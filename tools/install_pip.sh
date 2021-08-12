@@ -91,9 +91,7 @@ function install_get_pip {
             die $LINENO "Download of get-pip.py failed"
         touch $LOCAL_PIP.downloaded
     fi
-    # TODO: remove the trailing pip constraint when a proper fix
-    # arrives for bug https://bugs.launchpad.net/devstack/+bug/1906322
-    sudo -H -E python${PYTHON3_VERSION} $LOCAL_PIP -c $TOOLS_DIR/cap-pip.txt
+    sudo -H -E python${PYTHON3_VERSION} $LOCAL_PIP
 }
 
 
@@ -128,11 +126,6 @@ get_versions
 
 if [[ -n $PYPI_ALTERNATIVE_URL ]]; then
     configure_pypi_alternative_url
-fi
-
-# Just use system pkgs on Focal
-if [[ "$DISTRO" == focal ]]; then
-    exit 0
 fi
 
 # Eradicate any and all system packages
