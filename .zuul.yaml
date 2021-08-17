@@ -729,8 +729,7 @@
         - devstack-multinode
         - devstack-unit-tests
         - openstack-tox-bashate
-        - ironic-tempest-ipa-wholedisk-bios-agent_ipmitool-tinyipa:
-            voting: false
+        - ironic-tempest-bios-ipmi-direct-tinyipa
         - swift-dsvm-functional
         - grenade:
             irrelevant-files:
@@ -782,6 +781,7 @@
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
+        - ironic-tempest-bios-ipmi-direct-tinyipa
         - swift-dsvm-functional
         - grenade:
             irrelevant-files:
