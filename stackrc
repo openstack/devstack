@@ -17,6 +17,10 @@ source $RC_DIR/functions
 # does not need to update each repo below.
 TARGET_BRANCH=stable/queens
 
+# In cases where the TARGET_BRANCH does not exist anymore, the
+# $series-eol tag should be used
+EOL_TAG=refs/tags/queens-eol
+
 # Cycle trailing projects need to branch later than the others.
 TRAILING_TARGET_BRANCH=master
 
@@ -276,7 +280,7 @@ GLANCE_BRANCH=${GLANCE_BRANCH:-$TARGET_BRANCH}
 
 # django powered web control panel for openstack
 HORIZON_REPO=${HORIZON_REPO:-${GIT_BASE}/openstack/horizon.git}
-HORIZON_BRANCH=${HORIZON_BRANCH:-$TARGET_BRANCH}
+HORIZON_BRANCH=${HORIZON_BRANCH:-$EOL_TAG}
 
 # unified auth system (manages accounts/tokens)
 KEYSTONE_REPO=${KEYSTONE_REPO:-${GIT_BASE}/openstack/keystone.git}
