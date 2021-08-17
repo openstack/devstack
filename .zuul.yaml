@@ -731,14 +731,7 @@
         - openstack-tox-bashate
         - ironic-tempest-ipa-wholedisk-bios-agent_ipmitool-tinyipa:
             voting: false
-        - swift-dsvm-functional:
-            voting: false
-            irrelevant-files: &dsvm-irrelevant-files
-              - ^.*\.rst$
-              - ^doc/.*$
-        - swift-dsvm-functional-py3:
-            voting: false
-            irrelevant-files: *dsvm-irrelevant-files
+        - swift-dsvm-functional
         - grenade:
             irrelevant-files:
               - ^.*\.rst$
@@ -789,6 +782,7 @@
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
+        - swift-dsvm-functional
         - grenade:
             irrelevant-files:
               - ^.*\.rst$
