@@ -56,6 +56,17 @@ EOF
 
 # Installs required distro-specific libvirt packages.
 function install_libvirt {
+    # NOTE(yoctozepto): The common consensus [1] is that libvirt-python should
+    # be installed from distro packages. However, various projects might be
+    # trying to ensure it is installed using pip AND use upper-constraints
+    # with that, causing pip to try to upgrade it and to fail.
+    # The following line removes libvirt-python from upper-constraints and
+    # avoids the situation described above. Now only if installed packages
+    # explicitly depend on a newer (or, in general, incompatible) libvirt-python
+    # version, will pip try to reinstall it.
+    # [1] https://review.opendev.org/c/openstack/devstack/+/798514
+    $REQUIREMENTS_DIR/.venv/bin/edit-constraints \
+            $REQUIREMENTS_DIR/upper-constraints.txt -- libvirt-python
 
     if is_ubuntu; then
         install_package qemu-system libvirt-clients libvirt-daemon-system libvirt-dev python3-libvirt
