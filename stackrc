@@ -298,7 +298,7 @@ GLANCE_BRANCH=${GLANCE_BRANCH:-stable/pike}
 
 # django powered web control panel for openstack
 HORIZON_REPO=${HORIZON_REPO:-${GIT_BASE}/openstack/horizon.git}
-HORIZON_BRANCH=${HORIZON_BRANCH:-stable/pike}
+HORIZON_BRANCH=${HORIZON_BRANCH:-refs/tags/pike-eol}
 
 # unified auth system (manages accounts/tokens)
 KEYSTONE_REPO=${KEYSTONE_REPO:-${GIT_BASE}/openstack/keystone.git}
