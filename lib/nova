@@ -935,6 +935,11 @@ function start_nova_compute {
         iniset $NOVA_CPU_CONF os_vif_ovs ovsdb_connection "tcp:$OVSDB_SERVER_LOCAL_HOST:6640"
     fi
 
+    # Workaround bug #1939108
+    if [[ "$VIRT_DRIVER" == "libvirt" && "$LIBVIRT_TYPE" == "qemu" ]]; then
+        iniset $NOVA_CPU_CONF workarounds libvirt_disable_apic True
+    fi
+
     if [[ "$VIRT_DRIVER" = 'libvirt' ]]; then
         # The group **$LIBVIRT_GROUP** is added to the current user in this script.
         # ``sg`` is used in run_process to execute nova-compute as a member of the
