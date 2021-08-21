@@ -335,7 +335,6 @@ function configure_swift {
     local node_number
     local swift_node_config
     local swift_log_dir
-    local user_group
 
     # Make sure to kill all swift processes first
     $SWIFT_BIN_DIR/swift-init --run-dir=${SWIFT_DATA_DIR}/run all stop || true
@@ -353,7 +352,7 @@ function configure_swift {
     # partitions (which make more sense when you have a multi-node
     # setup) we configure it with our version of rsync.
     sed -e "
-        s/%GROUP%/${USER_GROUP}/;
+        s/%GROUP%/$(id -g -n ${STACK_USER})/;
         s/%USER%/${STACK_USER}/;
         s,%SWIFT_DATA_DIR%,$SWIFT_DATA_DIR,;
     " $FILES/swift/rsyncd.conf | sudo tee /etc/rsyncd.conf
