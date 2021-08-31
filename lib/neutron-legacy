@@ -663,6 +663,27 @@ function _move_neutron_addresses_route {
     fi
 }
 
+# _configure_public_network_connectivity() - Configures connectivity to the
+# external network using $PUBLIC_INTERFACE or NAT on the single interface
+# machines
+function _configure_public_network_connectivity {
+    # If we've given a PUBLIC_INTERFACE to take over, then we assume
+    # that we can own the whole thing, and privot it into the OVS
+    # bridge. If we are not, we're probably on a single interface
+    # machine, and we just setup NAT so that fixed guests can get out.
+    if [[ -n "$PUBLIC_INTERFACE" ]]; then
+        _move_neutron_addresses_route "$PUBLIC_INTERFACE" "$OVS_PHYSICAL_BRIDGE" True False "inet"
+
+        if [[ $(ip -f inet6 a s dev "$PUBLIC_INTERFACE" | grep -c 'global') != 0 ]]; then
+            _move_neutron_addresses_route "$PUBLIC_INTERFACE" "$OVS_PHYSICAL_BRIDGE" False False "inet6"
+        fi
+    else
+        for d in $default_v4_route_devs; do
+            sudo iptables -t nat -A POSTROUTING -o $d -s $FLOATING_RANGE -j MASQUERADE
+        done
+    fi
+}
+
 # cleanup_mutnauq() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
 function cleanup_mutnauq {

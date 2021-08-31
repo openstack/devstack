@@ -266,6 +266,7 @@ function create_public_bridge {
     # Create the public bridge that OVN will use
     sudo ovs-vsctl --may-exist add-br $PUBLIC_BRIDGE -- set bridge $PUBLIC_BRIDGE protocols=OpenFlow13,OpenFlow15
     sudo ovs-vsctl set open . external-ids:ovn-bridge-mappings=$PHYSICAL_NETWORK:$PUBLIC_BRIDGE
+    _configure_public_network_connectivity
 }
 
 function _disable_libvirt_apparmor {
