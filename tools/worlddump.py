@@ -134,7 +134,7 @@ def disk_space():
 
 
 def ebtables_dump():
-    tables = ['filter', 'nat', 'broute']
+    tables = ['filter', 'nat']
     _header("EB Tables Dump")
     if not _find_cmd('ebtables'):
         return
