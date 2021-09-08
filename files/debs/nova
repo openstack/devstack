@@ -8,7 +8,6 @@ iptables
 iputils-arping
 kpartx
 libjs-jquery-tablesorter # Needed for coverage html reports
-libmysqlclient-dev
 libvirt-clients # NOPRIME
 libvirt-daemon-system # NOPRIME
 libvirt-dev # NOPRIME
