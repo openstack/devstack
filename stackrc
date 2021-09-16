@@ -549,7 +549,7 @@ GITBRANCH["neutron-lib"]=${NEUTRON_LIB_BRANCH:-$TARGET_BRANCH}
 GITDIR["neutron-lib"]=$DEST/neutron-lib
 
 # os-resource-classes library containing a list of standardized resource classes for OpenStack
-GITREPO["os-resource-classes"]=${OS_RESOURCE_CLASSES_REPO=:-${GIT_BASE}/openstack/os-resource-classes.git}
+GITREPO["os-resource-classes"]=${OS_RESOURCE_CLASSES_REPO:-${GIT_BASE}/openstack/os-resource-classes.git}
 GITBRANCH["os-resource-classes"]=${OS_RESOURCE_CLASSES_BRANCH:-$TARGET_BRANCH}
 
 # os-traits library for resource provider traits in the placement service
