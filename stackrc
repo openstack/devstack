@@ -247,7 +247,7 @@ REQUIREMENTS_DIR=${REQUIREMENTS_DIR:-$DEST/requirements}
 # Setting the variable to 'ALL' will activate the download for all
 # libraries.
 
-DEVSTACK_SERIES="xena"
+DEVSTACK_SERIES="yoga"
 
 ##############
 #
