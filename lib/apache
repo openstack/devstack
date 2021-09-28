@@ -303,7 +303,7 @@ function write_uwsgi_config {
         apache_conf=$(apache_site_config_for $name)
         iniset "$file" uwsgi socket "$socket"
         iniset "$file" uwsgi chmod-socket 666
-        echo "ProxyPass \"${url}\" \"unix:${socket}|uwsgi://uwsgi-uds-${name}/\" retry=0 " | sudo tee -a $apache_conf
+        echo "ProxyPass \"${url}\" \"unix:${socket}|uwsgi://uwsgi-uds-${name}\" retry=0 " | sudo tee -a $apache_conf
         enable_apache_site $name
         restart_apache_server
     fi
