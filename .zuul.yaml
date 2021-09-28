@@ -659,7 +659,6 @@
       jobs:
         - devstack
         - devstack-ipv6
-        - devstack-platform-opensuse-15
         - devstack-platform-centos-8
         - devstack-platform-bionic
         - devstack-multinode
@@ -705,10 +704,6 @@
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
-        - nova-ceph-multistore:
-            irrelevant-files:
-              - ^.*\.rst$
-              - ^doc/.*$
         # NOTE(gmann): Remove this job from devstack pipeline once it is
         # migrated to zuulv3 native. This is legacy job and rely on
         # devstack-gate + devstack setting so any change in devstack can
@@ -742,10 +737,6 @@
               - ^.*\.rst$
               - ^doc/.*$
         - tempest-ipv6-only:
-            irrelevant-files:
-              - ^.*\.rst$
-              - ^doc/.*$
-        - nova-ceph-multistore:
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
