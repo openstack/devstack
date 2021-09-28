@@ -524,7 +524,6 @@
         c-bak: true
         c-sch: true
         c-vol: true
-        cinder: true
         # Services we don't need.
         # This section is not really needed, it's for readability.
         horizon: false
