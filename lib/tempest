@@ -444,7 +444,8 @@ function configure_tempest {
         SCENARIO_IMAGE_DIR=${SCENARIO_IMAGE_DIR:-$FILES}
         SCENARIO_IMAGE_FILE=$DEFAULT_IMAGE_FILE_NAME
     fi
-    iniset $TEMPEST_CONFIG scenario img_file $SCENARIO_IMAGE_DIR/$SCENARIO_IMAGE_FILE
+    iniset $TEMPEST_CONFIG scenario img_dir $SCENARIO_IMAGE_DIR
+    iniset $TEMPEST_CONFIG scenario img_file $SCENARIO_IMAGE_FILE
 
     # If using provider networking, use the physical network for validation rather than private
     TEMPEST_SSH_NETWORK_NAME=$PRIVATE_NETWORK_NAME
