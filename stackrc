@@ -415,6 +415,10 @@ GITBRANCH["oslo.db"]=${OSLODB_BRANCH:-$TARGET_BRANCH}
 GITREPO["oslo.i18n"]=${OSLOI18N_REPO:-${GIT_BASE}/openstack/oslo.i18n.git}
 GITBRANCH["oslo.i18n"]=${OSLOI18N_BRANCH:-$TARGET_BRANCH}
 
+# oslo.limit
+GITREPO["oslo.limit"]=${OSLOLIMIT_REPO:-${GIT_BASE}/openstack/oslo.limit.git}
+GITBRANCH["oslo.limit"]=${OSLOLIMIT_BRANCH:-$TARGET_BRANCH}
+
 # oslo.log
 GITREPO["oslo.log"]=${OSLOLOG_REPO:-${GIT_BASE}/openstack/oslo.log.git}
 GITBRANCH["oslo.log"]=${OSLOLOG_BRANCH:-$TARGET_BRANCH}
