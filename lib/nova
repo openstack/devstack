@@ -306,6 +306,9 @@ function configure_nova {
             sudo dnf update -y
         fi
 
+        # Ensure each compute host uses a unique iSCSI initiator
+        echo InitiatorName=$(iscsi-iname) | sudo tee /etc/iscsi/initiatorname.iscsi
+
         if [[ ${ISCSID_DEBUG} == "True" ]]; then
             # Install an override that starts iscsid with debugging
             # enabled.
