@@ -128,7 +128,7 @@ if is_fedora && [[ ${DISTRO} == f* ]]; then
     # if python3-pip is later installed.
     # For general sanity, we just use the packaged pip.  It should be
     # recent enough anyway.  This is included via rpms/general
-    continue
+    : # Simply fall through
 else
     install_get_pip
 fi
