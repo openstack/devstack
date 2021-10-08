@@ -204,6 +204,8 @@ function fixup_ubuntu {
     # overwriting works.  So this hacks around those packages that
     # have been dragged in by some other system dependency
     sudo rm -rf /usr/lib/python3/dist-packages/PyYAML-*.egg-info
+    sudo rm -rf /usr/lib/python3/dist-packages/pyasn1_modules-*.egg-info
+    sudo rm -rf /usr/lib/python3/dist-packages/simplejson-*.egg-info
 }
 
 function fixup_all {
