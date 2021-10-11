@@ -275,6 +275,10 @@ source $TOP_DIR/lib/neutron_plugins/services/metering
 
 # L3 Service functions
 source $TOP_DIR/lib/neutron_plugins/services/l3
+
+# Additional Neutron service plugins
+source $TOP_DIR/lib/neutron_plugins/services/trunk
+
 # Use security group or not
 if has_neutron_plugin_security_group; then
     Q_USE_SECGROUP=${Q_USE_SECGROUP:-True}
@@ -367,6 +371,11 @@ function configure_mutnauq {
     if [[ $Q_AGENT == "ovn" ]]; then
         configure_ovn
         configure_ovn_plugin
+    fi
+
+    # Configure Neutron's advanced services
+    if is_service_enabled q-trunk neutron-trunk; then
+        configure_trunk_extension
     fi
 
     iniset $NEUTRON_CONF DEFAULT api_workers "$API_WORKERS"
