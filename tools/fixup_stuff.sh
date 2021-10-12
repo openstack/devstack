@@ -106,6 +106,16 @@ function fixup_fedora {
     # overwriting works.  So this hacks around those packages that
     # have been dragged in by some other system dependency
     sudo rm -rf /usr/lib64/python3*/site-packages/PyYAML-*.egg-info
+
+    # After updating setuptools based on the requirements, the files from the
+    # python3-setuptools RPM are deleted, it breaks some tools such as semanage
+    # (used in diskimage-builder) that use the -s flag of the python
+    # interpreter, enforcing the use of the packages from /usr/lib.
+    # Importing setuptools/pkg_resources in a such environment fails.
+    # Enforce the package re-installation to fix those applications.
+    if is_package_installed python3-setuptools; then
+        sudo dnf reinstall -y python3-setuptools
+    fi
 }
 
 function fixup_suse {
