@@ -97,6 +97,12 @@ NOVA_SERVICE_LISTEN_ADDRESS=${NOVA_SERVICE_LISTEN_ADDRESS:-$(ipv6_unquote $SERVI
 METADATA_SERVICE_PORT=${METADATA_SERVICE_PORT:-8775}
 NOVA_ENABLE_CACHE=${NOVA_ENABLE_CACHE:-True}
 
+if [[ $SERVICE_IP_VERSION == 6 ]]; then
+    NOVA_MY_IP="$HOST_IPV6"
+else
+    NOVA_MY_IP="$HOST_IP"
+fi
+
 # Option to enable/disable config drive
 # NOTE: Set ``FORCE_CONFIG_DRIVE="False"`` to turn OFF config drive
 FORCE_CONFIG_DRIVE=${FORCE_CONFIG_DRIVE:-"False"}
@@ -219,6 +225,9 @@ function cleanup_nova {
         done
         sudo iscsiadm --mode node --op delete || true
 
+        # Disconnect all nvmeof connections
+        sudo nvme disconnect-all || true
+
         # Clean out the instances directory.
         sudo rm -rf $NOVA_INSTANCES_PATH/*
     fi
@@ -306,6 +315,7 @@ function configure_nova {
             fi
         fi
 
+        # Due to cinder bug #1966513 we ALWAYS need an initiator name for LVM
         # Ensure each compute host uses a unique iSCSI initiator
         echo InitiatorName=$(iscsi-iname) | sudo tee /etc/iscsi/initiatorname.iscsi
 
@@ -326,8 +336,28 @@ EOF
         # not work under FIPS.
         iniset -sudo /etc/iscsi/iscsid.conf DEFAULT "node.session.auth.chap_algs" "SHA3-256,SHA256"
 
-        # ensure that iscsid is started, even when disabled by default
-        restart_service iscsid
+        if [[ $CINDER_TARGET_HELPER != 'nvmet' ]]; then
+            # ensure that iscsid is started, even when disabled by default
+            restart_service iscsid
+
+        # For NVMe-oF we need different packages that many not be present
+        else
+            install_package nvme-cli
+            sudo modprobe nvme-fabrics
+
+            # Ensure NVMe is ready and create the Soft-RoCE device over the networking interface
+            if [[ $CINDER_TARGET_PROTOCOL == 'nvmet_rdma' ]]; then
+                sudo modprobe nvme-rdma
+                iface=${HOST_IP_IFACE:-`ip -br -$SERVICE_IP_VERSION a | grep $NOVA_MY_IP | awk '{print $1}'`}
+                if ! sudo rdma link | grep $iface ; then
+                    sudo rdma link add rxe_$iface type rxe netdev $iface
+                fi
+            elif [[ $CINDER_TARGET_PROTOCOL == 'nvmet_tcp' ]]; then
+                sudo modprobe nvme-tcp
+            else  # 'nvmet_fc'
+                sudo modprobe nvme-fc
+            fi
+        fi
     fi
 
     # Rebuild the config file from scratch
@@ -418,11 +448,7 @@ function create_nova_conf {
     iniset $NOVA_CONF filter_scheduler enabled_filters "$NOVA_FILTERS"
     iniset $NOVA_CONF scheduler workers "$API_WORKERS"
     iniset $NOVA_CONF neutron default_floating_pool "$PUBLIC_NETWORK_NAME"
-    if [[ $SERVICE_IP_VERSION == 6 ]]; then
-        iniset $NOVA_CONF DEFAULT my_ip "$HOST_IPV6"
-    else
-        iniset $NOVA_CONF DEFAULT my_ip "$HOST_IP"
-    fi
+    iniset $NOVA_CONF DEFAULT my_ip "$NOVA_MY_IP"
     iniset $NOVA_CONF DEFAULT instance_name_template "${INSTANCE_NAME_PREFIX}%08x"
     iniset $NOVA_CONF DEFAULT osapi_compute_listen "$NOVA_SERVICE_LISTEN_ADDRESS"
     iniset $NOVA_CONF DEFAULT metadata_listen "$NOVA_SERVICE_LISTEN_ADDRESS"

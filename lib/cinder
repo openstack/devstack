@@ -43,6 +43,13 @@ GITDIR["python-cinderclient"]=$DEST/python-cinderclient
 GITDIR["python-brick-cinderclient-ext"]=$DEST/python-brick-cinderclient-ext
 CINDER_DIR=$DEST/cinder
 
+if [[ $SERVICE_IP_VERSION == 6 ]]; then
+    CINDER_MY_IP="$HOST_IPV6"
+else
+    CINDER_MY_IP="$HOST_IP"
+fi
+
+
 # Cinder virtual environment
 if [[ ${USE_VENV} = True ]]; then
     PROJECT_VENV["cinder"]=${CINDER_DIR}.venv
@@ -88,13 +95,32 @@ CINDER_ENABLED_BACKENDS=${CINDER_ENABLED_BACKENDS:-lvm:lvmdriver-1}
 CINDER_VOLUME_CLEAR=${CINDER_VOLUME_CLEAR:-${CINDER_VOLUME_CLEAR_DEFAULT:-zero}}
 CINDER_VOLUME_CLEAR=$(echo ${CINDER_VOLUME_CLEAR} | tr '[:upper:]' '[:lower:]')
 
-# Default to lioadm
-CINDER_ISCSI_HELPER=${CINDER_ISCSI_HELPER:-lioadm}
+
+if [[ -n "$CINDER_ISCSI_HELPER" ]]; then
+    if [[ -z "$CINDER_TARGET_HELPER" ]]; then
+        deprecated 'Using CINDER_ISCSI_HELPER is deprecated, use CINDER_TARGET_HELPER instead'
+        CINDER_TARGET_HELPER="$CINDER_ISCSI_HELPER"
+    else
+        deprecated 'Deprecated CINDER_ISCSI_HELPER is set, but is being overwritten by CINDER_TARGET_HELPER'
+    fi
+fi
+CINDER_TARGET_HELPER=${CINDER_TARGET_HELPER:-lioadm}
+
+if [[ $CINDER_TARGET_HELPER == 'nvmet' ]]; then
+    CINDER_TARGET_PROTOCOL=${CINDER_TARGET_PROTOCOL:-'nvmet_rdma'}
+    CINDER_TARGET_PREFIX=${CINDER_TARGET_PREFIX:-'nvme-subsystem-1'}
+    CINDER_TARGET_PORT=${CINDER_TARGET_PORT:-4420}
+else
+    CINDER_TARGET_PROTOCOL=${CINDER_TARGET_PROTOCOL:-'iscsi'}
+    CINDER_TARGET_PREFIX=${CINDER_TARGET_PREFIX:-'iqn.2010-10.org.openstack:'}
+    CINDER_TARGET_PORT=${CINDER_TARGET_PORT:-3260}
+fi
+
 
 # EL and SUSE should only use lioadm
 if is_fedora || is_suse; then
-    if [[ ${CINDER_ISCSI_HELPER} != "lioadm" ]]; then
-        die "lioadm is the only valid Cinder target_helper config on this platform"
+    if [[ ${CINDER_TARGET_HELPER} != "lioadm" && ${CINDER_TARGET_HELPER} != 'nvmet' ]]; then
+        die "lioadm and nvmet are the only valid Cinder target_helper config on this platform"
     fi
 fi
 
@@ -187,7 +213,7 @@ function _cinder_cleanup_apache_wsgi {
 function cleanup_cinder {
     # ensure the volume group is cleared up because fails might
     # leave dead volumes in the group
-    if [ "$CINDER_ISCSI_HELPER" = "tgtadm" ]; then
+    if [ "$CINDER_TARGET_HELPER" = "tgtadm" ]; then
         local targets
         targets=$(sudo tgtadm --op show --mode target)
         if [ $? -ne 0 ]; then
@@ -215,8 +241,14 @@ function cleanup_cinder {
         else
             stop_service tgtd
         fi
-    else
+    elif [ "$CINDER_TARGET_HELPER" = "lioadm" ]; then
         sudo cinder-rtstool get-targets | sudo xargs -rn 1 cinder-rtstool delete
+    elif [ "$CINDER_TARGET_HELPER" = "nvmet" ]; then
+        # If we don't disconnect everything vgremove will block
+        sudo nvme disconnect-all
+        sudo nvmetcli clear
+    else
+        die $LINENO "Unknown value \"$CINDER_TARGET_HELPER\" for CINDER_TARGET_HELPER"
     fi
 
     if is_service_enabled c-vol && [[ -n "$CINDER_ENABLED_BACKENDS" ]]; then
@@ -267,7 +299,7 @@ function configure_cinder {
 
     iniset $CINDER_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
 
-    iniset $CINDER_CONF DEFAULT target_helper "$CINDER_ISCSI_HELPER"
+    iniset $CINDER_CONF DEFAULT target_helper "$CINDER_TARGET_HELPER"
     iniset $CINDER_CONF database connection `database_connection_url cinder`
     iniset $CINDER_CONF DEFAULT api_paste_config $CINDER_API_PASTE_INI
     iniset $CINDER_CONF DEFAULT rootwrap_config "$CINDER_CONF_DIR/rootwrap.conf"
@@ -275,11 +307,7 @@ function configure_cinder {
     iniset $CINDER_CONF DEFAULT osapi_volume_listen $CINDER_SERVICE_LISTEN_ADDRESS
     iniset $CINDER_CONF DEFAULT state_path $CINDER_STATE_PATH
     iniset $CINDER_CONF oslo_concurrency lock_path $CINDER_STATE_PATH
-    if [[ $SERVICE_IP_VERSION == 6 ]]; then
-        iniset $CINDER_CONF DEFAULT my_ip "$HOST_IPV6"
-    else
-        iniset $CINDER_CONF DEFAULT my_ip "$HOST_IP"
-    fi
+    iniset $CINDER_CONF DEFAULT my_ip "$CINDER_MY_IP"
     iniset $CINDER_CONF key_manager backend cinder.keymgr.conf_key_mgr.ConfKeyManager
     iniset $CINDER_CONF key_manager fixed_key $(openssl rand -hex 16)
     if [[ -n "$CINDER_ALLOWED_DIRECT_URL_SCHEMES" ]]; then
@@ -465,9 +493,9 @@ function init_cinder {
 function install_cinder {
     git_clone $CINDER_REPO $CINDER_DIR $CINDER_BRANCH
     setup_develop $CINDER_DIR
-    if [[ "$CINDER_ISCSI_HELPER" == "tgtadm" ]]; then
+    if [[ "$CINDER_TARGET_HELPER" == "tgtadm" ]]; then
         install_package tgt
-    elif [[ "$CINDER_ISCSI_HELPER" == "lioadm" ]]; then
+    elif [[ "$CINDER_TARGET_HELPER" == "lioadm" ]]; then
         if is_ubuntu; then
             # TODO(frickler): Workaround for https://launchpad.net/bugs/1819819
             sudo mkdir -p /etc/target
@@ -475,6 +503,43 @@ function install_cinder {
             install_package targetcli-fb
         else
             install_package targetcli
+        fi
+    elif [[ "$CINDER_TARGET_HELPER" == "nvmet" ]]; then
+        install_package nvme-cli
+
+        # TODO: Remove manual installation of the dependency when the
+        # requirement is added to nvmetcli:
+        # http://lists.infradead.org/pipermail/linux-nvme/2022-July/033576.html
+        if is_ubuntu; then
+            install_package python3-configshell-fb
+        else
+            install_package python3-configshell
+        fi
+        # Install from source because Ubuntu doesn't have the package and some packaged versions didn't work on Python 3
+        pip_install git+git://git.infradead.org/users/hch/nvmetcli.git
+
+        sudo modprobe nvmet
+        sudo modprobe nvme-fabrics
+
+        if [[ $CINDER_TARGET_PROTOCOL == 'nvmet_rdma' ]]; then
+            install_package rdma-core
+            sudo modprobe nvme-rdma
+
+            # Create the Soft-RoCE device over the networking interface
+            local iface=${HOST_IP_IFACE:-`ip -br -$SERVICE_IP_VERSION a | grep $CINDER_MY_IP | awk '{print $1}'`}
+            if [[ -z "$iface" ]]; then
+                die $LINENO "Cannot find interface to bind Soft-RoCE"
+            fi
+
+            if ! sudo rdma link | grep $iface ; then
+                sudo rdma link add rxe_$iface type rxe netdev $iface
+            fi
+
+        elif [[ $CINDER_TARGET_PROTOCOL == 'nvmet_tcp' ]]; then
+            sudo modprobe nvme-tcp
+
+        else  # 'nvmet_fc'
+            sudo modprobe nvme-fc
         fi
     fi
 }
@@ -512,7 +577,7 @@ function start_cinder {
         service_port=$CINDER_SERVICE_PORT_INT
         service_protocol="http"
     fi
-    if [ "$CINDER_ISCSI_HELPER" = "tgtadm" ]; then
+    if [ "$CINDER_TARGET_HELPER" = "tgtadm" ]; then
         if is_service_enabled c-vol; then
             # Delete any old stack.conf
             sudo rm -f /etc/tgt/conf.d/stack.conf

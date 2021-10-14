@@ -669,6 +669,35 @@ adjusted by setting ``CINDER_QUOTA_VOLUMES``, ``CINDER_QUOTA_BACKUPS``,
 or ``CINDER_QUOTA_SNAPSHOTS`` to the desired value.  (The default for
 each is 10.)
 
+DevStack's Cinder LVM configuration module currently supports both iSCSI and
+NVMe connections, and we can choose which one to use with options
+``CINDER_TARGET_HELPER``, ``CINDER_TARGET_PROTOCOL``, ``CINDER_TARGET_PREFIX``,
+and ``CINDER_TARGET_PORT``.
+
+Defaults use iSCSI with the LIO target manager::
+
+  CINDER_TARGET_HELPER="lioadm"
+  CINDER_TARGET_PROTOCOL="iscsi"
+  CINDER_TARGET_PREFIX="iqn.2010-10.org.openstack:"
+  CINDER_TARGET_PORT=3260
+
+Additionally there are 3 supported transport protocols for NVMe,
+``nvmet_rdma``, ``nvmet_tcp``, and ``nvmet_fc``, and when the ``nvmet`` target
+is selected the protocol, prefix, and port defaults will change to more
+sensible defaults for NVMe::
+
+  CINDER_TARGET_HELPER="nvmet"
+  CINDER_TARGET_PROTOCOL="nvmet_rdma"
+  CINDER_TARGET_PREFIX="nvme-subsystem-1"
+  CINDER_TARGET_PORT=4420
+
+When selecting the RDMA transport protocol DevStack will create on Cinder nodes
+a Software RoCE device on top of the ``HOST_IP_IFACE`` and if it is not defined
+then on top of the interface with IP address ``HOST_IP`` or ``HOST_IPV6``.
+
+This Soft-RoCE device will always be created on the Nova compute side since we
+cannot tell beforehand whether there will be an RDMA connection or not.
+
 
 Keystone
 ~~~~~~~~
