@@ -65,7 +65,7 @@ class UpdateCloudsYaml(object):
     def _read_clouds(self):
         try:
             with open(self._clouds_path) as clouds_file:
-                self._clouds = yaml.load(clouds_file)
+                self._clouds = yaml.safe_load(clouds_file)
         except IOError:
             # The user doesn't have a clouds.yaml file.
             print("The user clouds.yaml file didn't exist.")
