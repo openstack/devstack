@@ -24,8 +24,6 @@ official OpenStack projects.
 ======================================== ===
 Plugin Name                              URL
 ======================================== ===
-inspur/venus                             `https://opendev.org/inspur/venus <https://opendev.org/inspur/venus>`__
-inspur/venus-dashboard                   `https://opendev.org/inspur/venus-dashboard <https://opendev.org/inspur/venus-dashboard>`__
 openstack/aodh                           `https://opendev.org/openstack/aodh <https://opendev.org/openstack/aodh>`__
 openstack/barbican                       `https://opendev.org/openstack/barbican <https://opendev.org/openstack/barbican>`__
 openstack/blazar                         `https://opendev.org/openstack/blazar <https://opendev.org/openstack/blazar>`__
@@ -101,6 +99,8 @@ openstack/tap-as-a-service               `https://opendev.org/openstack/tap-as-a
 openstack/telemetry-tempest-plugin       `https://opendev.org/openstack/telemetry-tempest-plugin <https://opendev.org/openstack/telemetry-tempest-plugin>`__
 openstack/trove                          `https://opendev.org/openstack/trove <https://opendev.org/openstack/trove>`__
 openstack/trove-dashboard                `https://opendev.org/openstack/trove-dashboard <https://opendev.org/openstack/trove-dashboard>`__
+openstack/venus                          `https://opendev.org/openstack/venus <https://opendev.org/openstack/venus>`__
+openstack/venus-dashboard                `https://opendev.org/openstack/venus-dashboard <https://opendev.org/openstack/venus-dashboard>`__
 openstack/vitrage                        `https://opendev.org/openstack/vitrage <https://opendev.org/openstack/vitrage>`__
 openstack/vitrage-dashboard              `https://opendev.org/openstack/vitrage-dashboard <https://opendev.org/openstack/vitrage-dashboard>`__
 openstack/vitrage-tempest-plugin         `https://opendev.org/openstack/vitrage-tempest-plugin <https://opendev.org/openstack/vitrage-tempest-plugin>`__
