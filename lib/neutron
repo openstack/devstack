@@ -632,7 +632,7 @@ function configure_neutron {
 # configure_rbac_policies() - Configure Neutron to enforce new RBAC
 # policies and scopes if NEUTRON_ENFORCE_SCOPE == True
 function configure_rbac_policies {
-    if [ "$NEUTRON_ENFORCE_SCOPE" == "True" ]; then
+    if [[ "$NEUTRON_ENFORCE_SCOPE" == "True" || "ENFORCE_SCOPE" == "True" ]]; then
         iniset $NEUTRON_CONF oslo_policy enforce_new_defaults True
         iniset $NEUTRON_CONF oslo_policy enforce_scope True
     else

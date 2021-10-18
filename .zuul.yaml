@@ -646,10 +646,7 @@
       This job runs the devstack with scope checks enabled.
     vars:
       devstack_localrc:
-        # Keep enabeling the services here to run with system scope
-        CINDER_ENFORCE_SCOPE: true
-        GLANCE_ENFORCE_SCOPE: true
-        NEUTRON_ENFORCE_SCOPE: true
+        ENFORCE_SCOPE: true
 
 - job:
     name: devstack-multinode

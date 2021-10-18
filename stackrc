@@ -179,6 +179,10 @@ fi
 # TODO(frickler): Drop this when plugins no longer need it
 IDENTITY_API_VERSION=3
 
+# Global option for enforcing scope. If enabled, ENFORCE_SCOPE overrides
+# each services ${SERVICE}_ENFORCE_SCOPE variables
+ENFORCE_SCOPE=$(trueorfalse False ENFORCE_SCOPE)
+
 # Enable use of Python virtual environments.  Individual project use of
 # venvs are controlled by the PROJECT_VENV array; every project with
 # an entry in the array will be installed into the named venv.

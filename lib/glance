@@ -432,7 +432,7 @@ function configure_glance {
         iniset $GLANCE_API_CONF DEFAULT workers "$API_WORKERS"
     fi
 
-    if [[ "$GLANCE_ENFORCE_SCOPE" == True ]] ; then
+    if [[ "$GLANCE_ENFORCE_SCOPE" == True || "$ENFORCE_SCOPE" == True ]] ; then
         iniset $GLANCE_API_CONF oslo_policy enforce_scope true
         iniset $GLANCE_API_CONF oslo_policy enforce_new_defaults true
         iniset $GLANCE_API_CONF DEFAULT enforce_secure_rbac true

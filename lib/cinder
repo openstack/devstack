@@ -380,7 +380,7 @@ function configure_cinder {
         iniset $CINDER_CONF coordination backend_url "etcd3+http://${SERVICE_HOST}:$ETCD_PORT"
     fi
 
-    if [[ "$CINDER_ENFORCE_SCOPE" == True ]] ; then
+    if [[ "$CINDER_ENFORCE_SCOPE" == True || "$ENFORCE_SCOPE" == True ]] ; then
         iniset $CINDER_CONF oslo_policy enforce_scope true
         iniset $CINDER_CONF oslo_policy enforce_new_defaults true
     fi
