@@ -87,6 +87,16 @@
           - controller
 
 - nodeset:
+    name: devstack-single-node-debian-bullseye
+    nodes:
+      - name: controller
+        label: debian-bullseye
+    groups:
+      - name: tempest
+        nodes:
+          - controller
+
+- nodeset:
     name: openstack-two-node
     nodes:
       - name: controller
@@ -613,6 +623,49 @@
       configure_swap_size: 4096
 
 - job:
+    name: devstack-platform-debian-bullseye
+    parent: tempest-full-py3
+    description: Debian Bullseye platform test
+    nodeset: devstack-single-node-debian-bullseye
+    voting: false
+    timeout: 9000
+    vars:
+      # NOTE(yoctozepto): With concurrency equal 2, there is a random event
+      # that this job will run out of memory at some point.
+      tempest_concurrency: 1
+      # NOTE(yoctozepto): Debian Bullseye does not yet offer OVN. Switch to OVS
+      # for the time being.
+      devstack_localrc:
+        Q_AGENT: openvswitch
+        Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch
+        Q_ML2_TENANT_NETWORK_TYPE: vxlan
+      devstack_services:
+        # Disable OVN services
+        ovn-northd: false
+        ovn-controller: false
+        ovs-vswitchd: false
+        ovsdb-server: false
+        # Disable Neutron ML2/OVN services
+        q-ovn-metadata-agent: false
+        # Enable Neutron ML2/OVS services
+        q-agt: true
+        q-dhcp: true
+        q-l3: true
+        q-meta: true
+        q-metering: true
+    group-vars:
+      subnode:
+        devstack_services:
+          # Disable OVN services
+          ovn-controller: false
+          ovs-vswitchd: false
+          ovsdb-server: false
+          # Disable Neutron ML2/OVN services
+          q-ovn-metadata-agent: false
+          # Enable Neutron ML2/OVS services
+          q-agt: true
+
+- job:
     name: devstack-no-tls-proxy
     parent: tempest-full-py3
     description: |
@@ -715,6 +768,7 @@
         - devstack-enforce-scope
         - devstack-platform-fedora-latest
         - devstack-platform-centos-8-stream
+        - devstack-platform-debian-bullseye
         - devstack-multinode
         - devstack-unit-tests
         - openstack-tox-bashate
