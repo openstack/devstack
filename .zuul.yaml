@@ -670,37 +670,6 @@
     timeout: 9000
     vars:
       configure_swap_size: 4096
-      # NOTE(yoctozepto): Debian Bullseye does not yet offer OVN. Switch to OVS
-      # for the time being.
-      devstack_localrc:
-        Q_AGENT: openvswitch
-        Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch
-        Q_ML2_TENANT_NETWORK_TYPE: vxlan
-      devstack_services:
-        # Disable OVN services
-        ovn-northd: false
-        ovn-controller: false
-        ovs-vswitchd: false
-        ovsdb-server: false
-        # Disable Neutron ML2/OVN services
-        q-ovn-metadata-agent: false
-        # Enable Neutron ML2/OVS services
-        q-agt: true
-        q-dhcp: true
-        q-l3: true
-        q-meta: true
-        q-metering: true
-    group-vars:
-      subnode:
-        devstack_services:
-          # Disable OVN services
-          ovn-controller: false
-          ovs-vswitchd: false
-          ovsdb-server: false
-          # Disable Neutron ML2/OVN services
-          q-ovn-metadata-agent: false
-          # Enable Neutron ML2/OVS services
-          q-agt: true
 
 - job:
     name: devstack-platform-ubuntu-jammy
