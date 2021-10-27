@@ -277,6 +277,7 @@ source $TOP_DIR/lib/neutron_plugins/services/metering
 source $TOP_DIR/lib/neutron_plugins/services/l3
 
 # Additional Neutron service plugins
+source $TOP_DIR/lib/neutron_plugins/services/placement
 source $TOP_DIR/lib/neutron_plugins/services/trunk
 
 # Use security group or not
@@ -374,6 +375,9 @@ function configure_mutnauq {
     fi
 
     # Configure Neutron's advanced services
+    if is_service_enabled q-placement neutron-placement; then
+        configure_placement_extension
+    fi
     if is_service_enabled q-trunk neutron-trunk; then
         configure_trunk_extension
     fi

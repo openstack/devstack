@@ -1,0 +1,21 @@
+#!/bin/bash
+
+function configure_placement_service_plugin {
+    neutron_service_plugin_class_add "placement"
+}
+
+function configure_placement_neutron {
+    iniset $NEUTRON_CONF placement auth_type "$NEUTRON_PLACEMENT_AUTH_TYPE"
+    iniset $NEUTRON_CONF placement auth_url "$KEYSTONE_SERVICE_URI"
+    iniset $NEUTRON_CONF placement username "$NEUTRON_PLACEMENT_USERNAME"
+    iniset $NEUTRON_CONF placement password "$SERVICE_PASSWORD"
+    iniset $NEUTRON_CONF placement user_domain_name "$SERVICE_DOMAIN_NAME"
+    iniset $NEUTRON_CONF placement project_name "$SERVICE_TENANT_NAME"
+    iniset $NEUTRON_CONF placement project_domain_name "$SERVICE_DOMAIN_NAME"
+    iniset $NEUTRON_CONF placement region_name "$REGION_NAME"
+}
+
+function configure_placement_extension {
+    configure_placement_service_plugin
+    configure_placement_neutron
+}
