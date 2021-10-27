@@ -1,0 +1,30 @@
+#!/bin/bash
+
+function configure_qos_service_plugin {
+    neutron_service_plugin_class_add "qos"
+}
+
+
+function configure_qos_core_plugin {
+    configure_qos_$NEUTRON_CORE_PLUGIN
+}
+
+
+function configure_qos_l2_agent {
+    plugin_agent_add_l2_agent_extension "qos"
+}
+
+
+function configure_qos {
+    configure_qos_service_plugin
+    configure_qos_core_plugin
+    configure_qos_l2_agent
+}
+
+function configure_l3_agent_extension_fip_qos {
+    plugin_agent_add_l3_agent_extension "fip_qos"
+}
+
+function configure_l3_agent_extension_gateway_ip_qos {
+    plugin_agent_add_l3_agent_extension "gateway_ip_qos"
+}

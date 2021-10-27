@@ -279,6 +279,7 @@ source $TOP_DIR/lib/neutron_plugins/services/l3
 # Additional Neutron service plugins
 source $TOP_DIR/lib/neutron_plugins/services/placement
 source $TOP_DIR/lib/neutron_plugins/services/trunk
+source $TOP_DIR/lib/neutron_plugins/services/qos
 
 # Use security group or not
 if has_neutron_plugin_security_group; then
@@ -380,6 +381,13 @@ function configure_mutnauq {
     fi
     if is_service_enabled q-trunk neutron-trunk; then
         configure_trunk_extension
+    fi
+    if is_service_enabled q-qos neutron-qos; then
+        configure_qos
+        if is_service_enabled q-l3 neutron-l3; then
+            configure_l3_agent_extension_fip_qos
+            configure_l3_agent_extension_gateway_ip_qos
+        fi
     fi
 
     iniset $NEUTRON_CONF DEFAULT api_workers "$API_WORKERS"
