@@ -630,9 +630,7 @@
     voting: false
     timeout: 9000
     vars:
-      # NOTE(yoctozepto): With concurrency equal 2, there is a random event
-      # that this job will run out of memory at some point.
-      tempest_concurrency: 1
+      configure_swap_size: 4096
       # NOTE(yoctozepto): Debian Bullseye does not yet offer OVN. Switch to OVS
       # for the time being.
       devstack_localrc:
