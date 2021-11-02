@@ -1090,6 +1090,9 @@ fi
 
 source $TOP_DIR/userrc_early
 
+# Write a clouds.yaml file
+write_clouds_yaml
+
 if is_service_enabled keystone; then
     echo_summary "Starting Keystone"
 
@@ -1117,9 +1120,6 @@ if is_service_enabled keystone; then
     fi
 
 fi
-
-# Write a clouds.yaml file
-write_clouds_yaml
 
 # Horizon
 # -------
