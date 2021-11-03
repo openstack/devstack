@@ -876,7 +876,7 @@ fi
 install_keystonemiddleware
 
 if is_service_enabled keystone; then
-    if [ "$KEYSTONE_AUTH_HOST" == "$SERVICE_HOST" ]; then
+    if [ "$KEYSTONE_SERVICE_HOST" == "$SERVICE_HOST" ]; then
         stack_install_service keystone
         configure_keystone
     fi
@@ -1096,7 +1096,7 @@ write_clouds_yaml
 if is_service_enabled keystone; then
     echo_summary "Starting Keystone"
 
-    if [ "$KEYSTONE_AUTH_HOST" == "$SERVICE_HOST" ]; then
+    if [ "$KEYSTONE_SERVICE_HOST" == "$SERVICE_HOST" ]; then
         init_keystone
         start_keystone
         bootstrap_keystone

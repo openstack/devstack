@@ -50,9 +50,7 @@ fi
 KEYSTONE_CONF_DIR=${KEYSTONE_CONF_DIR:-/etc/keystone}
 KEYSTONE_CONF=$KEYSTONE_CONF_DIR/keystone.conf
 KEYSTONE_PUBLIC_UWSGI_CONF=$KEYSTONE_CONF_DIR/keystone-uwsgi-public.ini
-KEYSTONE_ADMIN_UWSGI_CONF=$KEYSTONE_CONF_DIR/keystone-uwsgi-admin.ini
 KEYSTONE_PUBLIC_UWSGI=$KEYSTONE_BIN_DIR/keystone-wsgi-public
-KEYSTONE_ADMIN_UWSGI=$KEYSTONE_BIN_DIR/keystone-wsgi-admin
 
 # KEYSTONE_DEPLOY defines how keystone is deployed, allowed values:
 # - mod_wsgi : Run keystone under Apache HTTPd mod_wsgi
@@ -81,20 +79,11 @@ KEYSTONE_RESOURCE_BACKEND=${KEYSTONE_RESOURCE_BACKEND:-sql}
 KEYSTONE_TOKEN_FORMAT=${KEYSTONE_TOKEN_FORMAT:-fernet}
 KEYSTONE_TOKEN_FORMAT=$(echo ${KEYSTONE_TOKEN_FORMAT} | tr '[:upper:]' '[:lower:]')
 
-# Set Keystone interface configuration
-KEYSTONE_AUTH_HOST=${KEYSTONE_AUTH_HOST:-$SERVICE_HOST}
-KEYSTONE_AUTH_PORT=${KEYSTONE_AUTH_PORT:-35357}
-KEYSTONE_AUTH_PORT_INT=${KEYSTONE_AUTH_PORT_INT:-35358}
-KEYSTONE_AUTH_PROTOCOL=${KEYSTONE_AUTH_PROTOCOL:-$SERVICE_PROTOCOL}
-
 # Public facing bits
 KEYSTONE_SERVICE_HOST=${KEYSTONE_SERVICE_HOST:-$SERVICE_HOST}
 KEYSTONE_SERVICE_PORT=${KEYSTONE_SERVICE_PORT:-5000}
 KEYSTONE_SERVICE_PORT_INT=${KEYSTONE_SERVICE_PORT_INT:-5001}
 KEYSTONE_SERVICE_PROTOCOL=${KEYSTONE_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
-
-# Bind hosts
-KEYSTONE_ADMIN_BIND_HOST=${KEYSTONE_ADMIN_BIND_HOST:-$KEYSTONE_SERVICE_HOST}
 
 # Set the project for service accounts in Keystone
 SERVICE_DOMAIN_NAME=${SERVICE_DOMAIN_NAME:-Default}
@@ -106,7 +95,6 @@ SERVICE_TENANT_NAME=${SERVICE_PROJECT_NAME:-service}
 
 # if we are running with SSL use https protocols
 if is_service_enabled tls-proxy; then
-    KEYSTONE_AUTH_PROTOCOL="https"
     KEYSTONE_SERVICE_PROTOCOL="https"
 fi
 
@@ -154,11 +142,8 @@ function cleanup_keystone {
         sudo rm -f $(apache_site_config_for keystone)
     else
         stop_process "keystone"
-        # TODO: remove admin at pike-2
         remove_uwsgi_config "$KEYSTONE_PUBLIC_UWSGI_CONF" "$KEYSTONE_PUBLIC_UWSGI"
-        remove_uwsgi_config "$KEYSTONE_ADMIN_UWSGI_CONF" "$KEYSTONE_ADMIN_UWSGI"
         sudo rm -f $(apache_site_config_for keystone-wsgi-public)
-        sudo rm -f $(apache_site_config_for keystone-wsgi-admin)
     fi
 }
 
@@ -171,12 +156,10 @@ function _config_keystone_apache_wsgi {
     local keystone_certfile=""
     local keystone_keyfile=""
     local keystone_service_port=$KEYSTONE_SERVICE_PORT
-    local keystone_auth_port=$KEYSTONE_AUTH_PORT
     local venv_path=""
 
     if is_service_enabled tls-proxy; then
         keystone_service_port=$KEYSTONE_SERVICE_PORT_INT
-        keystone_auth_port=$KEYSTONE_AUTH_PORT_INT
     fi
     if [[ ${USE_VENV} = True ]]; then
         venv_path="python-path=${PROJECT_VENV["keystone"]}/lib/$(python_version)/site-packages"
@@ -185,7 +168,6 @@ function _config_keystone_apache_wsgi {
     sudo cp $FILES/apache-keystone.template $keystone_apache_conf
     sudo sed -e "
         s|%PUBLICPORT%|$keystone_service_port|g;
-        s|%ADMINPORT%|$keystone_auth_port|g;
         s|%APACHE_NAME%|$APACHE_NAME|g;
         s|%SSLLISTEN%|$keystone_ssl_listen|g;
         s|%SSLENGINE%|$keystone_ssl|g;
@@ -223,12 +205,10 @@ function configure_keystone {
     iniset_rpc_backend keystone $KEYSTONE_CONF oslo_messaging_notifications
 
     local service_port=$KEYSTONE_SERVICE_PORT
-    local auth_port=$KEYSTONE_AUTH_PORT
 
     if is_service_enabled tls-proxy; then
         # Set the service ports for a proxy to take the originals
         service_port=$KEYSTONE_SERVICE_PORT_INT
-        auth_port=$KEYSTONE_AUTH_PORT_INT
     fi
 
     # Override the endpoints advertised by keystone (the public_endpoint and
@@ -238,7 +218,7 @@ function configure_keystone {
     # don't want the port (in the case of putting keystone on a path in
     # apache).
     iniset $KEYSTONE_CONF DEFAULT public_endpoint $KEYSTONE_SERVICE_URI
-    iniset $KEYSTONE_CONF DEFAULT admin_endpoint $KEYSTONE_AUTH_URI
+    iniset $KEYSTONE_CONF DEFAULT admin_endpoint $KEYSTONE_SERVICE_URI
 
     if [[ "$KEYSTONE_TOKEN_FORMAT" != "" ]]; then
         iniset $KEYSTONE_CONF token provider $KEYSTONE_TOKEN_FORMAT
@@ -261,7 +241,6 @@ function configure_keystone {
         _config_keystone_apache_wsgi
     else # uwsgi
         write_uwsgi_config "$KEYSTONE_PUBLIC_UWSGI_CONF" "$KEYSTONE_PUBLIC_UWSGI" "/identity"
-        write_uwsgi_config "$KEYSTONE_ADMIN_UWSGI_CONF" "$KEYSTONE_ADMIN_UWSGI" "/identity_admin"
     fi
 
     iniset $KEYSTONE_CONF DEFAULT max_token_size 16384
@@ -518,7 +497,7 @@ function install_keystone {
 function start_keystone {
     # Get right service port for testing
     local service_port=$KEYSTONE_SERVICE_PORT
-    local auth_protocol=$KEYSTONE_AUTH_PROTOCOL
+    local auth_protocol=$KEYSTONE_SERVICE_PROTOCOL
     if is_service_enabled tls-proxy; then
         service_port=$KEYSTONE_SERVICE_PORT_INT
         auth_protocol="http"
@@ -546,7 +525,6 @@ function start_keystone {
     # Start proxies if enabled
     if is_service_enabled tls-proxy; then
         start_tls_proxy keystone-service '*' $KEYSTONE_SERVICE_PORT $KEYSTONE_SERVICE_HOST $KEYSTONE_SERVICE_PORT_INT
-        start_tls_proxy keystone-auth '*' $KEYSTONE_AUTH_PORT $KEYSTONE_AUTH_HOST $KEYSTONE_AUTH_PORT_INT
     fi
 
     # (re)start memcached to make sure we have a clean memcache.
@@ -569,9 +547,7 @@ function stop_keystone {
 # - ``ADMIN_PASSWORD``
 # - ``IDENTITY_API_VERSION``
 # - ``REGION_NAME``
-# - ``KEYSTONE_SERVICE_PROTOCOL``
-# - ``KEYSTONE_SERVICE_HOST``
-# - ``KEYSTONE_SERVICE_PORT``
+# - ``KEYSTONE_SERVICE_URI``
 function bootstrap_keystone {
     $KEYSTONE_BIN_DIR/keystone-manage bootstrap \
         --bootstrap-username admin \
@@ -580,7 +556,7 @@ function bootstrap_keystone {
         --bootstrap-role-name admin \
         --bootstrap-service-name keystone \
         --bootstrap-region-id "$REGION_NAME" \
-        --bootstrap-admin-url "$KEYSTONE_AUTH_URI" \
+        --bootstrap-admin-url "$KEYSTONE_SERVICE_URI" \
         --bootstrap-public-url "$KEYSTONE_SERVICE_URI"
 }
 
