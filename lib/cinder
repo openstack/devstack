@@ -286,6 +286,11 @@ function configure_cinder {
         iniset $CINDER_CONF DEFAULT allowed_direct_url_schemes $CINDER_ALLOWED_DIRECT_URL_SCHEMES
     fi
 
+    # set default quotas
+    iniset $CINDER_CONF DEFAULT quota_volumes ${CINDER_QUOTA_VOLUMES:-10}
+    iniset $CINDER_CONF DEFAULT quota_backups ${CINDER_QUOTA_BACKUPS:-10}
+    iniset $CINDER_CONF DEFAULT quota_snapshots ${CINDER_QUOTA_SNAPSHOTS:-10}
+
     # Avoid RPC timeouts in slow CI and test environments by doubling the
     # default response timeout set by RPC clients. See bug #1873234 for more
     # details and example failures.

@@ -642,6 +642,12 @@ with ``VOLUME_BACKING_FILE_SIZE``.
   VOLUME_NAME_PREFIX="volume-"
   VOLUME_BACKING_FILE_SIZE=24G
 
+When running highly concurrent tests, the default per-project quotas
+for volumes, backups, or snapshots may be too small.  These can be
+adjusted by setting ``CINDER_QUOTA_VOLUMES``, ``CINDER_QUOTA_BACKUPS``,
+or ``CINDER_QUOTA_SNAPSHOTS`` to the desired value.  (The default for
+each is 10.)
+
 
 Keystone
 ~~~~~~~~
