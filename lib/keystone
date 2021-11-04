@@ -123,7 +123,7 @@ KEYSTONE_PASSWORD_HASH_ROUNDS=${KEYSTONE_PASSWORD_HASH_ROUNDS:-4}
 KEYSTONE_ENABLE_CACHE=${KEYSTONE_ENABLE_CACHE:-True}
 
 # Whether to create a keystone admin endpoint for legacy applications
-KEYSTONE_ADMIN_ENDPOINT=$(trueorfalse True KEYSTONE_ADMIN_ENDPOINT)
+KEYSTONE_ADMIN_ENDPOINT=$(trueorfalse False KEYSTONE_ADMIN_ENDPOINT)
 
 # Functions
 # ---------
