@@ -288,24 +288,17 @@ function configure_glance_store {
 
 function configure_glance_quotas {
 
-    # NOTE(danms): We need to have some of the OS_ things unset in
-    # order to use system scope, which is required for creating these
-    # limits. This is a hack, but I dunno how else to get osc to use
-    # system scope.
+    # Registered limit resources in keystone are system-specific resources.
+    # Make sure we use a system-scoped token to interact with this API.
 
-    bash -c "unset OS_USERNAME OS_TENANT_NAME OS_PROJECT_NAME;
-        openstack --os-cloud devstack-system-admin registered limit create \
-                --service glance --default-limit $GLANCE_LIMIT_IMAGE_SIZE_TOTAL \
-                --region $REGION_NAME image_size_total; \
-        openstack --os-cloud devstack-system-admin registered limit create \
-                --service glance --default-limit $GLANCE_LIMIT_IMAGE_SIZE_TOTAL \
-                --region $REGION_NAME image_stage_total; \
-        openstack --os-cloud devstack-system-admin registered limit create \
-                --service glance --default-limit 100 --region $REGION_NAME \
-                image_count_total; \
-        openstack --os-cloud devstack-system-admin registered limit create \
-                --service glance --default-limit 100 --region $REGION_NAME \
-                image_count_uploading"
+    openstack --os-cloud devstack-system-admin registered limit create --service glance \
+        --default-limit $GLANCE_LIMIT_IMAGE_SIZE_TOTAL --region $REGION_NAME image_size_total
+    openstack --os-cloud devstack-system-admin registered limit create --service glance \
+        --default-limit $GLANCE_LIMIT_IMAGE_SIZE_TOTAL --region $REGION_NAME image_stage_total
+    openstack --os-cloud devstack-system-admin registered limit create --service glance \
+        --default-limit 100 --region $REGION_NAME image_count_total
+    openstack --os-cloud devstack-system-admin registered limit create --service glance \
+        --default-limit 100 --region $REGION_NAME image_count_uploading
 
     # Tell glance to use these limits
     iniset $GLANCE_API_CONF DEFAULT use_keystone_limits True
