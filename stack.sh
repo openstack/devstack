@@ -1063,35 +1063,13 @@ fi
 # Keystone
 # --------
 
-# Rather than just export these, we write them out to a
-# intermediate userrc file that can also be used to debug if
-# something goes wrong between here and running
-# tools/create_userrc.sh (this script relies on services other
-# than keystone being available, so we can't call it right now)
-cat > $TOP_DIR/userrc_early <<EOF
-# Use this for debugging issues before files in accrc are created
-
-# Set up password auth credentials now that Keystone is bootstrapped
-export OS_IDENTITY_API_VERSION=3
-export OS_AUTH_URL=$KEYSTONE_SERVICE_URI
-export OS_USERNAME=admin
-export OS_USER_DOMAIN_ID=default
-export OS_PASSWORD=$ADMIN_PASSWORD
-export OS_PROJECT_NAME=admin
-export OS_PROJECT_DOMAIN_ID=default
-export OS_REGION_NAME=$KEYSTONE_REGION_NAME
-
-EOF
-
 if is_service_enabled tls-proxy; then
-    echo "export OS_CACERT=$INT_CA_DIR/ca-chain.pem" >> $TOP_DIR/userrc_early
     start_tls_proxy http-services '*' 443 $SERVICE_HOST 80
 fi
 
-source $TOP_DIR/userrc_early
-
-# Write a clouds.yaml file
+# Write a clouds.yaml file and use the devstack-admin cloud
 write_clouds_yaml
+export OS_CLOUD=devstack-admin
 
 if is_service_enabled keystone; then
     echo_summary "Starting Keystone"
@@ -1380,7 +1358,7 @@ fi
 # which is helpful in image bundle steps.
 
 if is_service_enabled nova && is_service_enabled keystone; then
-    USERRC_PARAMS="-PA --target-dir $TOP_DIR/accrc"
+    USERRC_PARAMS="-PA --target-dir $TOP_DIR/accrc --os-password $ADMIN_PASSWORD"
 
     if [ -f $SSL_BUNDLE_FILE ]; then
         USERRC_PARAMS="$USERRC_PARAMS --os-cacert $SSL_BUNDLE_FILE"
