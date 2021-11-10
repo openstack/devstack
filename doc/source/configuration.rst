@@ -684,17 +684,6 @@ KEYSTONE_REGION_NAME to specify the region of Keystone service.
 KEYSTONE_REGION_NAME has a default value the same as REGION_NAME thus we omit
 it in the configuration of RegionOne.
 
-Disabling Identity API v2
-+++++++++++++++++++++++++
-
-The Identity API v2 is deprecated as of Mitaka and it is recommended to only
-use the v3 API. It is possible to setup keystone without v2 API, by doing:
-
-::
-
-    ENABLE_IDENTITY_V2=False
-
-
 Glance
 ++++++
 

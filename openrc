@@ -74,7 +74,7 @@ else
 fi
 
 # Identity API version
-export OS_IDENTITY_API_VERSION=${IDENTITY_API_VERSION:-3}
+export OS_IDENTITY_API_VERSION=3
 
 # Ask keystoneauth1 to use keystone
 export OS_AUTH_TYPE=password
