@@ -486,7 +486,8 @@ function create_nova_conf {
     fi
 
     # nova defaults to genisoimage but only mkisofs is available for 15.0+
-    if is_suse; then
+    # rhel provides mkisofs symlink to genisoimage or xorriso appropiately
+    if is_suse || is_fedora; then
         iniset $NOVA_CONF DEFAULT mkisofs_cmd /usr/bin/mkisofs
     fi
 

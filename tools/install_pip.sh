@@ -127,7 +127,7 @@ if [[ -n $PYPI_ALTERNATIVE_URL ]]; then
     configure_pypi_alternative_url
 fi
 
-if is_fedora && [[ ${DISTRO} == f* ]]; then
+if is_fedora && [[ ${DISTRO} == f* || ${DISTRO} == rhel9 ]]; then
     # get-pip.py will not install over the python3-pip package in
     # Fedora 34 any more.
     #  https://bugzilla.redhat.com/show_bug.cgi?id=1988935
