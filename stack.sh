@@ -227,7 +227,7 @@ write_devstack_version
 
 # Warn users who aren't on an explicitly supported distro, but allow them to
 # override check and attempt installation with ``FORCE=yes ./stack``
-SUPPORTED_DISTROS="bionic|focal|f31|f32|opensuse-15.2|opensuse-tumbleweed|rhel8"
+SUPPORTED_DISTROS="bionic|focal|f31|f32|opensuse-15.2|opensuse-tumbleweed|rhel8|rhel9"
 
 if [[ ! ${DISTRO} =~ $SUPPORTED_DISTROS ]]; then
     echo "WARNING: this script has not been tested on $DISTRO"
@@ -300,13 +300,17 @@ function _install_epel {
 }
 
 function _install_rdo {
-    if [[ "$TARGET_BRANCH" == "master" ]]; then
-        # rdo-release.el8.rpm points to latest RDO release, use that for master
-        sudo dnf -y install https://rdoproject.org/repos/rdo-release.el8.rpm
-    else
-        # For stable branches use corresponding release rpm
-        rdo_release=$(echo $TARGET_BRANCH | sed "s|stable/||g")
-        sudo dnf -y install https://rdoproject.org/repos/openstack-${rdo_release}/rdo-release-${rdo_release}.el8.rpm
+    if [[ $DISTRO == "rhel8" ]]; then
+        if [[ "$TARGET_BRANCH" == "master" ]]; then
+            # rdo-release.el8.rpm points to latest RDO release, use that for master
+            sudo dnf -y install https://rdoproject.org/repos/rdo-release.el8.rpm
+        else
+            # For stable branches use corresponding release rpm
+            rdo_release=$(echo $TARGET_BRANCH | sed "s|stable/||g")
+            sudo dnf -y install https://rdoproject.org/repos/openstack-${rdo_release}/rdo-release-${rdo_release}.el8.rpm
+        fi
+    elif [[ $DISTRO == "rhel9" ]]; then
+        sudo curl -L -o /etc/yum.repos.d/delorean-deps.repo http://trunk.rdoproject.org/centos9-master/delorean-deps.repo
     fi
     sudo dnf -y update
 }
@@ -385,6 +389,10 @@ if [[ $DISTRO == "rhel8" ]]; then
     # RHBZ: https://bugzilla.redhat.com/show_bug.cgi?id=1154272
     # Patch: https://github.com/rpm-software-management/dnf/pull/1448
     echo "[]" | sudo tee /var/cache/dnf/expired_repos.json
+elif [[ $DISTRO == "rhel9" ]]; then
+    sudo dnf config-manager --set-enabled crb
+    # rabbitmq and other packages are provided by RDO repositories.
+    _install_rdo
 fi
 
 # Ensure python is installed

@@ -4,4 +4,4 @@ memcached
 rsync-daemon
 sqlite
 xfsprogs
-xinetd
+xinetd # not:f34,rhel9
