@@ -67,6 +67,16 @@
           - controller
 
 - nodeset:
+    name: devstack-single-node-centos-9-stream
+    nodes:
+      - name: controller
+        label: centos-9-stream
+    groups:
+      - name: tempest
+        nodes:
+          - controller
+
+- nodeset:
     name: devstack-single-node-opensuse-15
     nodes:
       - name: controller
@@ -623,6 +633,16 @@
       configure_swap_size: 4096
 
 - job:
+    name: devstack-platform-centos-9-stream
+    parent: tempest-full-py3
+    description: CentOS 9 Stream platform test
+    nodeset: devstack-single-node-centos-9-stream
+    voting: false
+    timeout: 9000
+    vars:
+      configure_swap_size: 4096
+
+- job:
     name: devstack-platform-debian-bullseye
     parent: tempest-full-py3
     description: Debian Bullseye platform test
@@ -766,6 +786,7 @@
         - devstack-enforce-scope
         - devstack-platform-fedora-latest
         - devstack-platform-centos-8-stream
+        - devstack-platform-centos-9-stream
         - devstack-platform-debian-bullseye
         - devstack-multinode
         - devstack-unit-tests
