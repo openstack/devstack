@@ -294,6 +294,7 @@ source $TOP_DIR/lib/neutron_plugins/services/l3
 source $TOP_DIR/lib/neutron_plugins/services/placement
 source $TOP_DIR/lib/neutron_plugins/services/trunk
 source $TOP_DIR/lib/neutron_plugins/services/qos
+source $TOP_DIR/lib/neutron_plugins/services/segments
 
 # Use security group or not
 if has_neutron_plugin_security_group; then
@@ -415,6 +416,10 @@ function configure_neutron {
             configure_l3_agent_extension_fip_qos
             configure_l3_agent_extension_gateway_ip_qos
         fi
+    fi
+    if is_service_enabled neutron-segments; then
+        configure_placement_neutron
+        configure_segments_extension
     fi
 
     # Finally configure Neutron server and core plugin
