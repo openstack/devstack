@@ -866,12 +866,15 @@ function stop_swift {
 
 function swift_configure_tempurls {
     # note we are using swift credentials!
-    OS_USERNAME=swift \
-    OS_PASSWORD=$SERVICE_PASSWORD \
-    OS_USER_DOMAIN_NAME=$SERVICE_DOMAIN_NAME \
-    OS_PROJECT_NAME=$SERVICE_PROJECT_NAME \
-    OS_PROJECT_DOMAIN_NAME=$SERVICE_DOMAIN_NAME \
-    openstack object store account \
+    openstack --os-cloud "" \
+        --os-region-name $REGION_NAME \
+        --os-auth-url $KEYSTONE_SERVICE_URI \
+        --os-username=swift \
+        --os-password=$SERVICE_PASSWORD \
+        --os-user-domain-name=$SERVICE_DOMAIN_NAME \
+        --os-project-name=$SERVICE_PROJECT_NAME \
+        --os-project-domain-name=$SERVICE_DOMAIN_NAME \
+        object store account \
         set --property "Temp-URL-Key=$SWIFT_TEMPURL_KEY"
 }
 
