@@ -427,3 +427,12 @@ function is_networking_extension_supported {
     EXT_LIST=$(openstack --os-cloud devstack-admin --os-region "$REGION_NAME" extension list --network -c Alias -f value)
     [[ $EXT_LIST =~ $extension ]] && return 0
 }
+
+function plugin_agent_add_l3_agent_extension {
+    local l3_agent_extension=$1
+    if [[ -z "$L3_AGENT_EXTENSIONS" ]]; then
+        L3_AGENT_EXTENSIONS=$l3_agent_extension
+    elif [[ ! ,${L3_AGENT_EXTENSIONS}, =~ ,${l3_agent_extension}, ]]; then
+        L3_AGENT_EXTENSIONS+=",$l3_agent_extension"
+    fi
+}
