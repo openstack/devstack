@@ -1069,7 +1069,7 @@ fi
 
 # Write a clouds.yaml file and use the devstack-admin cloud
 write_clouds_yaml
-export OS_CLOUD=devstack-admin
+export OS_CLOUD=${OS_CLOUD:-devstack-admin}
 
 if is_service_enabled keystone; then
     echo_summary "Starting Keystone"
