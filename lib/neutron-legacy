@@ -1039,6 +1039,15 @@ function _ssh_check_neutron {
     test_with_retry "$testcmd" "server $ip didn't become ssh-able" $timeout_sec
 }
 
+function plugin_agent_add_l2_agent_extension {
+    local l2_agent_extension=$1
+    if [[ -z "$L2_AGENT_EXTENSIONS" ]]; then
+        L2_AGENT_EXTENSIONS=$l2_agent_extension
+    elif [[ ! ,${L2_AGENT_EXTENSIONS}, =~ ,${l2_agent_extension}, ]]; then
+        L2_AGENT_EXTENSIONS+=",$l2_agent_extension"
+    fi
+}
+
 # Restore xtrace
 $_XTRACE_NEUTRON
 

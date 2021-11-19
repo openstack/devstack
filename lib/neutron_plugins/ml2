@@ -156,5 +156,9 @@ function has_neutron_plugin_security_group {
     return 0
 }
 
+function configure_qos_ml2 {
+    neutron_ml2_extension_driver_add "qos"
+}
+
 # Restore xtrace
 $_XTRACE_NEUTRON_ML2
