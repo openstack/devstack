@@ -119,7 +119,13 @@ OVS_SCRIPTDIR=$OVS_SHAREDIR/scripts
 OVS_DATADIR=$DATA_DIR/ovs
 OVS_SYSCONFDIR=${OVS_SYSCONFDIR:-$OVS_PREFIX/etc/openvswitch}
 
-OVN_DATADIR=$DATA_DIR/ovn
+if [[ "$OVN_BUILD_FROM_SOURCE" == "True" ]]; then
+    OVN_DATADIR=$DATA_DIR/ovn
+else
+    # When using OVN from packages, the data dir for OVN DBs is
+    # /var/lib/ovn
+    OVN_DATADIR=/var/lib/ovn
+fi
 OVN_SHAREDIR=$OVS_PREFIX/share/ovn
 OVN_SCRIPTDIR=$OVN_SHAREDIR/scripts
 OVN_RUNDIR=$OVS_PREFIX/var/run/ovn
@@ -562,13 +568,13 @@ function init_ovn {
 
     _disable_libvirt_apparmor
 
-    mkdir -p $OVN_DATADIR
+    sudo mkdir -p $OVN_DATADIR
     mkdir -p $OVS_DATADIR
 
     rm -f $OVS_DATADIR/*.db
     rm -f $OVS_DATADIR/.*.db.~lock~
-    rm -f $OVN_DATADIR/*.db
-    rm -f $OVN_DATADIR/.*.db.~lock~
+    sudo rm -f $OVN_DATADIR/*.db
+    sudo rm -f $OVN_DATADIR/.*.db.~lock~
 }
 
 function _start_ovs {
