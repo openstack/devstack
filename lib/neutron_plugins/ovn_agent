@@ -568,7 +568,11 @@ function init_ovn {
 
     _disable_libvirt_apparmor
 
-    sudo mkdir -p $OVN_DATADIR
+    if [[ "$OVN_BUILD_FROM_SOURCE" == "True" ]]; then
+        mkdir -p $OVN_DATADIR
+    else
+        sudo mkdir -p $OVN_DATADIR
+    fi
     mkdir -p $OVS_DATADIR
 
     rm -f $OVS_DATADIR/*.db
