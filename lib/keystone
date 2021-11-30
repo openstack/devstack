@@ -9,7 +9,6 @@
 # - ``tls`` file
 # - ``DEST``, ``STACK_USER``
 # - ``FILES``
-# - ``IDENTITY_API_VERSION``
 # - ``BASE_SQL_CONN``
 # - ``SERVICE_HOST``, ``SERVICE_PROTOCOL``
 # - ``S3_SERVICE_PORT`` (template backend only)
@@ -557,7 +556,7 @@ function start_keystone {
     # unencryted traffic at this point.
     # If running in Apache, use the path rather than port.
 
-    local service_uri=$auth_protocol://$KEYSTONE_SERVICE_HOST/identity/v$IDENTITY_API_VERSION/
+    local service_uri=$auth_protocol://$KEYSTONE_SERVICE_HOST/identity/v3/
 
     if ! wait_for_service $SERVICE_TIMEOUT $service_uri; then
         die $LINENO "keystone did not start"
@@ -586,7 +585,6 @@ function stop_keystone {
 # This function uses the following GLOBAL variables:
 # - ``KEYSTONE_BIN_DIR``
 # - ``ADMIN_PASSWORD``
-# - ``IDENTITY_API_VERSION``
 # - ``REGION_NAME``
 # - ``KEYSTONE_SERVICE_URI``
 function bootstrap_keystone {

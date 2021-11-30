@@ -175,21 +175,9 @@ else
     export PS4='+ $(short_source):   '
 fi
 
-# Configure Identity API version: 2.0, 3
-IDENTITY_API_VERSION=${IDENTITY_API_VERSION:-3}
-
-# Set the option ENABLE_IDENTITY_V2 to True. It defines whether the DevStack
-# deployment will be deploying the Identity v2 pipelines. If this option is set
-# to ``False``, DevStack will: i) disable Identity v2; ii) configure Tempest to
-# skip Identity v2 specific tests; and iii) configure Horizon to use Identity
-# v3. When this option is set to ``False``, the option IDENTITY_API_VERSION
-# will to be set to ``3`` in order to make DevStack register the Identity
-# endpoint as v3. This flag is experimental and will be used as basis to
-# identify the projects which still have issues to operate with Identity v3.
-ENABLE_IDENTITY_V2=$(trueorfalse False ENABLE_IDENTITY_V2)
-if [ "$ENABLE_IDENTITY_V2" == "False" ]; then
-    IDENTITY_API_VERSION=3
-fi
+# Configure Identity API version
+# TODO(frickler): Drop this when plugins no longer need it
+IDENTITY_API_VERSION=3
 
 # Enable use of Python virtual environments.  Individual project use of
 # venvs are controlled by the PROJECT_VENV array; every project with
