@@ -488,8 +488,13 @@ function create_nova_conf {
 
     iniset $NOVA_CONF upgrade_levels compute "auto"
 
-    write_uwsgi_config "$NOVA_UWSGI_CONF" "$NOVA_UWSGI" "/compute"
-    write_uwsgi_config "$NOVA_METADATA_UWSGI_CONF" "$NOVA_METADATA_UWSGI" "" "$SERVICE_LISTEN_ADDRESS:${METADATA_SERVICE_PORT}"
+    if is_service_enabled n-api; then
+        write_uwsgi_config "$NOVA_UWSGI_CONF" "$NOVA_UWSGI" "/compute"
+    fi
+
+    if is_service_enabled n-api-meta; then
+        write_uwsgi_config "$NOVA_METADATA_UWSGI_CONF" "$NOVA_METADATA_UWSGI" "" "$SERVICE_LISTEN_ADDRESS:${METADATA_SERVICE_PORT}"
+    fi
 
     if is_service_enabled ceilometer; then
         iniset $NOVA_CONF DEFAULT instance_usage_audit "True"
