@@ -294,16 +294,13 @@ function _disable_libvirt_apparmor {
 
 # compile_ovn() - Compile OVN from source and load needed modules
 #                 Accepts three parameters:
-#                   - first optional is False by default and means that
-#                     modules are built and installed.
-#                   - second optional parameter defines prefix for
+#                   - first optional parameter defines prefix for
 #                     ovn compilation
-#                   - third optional parameter defines localstatedir for
+#                   - second optional parameter defines localstatedir for
 #                     ovn single machine runtime
 function compile_ovn {
-    local build_modules=${1:-False}
-    local prefix=$2
-    local localstatedir=$3
+    local prefix=$1
+    local localstatedir=$2
 
     if [ -n "$prefix" ]; then
         prefix="--prefix=$prefix"
@@ -381,7 +378,7 @@ function install_ovn {
 
         compile_ovs $OVN_BUILD_MODULES
         if use_new_ovn_repository; then
-            compile_ovn $OVN_BUILD_MODULES
+            compile_ovn
         fi
 
         sudo mkdir -p $OVS_PREFIX/var/log/openvswitch
