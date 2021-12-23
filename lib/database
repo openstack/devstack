@@ -89,6 +89,10 @@ function initialize_database_backends {
         DATABASE_PASSWORD=$MYSQL_PASSWORD
     fi
 
+    return 0
+}
+
+function define_database_baseurl {
     # We configure Nova, Horizon, Glance and Keystone to use MySQL as their
     # database server.  While they share a single server, each has their own
     # database and tables.
@@ -100,8 +104,6 @@ function initialize_database_backends {
 
     # NOTE: Don't specify ``/db`` in this string so we can use it for multiple services
     BASE_SQL_CONN=${BASE_SQL_CONN:-$(get_database_type_$DATABASE_TYPE)://$DATABASE_USER:$DATABASE_PASSWORD@$DATABASE_HOST}
-
-    return 0
 }
 
 # Recreate a given database
