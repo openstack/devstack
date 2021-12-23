@@ -393,7 +393,7 @@
         PUBLIC_BRIDGE_MTU: '{{ external_bridge_mtu }}'
       devstack_services:
         # Shared services
-        dstat: true
+        dstat: false
         etcd3: true
         memory_tracker: true
         mysql: true
@@ -402,7 +402,7 @@
       subnode:
         devstack_services:
           # Shared services
-          dstat: true
+          dstat: false
           memory_tracker: true
         devstack_localrc:
           # Multinode specific settings
@@ -467,7 +467,7 @@
         # Core services enabled for this branch.
         # This list replaces the test-matrix.
         # Shared services
-        dstat: true
+        dstat: false
         etcd3: true
         memory_tracker: true
         mysql: true
@@ -517,7 +517,7 @@
           # Core services enabled for this branch.
           # This list replaces the test-matrix.
           # Shared services
-          dstat: true
+          dstat: false
           memory_tracker: true
           tls-proxy: true
           # Nova services
