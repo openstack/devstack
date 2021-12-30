@@ -38,6 +38,7 @@ GITDIR["oslo.config"]=$DEST/oslo.config
 GITDIR["oslo.context"]=$DEST/oslo.context
 GITDIR["oslo.db"]=$DEST/oslo.db
 GITDIR["oslo.i18n"]=$DEST/oslo.i18n
+GITDIR["oslo.limit"]=$DEST/oslo.limit
 GITDIR["oslo.log"]=$DEST/oslo.log
 GITDIR["oslo.messaging"]=$DEST/oslo.messaging
 GITDIR["oslo.middleware"]=$DEST/oslo.middleware
@@ -102,6 +103,7 @@ function install_libs {
     _install_lib_from_source "oslo.context"
     _install_lib_from_source "oslo.db"
     _install_lib_from_source "oslo.i18n"
+    _install_lib_from_source "oslo.limit"
     _install_lib_from_source "oslo.log"
     _install_lib_from_source "oslo.messaging"
     _install_lib_from_source "oslo.middleware"
