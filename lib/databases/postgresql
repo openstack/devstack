@@ -95,7 +95,6 @@ function configure_database_postgresql {
 
 function install_database_postgresql {
     echo_summary "Installing postgresql"
-    deprecated "Use of postgresql in devstack is deprecated, and will be removed during the Pike cycle"
     local pgpass=$HOME/.pgpass
     if [[ ! -e $pgpass ]]; then
         cat <<EOF > $pgpass
