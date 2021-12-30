@@ -1,4 +1,4 @@
-dn: olcDatabase={${LDAP_OLCDB_NUMBER}}hdb,cn=config
+dn: olcDatabase={${LDAP_OLCDB_NUMBER}}${LDAP_OLCDB_TYPE},cn=config
 changetype: modify
 replace: olcSuffix
 olcSuffix: ${BASE_DN}

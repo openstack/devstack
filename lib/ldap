@@ -33,14 +33,17 @@ LDAP_SERVICE_NAME=slapd
 
 if is_ubuntu; then
     LDAP_OLCDB_NUMBER=1
+    LDAP_OLCDB_TYPE=mdb
     LDAP_ROOTPW_COMMAND=replace
 elif is_fedora; then
     LDAP_OLCDB_NUMBER=2
+    LDAP_OLCDB_TYPE=hdb
     LDAP_ROOTPW_COMMAND=add
 elif is_suse; then
     # SUSE has slappasswd in /usr/sbin/
     PATH=$PATH:/usr/sbin/
     LDAP_OLCDB_NUMBER=1
+    LDAP_OLCDB_TYPE=hdb
     LDAP_ROOTPW_COMMAND=add
     LDAP_SERVICE_NAME=ldap
 fi
@@ -56,6 +59,7 @@ function _ldap_varsubst {
     local slappass=$2
     sed -e "
         s|\${LDAP_OLCDB_NUMBER}|$LDAP_OLCDB_NUMBER|
+        s|\${LDAP_OLCDB_TYPE}|$LDAP_OLCDB_TYPE|
         s|\${SLAPPASS}|$slappass|
         s|\${LDAP_ROOTPW_COMMAND}|$LDAP_ROOTPW_COMMAND|
         s|\${BASE_DC}|$LDAP_BASE_DC|
@@ -157,7 +161,7 @@ function configure_ldap {
     slapd slapd/dump_database_destdir string /var/backups/slapd-VERSION
     slapd slapd/domain string Users
     slapd shared/organization string $LDAP_DOMAIN
-    slapd slapd/backend string HDB
+    slapd slapd/backend string ${LDAP_OLCDB_TYPE^^}
     slapd slapd/purge_database boolean true
     slapd slapd/move_old_database boolean true
     slapd slapd/allow_ldap_v2 boolean false
