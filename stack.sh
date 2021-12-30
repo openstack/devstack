@@ -227,7 +227,7 @@ write_devstack_version
 
 # Warn users who aren't on an explicitly supported distro, but allow them to
 # override check and attempt installation with ``FORCE=yes ./stack``
-SUPPORTED_DISTROS="bullseye|focal|f34|opensuse-15.2|opensuse-tumbleweed|rhel8|rhel9"
+SUPPORTED_DISTROS="bullseye|focal|f34|opensuse-15.2|opensuse-tumbleweed|rhel8|rhel9|openEuler-20.03"
 
 if [[ ! ${DISTRO} =~ $SUPPORTED_DISTROS ]]; then
     echo "WARNING: this script has not been tested on $DISTRO"
@@ -278,6 +278,12 @@ chmod 0440 $TEMPFILE
 sudo chown root:root $TEMPFILE
 sudo mv $TEMPFILE /etc/sudoers.d/50_stack_sh
 
+# TODO(wxy): Currently some base packages are not installed by default in
+# openEuler. Remove the code below once the packaged are installed by default
+# in the future.
+if [[ $DISTRO == "openEuler-20.03" ]]; then
+    install_package hostname
+fi
 
 # Configure Distro Repositories
 # -----------------------------

@@ -82,19 +82,10 @@ function install_apache_uwsgi {
         apxs="apxs"
     fi
 
-    # This varies based on packaged/installed.  If we've
-    # pip_installed, then the pip setup will only build a "python"
-    # module that will be either python2 or python3 depending on what
-    # it was built with.
-    #
-    # For package installs, the distro ships both plugins and you need
-    # to select the right one ... it will not be autodetected.
-    UWSGI_PYTHON_PLUGIN=python3
-
     if is_ubuntu; then
         local pkg_list="uwsgi uwsgi-plugin-python3 libapache2-mod-proxy-uwsgi"
         install_package ${pkg_list}
-    elif is_fedora; then
+    elif is_fedora && ! is_openeuler; then
         # Note httpd comes with mod_proxy_uwsgi and it is loaded by
         # default; the mod_proxy_uwsgi package actually conflicts now.
         # See:
@@ -122,7 +113,6 @@ function install_apache_uwsgi {
         popd
         # delete the temp directory
         sudo rm -rf $dir
-        UWSGI_PYTHON_PLUGIN=python
     fi
 
     if is_ubuntu || is_suse ; then
@@ -283,7 +273,7 @@ function write_uwsgi_config {
     # configured after graceful shutdown
     iniset "$file" uwsgi worker-reload-mercy $WORKER_TIMEOUT
     iniset "$file" uwsgi enable-threads true
-    iniset "$file" uwsgi plugins http,${UWSGI_PYTHON_PLUGIN}
+    iniset "$file" uwsgi plugins http,python3
     # uwsgi recommends this to prevent thundering herd on accept.
     iniset "$file" uwsgi thunder-lock true
     # Set hook to trigger graceful shutdown on SIGTERM
@@ -336,7 +326,7 @@ function write_local_uwsgi_http_config {
     iniset "$file" uwsgi die-on-term true
     iniset "$file" uwsgi exit-on-reload false
     iniset "$file" uwsgi enable-threads true
-    iniset "$file" uwsgi plugins http,${UWSGI_PYTHON_PLUGIN}
+    iniset "$file" uwsgi plugins http,python3
     # uwsgi recommends this to prevent thundering herd on accept.
     iniset "$file" uwsgi thunder-lock true
     # Set hook to trigger graceful shutdown on SIGTERM

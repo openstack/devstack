@@ -6,7 +6,7 @@ ebtables
 genisoimage # not:rhel9 required for config_drive
 iptables
 iputils
-kernel-modules
+kernel-modules # not:openEuler-20.03
 kpartx
 parted
 polkit

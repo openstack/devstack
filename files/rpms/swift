@@ -1,5 +1,5 @@
 curl
-liberasurecode-devel
+liberasurecode-devel # not:openEuler-20.03
 memcached
 rsync-daemon
 sqlite
