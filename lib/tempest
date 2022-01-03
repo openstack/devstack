@@ -115,7 +115,9 @@ function set_tempest_venv_constraints {
     local tmp_c
     tmp_c=$1
     if [[ $TEMPEST_VENV_UPPER_CONSTRAINTS == "master" ]]; then
-        (cd $REQUIREMENTS_DIR && git show master:upper-constraints.txt) > $tmp_c
+        (cd $REQUIREMENTS_DIR &&
+            git show master:upper-constraints.txt 2>/dev/null ||
+            git show origin/master:upper-constraints.txt) > $tmp_c
     else
         echo "Using $TEMPEST_VENV_UPPER_CONSTRAINTS constraints in Tempest virtual env."
         cat $TEMPEST_VENV_UPPER_CONSTRAINTS > $tmp_c
