@@ -233,6 +233,10 @@ function cleanup_nova {
     stop_process "n-api-meta"
     remove_uwsgi_config "$NOVA_UWSGI_CONF" "$NOVA_UWSGI"
     remove_uwsgi_config "$NOVA_METADATA_UWSGI_CONF" "$NOVA_METADATA_UWSGI"
+
+    if [[ "$NOVA_BACKEND" == "LVM" ]]; then
+        clean_lvm_volume_group $DEFAULT_VOLUME_GROUP_NAME
+    fi
 }
 
 # configure_nova() - Set config files, create data dirs, etc
