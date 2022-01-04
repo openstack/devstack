@@ -725,6 +725,8 @@
     description: Fedora latest platform test
     nodeset: devstack-single-node-fedora-latest
     voting: false
+    vars:
+      configure_swap_size: 4096
 
 - job:
     name: devstack-platform-fedora-latest-virt-preview
@@ -733,6 +735,7 @@
     nodeset: devstack-single-node-fedora-latest
     voting: false
     vars:
+      configure_swap_size: 4096
       devstack_localrc:
         ENABLE_FEDORA_VIRT_PREVIEW_REPO: true
 

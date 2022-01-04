@@ -178,7 +178,7 @@ EOF
     if is_oraclelinux; then
         install_package mysql-community-server
     elif is_fedora; then
-        install_package mariadb-server mariadb-devel
+        install_package mariadb-server mariadb-devel mariadb
         sudo systemctl enable $MYSQL_SERVICE_NAME
     elif is_suse; then
         install_package mariadb-server
