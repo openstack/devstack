@@ -697,6 +697,8 @@ if initialize_database_backends; then
     # Last chance for the database password. This must be handled here
     # because read_password is not a library function.
     read_password DATABASE_PASSWORD "ENTER A PASSWORD TO USE FOR THE DATABASE."
+
+    define_database_baseurl
 else
     echo "No database enabled"
 fi
