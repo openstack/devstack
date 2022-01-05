@@ -320,6 +320,14 @@ EOF
             sudo systemctl daemon-reload
         fi
 
+        # set chap algorithms.  The default chap_algorithm is md5 which will
+        # not work under FIPS.
+        # FIXME(alee) For some reason, this breaks openeuler.  Openeuler devs should weigh in
+        # and determine the correct solution for openeuler here
+        if ! is_openeuler; then
+            iniset -sudo /etc/iscsi/iscsid.conf DEFAULT "node.session.auth.chap_algs" "SHA3-256,SHA256"
+        fi
+
         # ensure that iscsid is started, even when disabled by default
         restart_service iscsid
     fi
