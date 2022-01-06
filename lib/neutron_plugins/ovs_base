@@ -7,6 +7,12 @@
 _XTRACE_NEUTRON_OVS_BASE=$(set +o | grep xtrace)
 set +o xtrace
 
+# Load devstack ovs compliation and loading functions
+source ${TOP_DIR}/lib/neutron_plugins/ovs_source
+
+# Defaults
+# --------
+
 OVS_BRIDGE=${OVS_BRIDGE:-br-int}
 # OVS recognize default 'system' datapath or 'netdev' for userspace datapath
 OVS_DATAPATH_TYPE=${OVS_DATAPATH_TYPE:-system}
@@ -60,26 +66,33 @@ function _neutron_ovs_base_install_ubuntu_dkms {
 }
 
 function _neutron_ovs_base_install_agent_packages {
-    # Install deps
-    install_package $(get_packages "openvswitch")
-    if is_ubuntu; then
-        _neutron_ovs_base_install_ubuntu_dkms
-        restart_service openvswitch-switch
-    elif is_fedora; then
-        restart_service openvswitch
-        sudo systemctl enable openvswitch
-    elif is_suse; then
-        if [[ $DISTRO == "sle12" ]] && vercmp "$os_RELEASE" "<" "12.2" ; then
+    if [ "$Q_BUILD_OVS_FROM_GIT" == "True" ]; then
+        remove_ovs_packages
+        compile_ovs False /usr /var
+        load_conntrack_gre_module
+        start_new_ovs
+    else
+        # Install deps
+        install_package $(get_packages "openvswitch")
+        if is_ubuntu; then
+            _neutron_ovs_base_install_ubuntu_dkms
             restart_service openvswitch-switch
-        else
-            # workaround for https://bugzilla.suse.com/show_bug.cgi?id=1085971
-            if [[ $DISTRO =~ "tumbleweed" ]]; then
-                sudo sed -i -e "s,^OVS_USER_ID=.*,OVS_USER_ID='root:root'," /etc/sysconfig/openvswitch
+        elif is_fedora; then
+            restart_service openvswitch
+            sudo systemctl enable openvswitch
+        elif is_suse; then
+            if [[ $DISTRO == "sle12" ]] && vercmp "$os_RELEASE" "<" "12.2" ; then
+                restart_service openvswitch-switch
+            else
+                # workaround for https://bugzilla.suse.com/show_bug.cgi?id=1085971
+                if [[ $DISTRO =~ "tumbleweed" ]]; then
+                    sudo sed -i -e "s,^OVS_USER_ID=.*,OVS_USER_ID='root:root'," /etc/sysconfig/openvswitch
+                fi
+                restart_service openvswitch || {
+                    journalctl -xe || :
+                    systemctl status openvswitch
+                }
             fi
-            restart_service openvswitch || {
-                journalctl -xe || :
-                systemctl status openvswitch
-            }
         fi
     fi
 }
