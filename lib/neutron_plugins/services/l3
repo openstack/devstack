@@ -305,7 +305,7 @@ function _neutron_create_public_subnet_v4 {
     local admin_project_id
     admin_project_id=$(openstack project list | grep " admin " | get_field 1)
     die_if_not_set $LINENO admin_project_id "Failure retrieving project_id for admin"
-    local subnet_params="--ip-version 4 --project $admin_project_id"
+    local subnet_params="--ip-version 4 --project $admin_project_id "
     subnet_params+="${Q_FLOATING_ALLOCATION_POOL:+--allocation-pool $Q_FLOATING_ALLOCATION_POOL} "
     if [[ -n "$PUBLIC_NETWORK_GATEWAY" ]]; then
         subnet_params+="--gateway $PUBLIC_NETWORK_GATEWAY "
