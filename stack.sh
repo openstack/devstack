@@ -765,7 +765,9 @@ save_stackenv $LINENO
 # Bring down global requirements before any use of pip_install. This is
 # necessary to ensure that the constraints file is in place before we
 # attempt to apply any constraints to pip installs.
-git_clone $REQUIREMENTS_REPO $REQUIREMENTS_DIR $REQUIREMENTS_BRANCH
+# We always need the master branch in addition to any stable branch, so
+# override GIT_DEPTH here.
+GIT_DEPTH=0 git_clone $REQUIREMENTS_REPO $REQUIREMENTS_DIR $REQUIREMENTS_BRANCH
 
 # Install package requirements
 # Source it so the entire environment is available
