@@ -13,7 +13,7 @@ set +o xtrace
 
 
 MAX_DB_CONNECTIONS=${MAX_DB_CONNECTIONS:-200}
-
+INSTALL_DATABASE_SERVER_PACKAGES=$(trueorfalse True INSTALL_DATABASE_SERVER_PACKAGES)
 
 register_database postgresql
 
@@ -104,15 +104,17 @@ EOF
     else
         sed -i "s/:root:\w\+/:root:$DATABASE_PASSWORD/" $pgpass
     fi
-    if is_ubuntu; then
-        install_package postgresql
-    elif is_fedora || is_suse; then
-        install_package postgresql-server
-        if is_fedora; then
-            sudo systemctl enable postgresql
+    if [[ "$INSTALL_DATABASE_SERVER_PACKAGES" == "True" ]]; then
+        if is_ubuntu; then
+            install_package postgresql
+        elif is_fedora || is_suse; then
+            install_package postgresql-server
+            if is_fedora; then
+                sudo systemctl enable postgresql
+            fi
+        else
+            exit_distro_not_supported "postgresql installation"
         fi
-    else
-        exit_distro_not_supported "postgresql installation"
     fi
 }
 
