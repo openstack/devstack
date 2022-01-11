@@ -146,6 +146,7 @@ fi
 # cleanup_neutron() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
 function cleanup_neutron_new {
+    deprecated "Using lib/neutron is deprecated, and it will be removed in AA release!"
     source $TOP_DIR/lib/neutron_plugins/${NEUTRON_AGENT}_agent
     if is_neutron_ovs_base_plugin; then
         neutron_ovs_base_cleanup
@@ -169,6 +170,7 @@ function configure_root_helper_options {
 
 # configure_neutron() - Set config files, create data dirs, etc
 function configure_neutron_new {
+    deprecated "Using lib/neutron is deprecated, and it will be removed in AA release!"
     sudo install -d -o $STACK_USER $NEUTRON_CONF_DIR
 
     (cd $NEUTRON_DIR && exec ./tools/generate_config_file_samples.sh)
@@ -359,6 +361,7 @@ function configure_neutron_rootwrap {
 # Takes a single optional argument which is the config file to update,
 # if not passed $NOVA_CONF is used.
 function configure_neutron_nova_new {
+    deprecated "Using lib/neutron is deprecated, and it will be removed in AA release!"
     local conf=${1:-$NOVA_CONF}
     iniset $conf neutron auth_type "password"
     iniset $conf neutron auth_url "$KEYSTONE_SERVICE_URI"
@@ -385,6 +388,7 @@ function configure_neutron_nova_new {
 
 # create_neutron_accounts() - Create required service accounts
 function create_neutron_accounts_new {
+    deprecated "Using lib/neutron is deprecated, and it will be removed in AA release!"
     local neutron_url
 
     if [ "$NEUTRON_DEPLOY_MOD_WSGI" == "True" ]; then
@@ -408,6 +412,7 @@ function create_neutron_accounts_new {
 # init_neutron() - Initialize databases, etc.
 function init_neutron_new {
 
+    deprecated "Using lib/neutron is deprecated, and it will be removed in AA release!"
     recreate_database neutron
 
     time_start "dbsync"
@@ -418,6 +423,7 @@ function init_neutron_new {
 
 # install_neutron() - Collect source and prepare
 function install_neutron_new {
+    deprecated "Using lib/neutron is deprecated, and it will be removed in AA release!"
     git_clone $NEUTRON_REPO $NEUTRON_DIR $NEUTRON_BRANCH
     setup_develop $NEUTRON_DIR
 
@@ -491,6 +497,7 @@ function start_neutron_api {
 
 # start_neutron() - Start running processes
 function start_neutron_new {
+    deprecated "Using lib/neutron is deprecated, and it will be removed in AA release!"
     # Start up the neutron agents if enabled
     # TODO(sc68cal) Make this pluggable so different DevStack plugins for different Neutron plugins
     # can resolve the $NEUTRON_AGENT_BINARY
@@ -528,6 +535,7 @@ function start_neutron_new {
 
 # stop_neutron() - Stop running processes
 function stop_neutron_new {
+    deprecated "Using lib/neutron is deprecated, and it will be removed in AA release!"
     for serv in neutron-api neutron-agent neutron-l3; do
         stop_process $serv
     done
@@ -550,6 +558,7 @@ function stop_neutron_new {
 
 # neutron_service_plugin_class_add() - add service plugin class
 function neutron_service_plugin_class_add_new {
+    deprecated "Using lib/neutron is deprecated, and it will be removed in AA release!"
     local service_plugin_class=$1
     local plugins=""
 
@@ -574,11 +583,13 @@ function _neutron_ml2_extension_driver_add {
 }
 
 function neutron_server_config_add_new {
+    deprecated "Using lib/neutron is deprecated, and it will be removed in AA release!"
     _NEUTRON_SERVER_EXTRA_CONF_FILES_ABS+=($1)
 }
 
 # neutron_deploy_rootwrap_filters() - deploy rootwrap filters
 function neutron_deploy_rootwrap_filters_new {
+    deprecated "Using lib/neutron is deprecated, and it will be removed in AA release!"
     local srcdir=$1
     sudo install -d -o root -g root -m 755 $NEUTRON_CONF_DIR/rootwrap.d
     sudo install -o root -g root -m 644 $srcdir/etc/neutron/rootwrap.d/*.filters $NEUTRON_CONF_DIR/rootwrap.d
