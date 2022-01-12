@@ -49,16 +49,6 @@
           - controller
 
 - nodeset:
-    name: devstack-single-node-centos-8
-    nodes:
-      - name: controller
-        label: centos-8
-    groups:
-      - name: tempest
-        nodes:
-          - controller
-
-- nodeset:
     name: devstack-single-node-opensuse-15
     nodes:
       - name: controller
@@ -566,14 +556,6 @@
 # and these platforms don't have the round-the-clock support to avoid
 # becoming blockers in that situation.
 - job:
-    name: devstack-platform-centos-8
-    parent: tempest-full-py3
-    description: Centos 8 platform test
-    nodeset: devstack-single-node-centos-8
-    voting: false
-    timeout: 9000
-
-- job:
     name: devstack-platform-opensuse-15
     parent: tempest-full-py3
     description: openSUSE 15.x platform test
@@ -659,7 +641,6 @@
       jobs:
         - devstack
         - devstack-ipv6
-        - devstack-platform-centos-8
         - devstack-platform-bionic
         - devstack-multinode
         - devstack-unit-tests
