@@ -152,6 +152,7 @@ function _neutron_get_ext_gw_interface {
 }
 
 function create_neutron_initial_network {
+    sudo systemctl restart devstack@q-svc.service
     local project_id
     project_id=$(openstack project list | grep " demo " | get_field 1)
     die_if_not_set $LINENO project_id "Failure retrieving project_id for demo"
@@ -402,6 +403,10 @@ function _neutron_configure_router_v6 {
         # This is needed for neutron-based devstack clouds to work in
         # IPv6-only clouds in the gate. Please do not remove this without
         # talking to folks in Infra.
+        # Ensure IPv6 forwarding is not disabled on the host
+        sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0
+        sudo sysctl -w net.ipv6.conf.default.disable_ipv6=0
+        sudo sysctl -w net.ipv6.conf.lo.disable_ipv6=0
         for d in $default_v6_route_devs; do
             # Slashes must be used in this sysctl command because route devices
             # can have dots in their names. If dots were used, dots in the
