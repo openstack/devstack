@@ -66,6 +66,11 @@ Q_L3_ROUTER_PER_TENANT=${Q_L3_ROUTER_PER_TENANT:-True}
 Q_USE_PROVIDERNET_FOR_PUBLIC=${Q_USE_PROVIDERNET_FOR_PUBLIC:-True}
 PUBLIC_PHYSICAL_NETWORK=${PUBLIC_PHYSICAL_NETWORK:-public}
 
+# Ensure IPv6 forwarding is not disabled on the host
+sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0
+sudo sysctl -w net.ipv6.conf.default.disable_ipv6=0
+sudo sysctl -w net.ipv6.conf.lo.disable_ipv6=0
+
 # Generate 40-bit IPv6 Global ID to comply with RFC 4193
 IPV6_GLOBAL_ID=`uuidgen | sed s/-//g | cut -c 23- | sed -e "s/\(..\)\(....\)\(....\)/\1:\2:\3/"`
 
@@ -403,10 +408,6 @@ function _neutron_configure_router_v6 {
         # This is needed for neutron-based devstack clouds to work in
         # IPv6-only clouds in the gate. Please do not remove this without
         # talking to folks in Infra.
-        # Ensure IPv6 forwarding is not disabled on the host
-        sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0
-        sudo sysctl -w net.ipv6.conf.default.disable_ipv6=0
-        sudo sysctl -w net.ipv6.conf.lo.disable_ipv6=0
         for d in $default_v6_route_devs; do
             # Slashes must be used in this sysctl command because route devices
             # can have dots in their names. If dots were used, dots in the
