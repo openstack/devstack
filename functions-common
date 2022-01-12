@@ -662,10 +662,22 @@ function git_clone {
         fi
     fi
 
+     # bdist_wheel needs to be installed to devstack virtual environment
+     install_python_bdist_wheel_for_devstack_venv
+
     # print out the results so we know what change was used in the logs
     cd $git_dest
     git show --oneline | head -1
     cd $orig_dir
+}
+
+
+function install_python_bdist_wheel_for_devstack_venv {
+    source /opt/stack/requirements/.venv/bin/activate
+    pushd /opt/stack/requirements
+    python setup.py bdist_wheel
+    popd
+    deactivate
 }
 
 # A variation on git clone that lets us specify a project by it's
