@@ -69,6 +69,11 @@ PUBLIC_PHYSICAL_NETWORK=${PUBLIC_PHYSICAL_NETWORK:-public}
 # Generate 40-bit IPv6 Global ID to comply with RFC 4193
 IPV6_GLOBAL_ID=`uuidgen | sed s/-//g | cut -c 23- | sed -e "s/\(..\)\(....\)\(....\)/\1:\2:\3/"`
 
+# Ensure IPv6 forwarding is not disabled on the host
+sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0
+sudo sysctl -w net.ipv6.conf.default.disable_ipv6=0
+sudo sysctl -w net.ipv6.conf.lo.disable_ipv6=0
+
 # IPv6 gateway and subnet defaults, in case they are not customized in localrc
 IPV6_RA_MODE=${IPV6_RA_MODE:-slaac}
 IPV6_ADDRESS_MODE=${IPV6_ADDRESS_MODE:-slaac}
@@ -404,9 +409,6 @@ function _neutron_configure_router_v6 {
         # IPv6-only clouds in the gate. Please do not remove this without
         # talking to folks in Infra.
         # Ensure IPv6 forwarding is not disabled on the host
-        sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0
-        sudo sysctl -w net.ipv6.conf.default.disable_ipv6=0
-        sudo sysctl -w net.ipv6.conf.lo.disable_ipv6=0
         for d in $default_v6_route_devs; do
             # Slashes must be used in this sysctl command because route devices
             # can have dots in their names. If dots were used, dots in the
