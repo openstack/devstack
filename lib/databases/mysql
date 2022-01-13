@@ -12,6 +12,7 @@ _XTRACE_DB_MYSQL=$(set +o | grep xtrace)
 set +o xtrace
 
 MYSQL_DRIVER=${MYSQL_DRIVER:-PyMySQL}
+INSTALL_DATABASE_SERVER_PACKAGES=$(trueorfalse True INSTALL_DATABASE_SERVER_PACKAGES)
 
 register_database mysql
 
@@ -175,18 +176,20 @@ EOF
         chmod 0600 $HOME/.my.cnf
     fi
     # Install mysql-server
-    if is_oraclelinux; then
-        install_package mysql-community-server
-    elif is_fedora; then
-        install_package mariadb-server mariadb-devel mariadb
-        sudo systemctl enable $MYSQL_SERVICE_NAME
-    elif is_suse; then
-        install_package mariadb-server
-        sudo systemctl enable $MYSQL_SERVICE_NAME
-    elif is_ubuntu; then
-        install_package $MYSQL_SERVICE_NAME-server
-    else
-        exit_distro_not_supported "mysql installation"
+    if [[ "$INSTALL_DATABASE_SERVER_PACKAGES" == "True" ]]; then
+        if is_oraclelinux; then
+            install_package mysql-community-server
+        elif is_fedora; then
+            install_package mariadb-server mariadb-devel mariadb
+            sudo systemctl enable $MYSQL_SERVICE_NAME
+        elif is_suse; then
+            install_package mariadb-server
+            sudo systemctl enable $MYSQL_SERVICE_NAME
+        elif is_ubuntu; then
+            install_package $MYSQL_SERVICE_NAME-server
+        else
+            exit_distro_not_supported "mysql installation"
+        fi
     fi
 }
 
