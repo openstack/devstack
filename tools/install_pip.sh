@@ -129,6 +129,8 @@ if is_fedora && [[ ${DISTRO} == f* || ${DISTRO} == rhel9 ]]; then
     # For general sanity, we just use the packaged pip.  It should be
     # recent enough anyway.  This is included via rpms/general
     : # Simply fall through
+elif is_ubuntu; then
+    : # pip on Ubuntu 20.04 is new enough, too
 else
     install_get_pip
 fi
