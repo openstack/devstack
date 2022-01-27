@@ -619,7 +619,9 @@
         # Keep enabeling the services here to run with system scope
         CINDER_ENFORCE_SCOPE: true
         GLANCE_ENFORCE_SCOPE: true
-        NEUTRON_ENFORCE_SCOPE: true
+        # TODO(slaweq): Enable enforce scopes in Neutron when bug
+        # https://bugs.launchpad.net/neutron/+bug/1959196 will be fixed
+        # NEUTRON_ENFORCE_SCOPE: true
 
 - job:
     name: devstack-multinode
