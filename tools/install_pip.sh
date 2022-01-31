@@ -38,7 +38,7 @@ FILES=$TOP_DIR/files
 # [1] https://opendev.org/openstack/project-config/src/branch/master/nodepool/elements/cache-devstack/source-repository-pip
 
 PIP_GET_PIP_URL=${PIP_GET_PIP_URL:-"https://bootstrap.pypa.io/get-pip.py"}
-LOCAL_PIP="$FILES/$(basename $PIP_GET_PIP_URL)"
+PIP_GET_PIP36_URL=${PIP_GET_PIP36_URL:-"https://bootstrap.pypa.io/pip/3.6/get-pip.py"}
 
 GetDistro
 echo "Distro: $DISTRO"
@@ -57,12 +57,21 @@ function get_versions {
 
 
 function install_get_pip {
+    if [[ "$PYTHON3_VERSION" = "3.6" ]]; then
+        _pip_url=$PIP_GET_PIP36_URL
+        _local_pip="$FILES/$(basename $_pip_url)-py36"
+    else
+        _pip_url=$PIP_GET_PIP_URL
+        _local_pip="$FILES/$(basename $_pip_url)"
+    fi
+
+
     # If get-pip.py isn't python, delete it. This was probably an
     # outage on the server.
-    if [[ -r $LOCAL_PIP ]]; then
-        if ! head -1 $LOCAL_PIP | grep -q '#!/usr/bin/env python'; then
-            echo "WARNING: Corrupt $LOCAL_PIP found removing"
-            rm $LOCAL_PIP
+    if [[ -r $_local_pip ]]; then
+        if ! head -1 $_local_pip | grep -q '#!/usr/bin/env python'; then
+            echo "WARNING: Corrupt $_local_pip found removing"
+            rm $_local_pip
         fi
     fi
 
@@ -76,20 +85,20 @@ function install_get_pip {
     # Thus we use curl's "-z" feature to always check the modified
     # since and only download if a new version is out -- but only if
     # it seems we downloaded the file originally.
-    if [[ ! -r $LOCAL_PIP || -r $LOCAL_PIP.downloaded ]]; then
+    if [[ ! -r $_local_pip || -r $_local_pip.downloaded ]]; then
         # only test freshness if LOCAL_PIP is actually there,
         # otherwise we generate a scary warning.
         local timecond=""
-        if [[ -r $LOCAL_PIP ]]; then
-            timecond="-z $LOCAL_PIP"
+        if [[ -r $_local_pip ]]; then
+            timecond="-z $_local_pip"
         fi
 
         curl -f --retry 6 --retry-delay 5 \
-            $timecond -o $LOCAL_PIP $PIP_GET_PIP_URL || \
+            $timecond -o $_local_pip $_pip_url || \
             die $LINENO "Download of get-pip.py failed"
-        touch $LOCAL_PIP.downloaded
+        touch $_local_pip.downloaded
     fi
-    sudo -H -E python${PYTHON3_VERSION} $LOCAL_PIP
+    sudo -H -E python${PYTHON3_VERSION} $_local_pip
 }
 
 
