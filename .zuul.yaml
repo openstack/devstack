@@ -571,7 +571,9 @@
 
 - project:
     templates:
-      - integrated-gate-py3
+      # Note(frickler): No longer use this global template since we no
+      # longer gate on grenade
+      # - integrated-gate-py3
       - publish-openstack-docs-pti
     check:
       jobs:
@@ -596,6 +598,7 @@
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
+        - tempest-full-py3
         - neutron-grenade-multinode:
             voting: false
             irrelevant-files:
@@ -634,6 +637,7 @@
         - devstack-multinode
         - devstack-unit-tests
         - openstack-tox-bashate
+        - tempest-full-py3
         # - neutron-grenade-multinode:
         #     irrelevant-files:
         #       - ^.*\.rst$
