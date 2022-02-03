@@ -85,7 +85,12 @@ function install_apache_uwsgi {
     if is_ubuntu; then
         local pkg_list="uwsgi uwsgi-plugin-python3 libapache2-mod-proxy-uwsgi"
         install_package ${pkg_list}
-    elif is_fedora && ! is_openeuler; then
+    # NOTE(ianw) 2022-02-03 : Fedora 35 needs to skip this and fall
+    # into the install-from-source because the upstream packages
+    # didn't fix Python 3.10 compatibility before release.  Should be
+    # fixed in uwsgi 4.9.0; can remove this when packages available
+    # or we drop this release
+    elif is_fedora && ! is_openeuler && ! [[ $DISTRO =~ f35 ]]; then
         # Note httpd comes with mod_proxy_uwsgi and it is loaded by
         # default; the mod_proxy_uwsgi package actually conflicts now.
         # See:
