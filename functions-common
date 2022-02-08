@@ -107,6 +107,17 @@ function write_clouds_yaml {
         --os-password $ADMIN_PASSWORD \
         --os-project-name admin
 
+    # devstack-admin-demo: user with the admin role on the demo project
+    $PYTHON $TOP_DIR/tools/update_clouds_yaml.py \
+        --file $CLOUDS_YAML \
+        --os-cloud devstack-admin-demo \
+        --os-region-name $REGION_NAME \
+        $CA_CERT_ARG \
+        --os-auth-url $KEYSTONE_SERVICE_URI \
+        --os-username admin \
+        --os-password $ADMIN_PASSWORD \
+        --os-project-name demo
+
     # devstack-alt: user with the member role on alt_demo project
     $PYTHON $TOP_DIR/tools/update_clouds_yaml.py \
         --file $CLOUDS_YAML \
