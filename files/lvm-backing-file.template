@@ -1,0 +1,16 @@
+[Unit]
+Description=Activate LVM backing file %BACKING_FILE%
+DefaultDependencies=no
+After=systemd-udev-settle.service
+Before=lvm2-activation-early.service
+Wants=systemd-udev-settle.service
+
+[Service]
+ExecStart=/sbin/losetup --find --show %DIRECTIO% %BACKING_FILE%
+ExecStop=/bin/sh -c '/sbin/losetup -d $$(/sbin/losetup --associated %BACKING_FILE% -O NAME -n)'
+RemainAfterExit=yes
+Type=oneshot
+
+[Install]
+WantedBy=local-fs.target
+Also=systemd-udev-settle.service
