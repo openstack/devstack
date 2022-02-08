@@ -90,7 +90,7 @@
     name: devstack-single-node-fedora-latest
     nodes:
       - name: controller
-        label: fedora-34
+        label: fedora-35
     groups:
       - name: tempest
         nodes:
@@ -759,6 +759,10 @@
     voting: false
     vars:
       configure_swap_size: 4096
+      # Python 3.10 dependency issues; see
+      # https://bugs.launchpad.net/horizon/+bug/1960204
+      devstack_services:
+        horizon: false
 
 - job:
     name: devstack-platform-fedora-latest-virt-preview
