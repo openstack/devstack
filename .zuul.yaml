@@ -39,16 +39,6 @@
           - controller
 
 - nodeset:
-    name: devstack-single-node-centos-8
-    nodes:
-      - name: controller
-        label: centos-8
-    groups:
-      - name: tempest
-        nodes:
-          - controller
-
-- nodeset:
     name: devstack-single-node-opensuse-15
     nodes:
       - name: controller
