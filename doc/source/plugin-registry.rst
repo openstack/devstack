@@ -75,6 +75,7 @@ openstack/networking-powervm             `https://opendev.org/openstack/networki
 openstack/networking-sfc                 `https://opendev.org/openstack/networking-sfc <https://opendev.org/openstack/networking-sfc>`__
 openstack/neutron                        `https://opendev.org/openstack/neutron <https://opendev.org/openstack/neutron>`__
 openstack/neutron-dynamic-routing        `https://opendev.org/openstack/neutron-dynamic-routing <https://opendev.org/openstack/neutron-dynamic-routing>`__
+openstack/neutron-fwaas-dashboard        `https://opendev.org/openstack/neutron-fwaas-dashboard <https://opendev.org/openstack/neutron-fwaas-dashboard>`__
 openstack/neutron-tempest-plugin         `https://opendev.org/openstack/neutron-tempest-plugin <https://opendev.org/openstack/neutron-tempest-plugin>`__
 openstack/neutron-vpnaas                 `https://opendev.org/openstack/neutron-vpnaas <https://opendev.org/openstack/neutron-vpnaas>`__
 openstack/neutron-vpnaas-dashboard       `https://opendev.org/openstack/neutron-vpnaas-dashboard <https://opendev.org/openstack/neutron-vpnaas-dashboard>`__
@@ -92,6 +93,7 @@ openstack/sahara                         `https://opendev.org/openstack/sahara <
 openstack/sahara-dashboard               `https://opendev.org/openstack/sahara-dashboard <https://opendev.org/openstack/sahara-dashboard>`__
 openstack/senlin                         `https://opendev.org/openstack/senlin <https://opendev.org/openstack/senlin>`__
 openstack/shade                          `https://opendev.org/openstack/shade <https://opendev.org/openstack/shade>`__
+openstack/skyline-apiserver              `https://opendev.org/openstack/skyline-apiserver <https://opendev.org/openstack/skyline-apiserver>`__
 openstack/solum                          `https://opendev.org/openstack/solum <https://opendev.org/openstack/solum>`__
 openstack/storlets                       `https://opendev.org/openstack/storlets <https://opendev.org/openstack/storlets>`__
 openstack/tacker                         `https://opendev.org/openstack/tacker <https://opendev.org/openstack/tacker>`__
@@ -112,7 +114,6 @@ openstack/zaqar-ui                       `https://opendev.org/openstack/zaqar-ui
 openstack/zun                            `https://opendev.org/openstack/zun <https://opendev.org/openstack/zun>`__
 openstack/zun-ui                         `https://opendev.org/openstack/zun-ui <https://opendev.org/openstack/zun-ui>`__
 performa/os-faults                       `https://opendev.org/performa/os-faults <https://opendev.org/performa/os-faults>`__
-skyline/skyline-apiserver                `https://opendev.org/skyline/skyline-apiserver <https://opendev.org/skyline/skyline-apiserver>`__
 starlingx/config                         `https://opendev.org/starlingx/config <https://opendev.org/starlingx/config>`__
 starlingx/fault                          `https://opendev.org/starlingx/fault <https://opendev.org/starlingx/fault>`__
 starlingx/ha                             `https://opendev.org/starlingx/ha <https://opendev.org/starlingx/ha>`__
