@@ -878,10 +878,10 @@ function get_or_create_domain {
     # Gets domain id
     domain_id=$(
         # Gets domain id
-        openstack domain show $1 \
+        openstack --os-cloud devstack-system-admin domain show $1 \
             -f value -c id 2>/dev/null ||
         # Creates new domain
-        openstack domain create $1 \
+        openstack --os-cloud devstack-system-admin domain create $1 \
             --description "$2" \
             -f value -c id
     )
@@ -896,7 +896,7 @@ function get_or_create_group {
     # Gets group id
     group_id=$(
         # Creates new group with --or-show
-        openstack group create $1 \
+        openstack --os-cloud devstack-system-admin group create $1 \
             --domain $2 --description "$desc" --or-show \
             -f value -c id
     )
@@ -915,7 +915,7 @@ function get_or_create_user {
     # Gets user id
     user_id=$(
         # Creates new user with --or-show
-        openstack user create \
+        openstack --os-cloud devstack-system-admin user create \
             $1 \
             --password "$2" \
             --domain=$3 \
@@ -932,7 +932,7 @@ function get_or_create_project {
     local project_id
     project_id=$(
         # Creates new project with --or-show
-        openstack project create $1 \
+        openstack --os-cloud devstack-system-admin project create $1 \
             --domain=$2 \
             --or-show -f value -c id
     )
@@ -945,7 +945,7 @@ function get_or_create_role {
     local role_id
     role_id=$(
         # Creates role with --or-show
-        openstack role create $1 \
+        openstack --os-cloud devstack-system-admin role create $1 \
             --or-show -f value -c id
     )
     echo $role_id
@@ -975,7 +975,7 @@ function get_or_add_user_project_role {
     domain_args=$(_get_domain_args $4 $5)
 
     # Gets user role id
-    user_role_id=$(openstack role assignment list \
+    user_role_id=$(openstack --os-cloud devstack-system-admin role assignment list \
         --role $1 \
         --user $2 \
         --project $3 \
@@ -983,11 +983,11 @@ function get_or_add_user_project_role {
         | grep '^|\s[a-f0-9]\+' | get_field 1)
     if [[ -z "$user_role_id" ]]; then
         # Adds role to user and get it
-        openstack role add $1 \
+        openstack --os-cloud devstack-system-admin role add $1 \
             --user $2 \
             --project $3 \
             $domain_args
-        user_role_id=$(openstack role assignment list \
+        user_role_id=$(openstack --os-cloud devstack-system-admin role assignment list \
             --role $1 \
             --user $2 \
             --project $3 \
@@ -1002,17 +1002,17 @@ function get_or_add_user_project_role {
 function get_or_add_user_domain_role {
     local user_role_id
     # Gets user role id
-    user_role_id=$(openstack role assignment list \
+    user_role_id=$(openstack --os-cloud devstack-system-admin role assignment list \
         --role $1 \
         --user $2 \
         --domain $3 \
         | grep '^|\s[a-f0-9]\+' | get_field 1)
     if [[ -z "$user_role_id" ]]; then
         # Adds role to user and get it
-        openstack role add $1 \
+        openstack --os-cloud devstack-system-admin role add $1 \
             --user $2 \
             --domain $3
-        user_role_id=$(openstack role assignment list \
+        user_role_id=$(openstack --os-cloud devstack-system-admin role assignment list \
             --role $1 \
             --user $2 \
             --domain $3 \
@@ -1030,7 +1030,7 @@ function get_or_add_user_system_role {
     domain_args=$(_get_domain_args $4)
 
     # Gets user role id
-    user_role_id=$(openstack role assignment list \
+    user_role_id=$(openstack --os-cloud devstack-system-admin role assignment list \
         --role $1 \
         --user $2 \
         --system $3 \
@@ -1038,11 +1038,11 @@ function get_or_add_user_system_role {
         -f value -c Role)
     if [[ -z "$user_role_id" ]]; then
         # Adds role to user and get it
-        openstack role add $1 \
+        openstack --os-cloud devstack-system-admin role add $1 \
             --user $2 \
             --system $3 \
             $domain_args
-        user_role_id=$(openstack role assignment list \
+        user_role_id=$(openstack --os-cloud devstack-system-admin role assignment list \
             --role $1 \
             --user $2 \
             --system $3 \
@@ -1057,17 +1057,17 @@ function get_or_add_user_system_role {
 function get_or_add_group_project_role {
     local group_role_id
     # Gets group role id
-    group_role_id=$(openstack role assignment list \
+    group_role_id=$(openstack --os-cloud devstack-system-admin role assignment list \
         --role $1 \
         --group $2 \
         --project $3 \
         -f value)
     if [[ -z "$group_role_id" ]]; then
         # Adds role to group and get it
-        openstack role add $1 \
+        openstack --os-cloud devstack-system-admin role add $1 \
             --group $2 \
             --project $3
-        group_role_id=$(openstack role assignment list \
+        group_role_id=$(openstack --os-cloud devstack-system-admin role assignment list \
             --role $1 \
             --group $2 \
             --project $3 \
@@ -1083,9 +1083,9 @@ function get_or_create_service {
     # Gets service id
     service_id=$(
         # Gets service id
-        openstack service show $2 -f value -c id 2>/dev/null ||
+        openstack --os-cloud devstack-system-admin service show $2 -f value -c id 2>/dev/null ||
         # Creates new service if not exists
-        openstack service create \
+        openstack --os-cloud devstack-system-admin service create \
             $2 \
             --name $1 \
             --description="$3" \
@@ -1098,14 +1098,14 @@ function get_or_create_service {
 # Usage: _get_or_create_endpoint_with_interface <service> <interface> <url> <region>
 function _get_or_create_endpoint_with_interface {
     local endpoint_id
-    endpoint_id=$(openstack endpoint list \
+    endpoint_id=$(openstack --os-cloud devstack-system-admin endpoint list \
         --service $1 \
         --interface $2 \
         --region $4 \
         -c ID -f value)
     if [[ -z "$endpoint_id" ]]; then
         # Creates new endpoint
-        endpoint_id=$(openstack endpoint create \
+        endpoint_id=$(openstack --os-cloud devstack-system-admin endpoint create \
             $1 $2 $3 --region $4 -f value -c id)
     fi
 
@@ -1139,7 +1139,7 @@ function get_or_create_endpoint {
 # Get a URL from the identity service
 # Usage: get_endpoint_url <service> <interface>
 function get_endpoint_url {
-    echo $(openstack endpoint list \
+    echo $(openstack --os-cloud devstack-system-admin endpoint list \
             --service $1 --interface $2 \
             -c URL -f value)
 }
