@@ -146,7 +146,7 @@ export PYTHON3_VERSION=${PYTHON3_VERSION:-${_DEFAULT_PYTHON3_VERSION:-3}}
 
 # Create a virtualenv with this
 # Use the built-in venv to avoid more dependencies
-export VIRTUALENV_CMD="python3 -m venv"
+export VIRTUALENV_CMD="python$PYTHON3_VERSION -m venv"
 
 # Default for log coloring is based on interactive-or-not.
 # Baseline assumption is that non-interactive invocations are for CI,
