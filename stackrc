@@ -663,7 +663,7 @@ esac
 #IMAGE_URLS="http://download.cirros-cloud.net/${CIRROS_VERSION}/cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-disk.img" # cirros full disk image
 
 CIRROS_VERSION=${CIRROS_VERSION:-"0.5.2"}
-CIRROS_ARCH=${CIRROS_ARCH:-"x86_64"}
+CIRROS_ARCH=${CIRROS_ARCH:-$(uname -m)}
 
 # Set default image based on ``VIRT_DRIVER`` and ``LIBVIRT_TYPE``, either of
 # which may be set in ``local.conf``.  Also allow ``DEFAULT_IMAGE_NAME`` and
