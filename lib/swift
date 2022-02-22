@@ -179,12 +179,9 @@ function is_swift_enabled {
 # cleanup_swift() - Remove residual data files
 function cleanup_swift {
     rm -f ${SWIFT_CONF_DIR}{*.builder,*.ring.gz,backups/*.builder,backups/*.ring.gz}
-    if egrep -q ${SWIFT_DATA_DIR}/drives/sdb1 /proc/mounts; then
-        sudo umount ${SWIFT_DATA_DIR}/drives/sdb1
-    fi
-    if [[ -e ${SWIFT_DISK_IMAGE} ]]; then
-        rm ${SWIFT_DISK_IMAGE}
-    fi
+
+    destroy_disk ${SWIFT_DISK_IMAGE} ${SWIFT_DATA_DIR}/drives/sdb1
+
     rm -rf ${SWIFT_DATA_DIR}/run/
     if [ "$SWIFT_USE_MOD_WSGI" == "True" ]; then
         _cleanup_swift_apache_wsgi
@@ -575,28 +572,7 @@ function create_swift_disk {
     sudo install -d -o ${STACK_USER} -g ${user_group} ${SWIFT_DATA_DIR}/{drives,cache,run,logs}
 
     # Create a loopback disk and format it to XFS.
-    if [[ -e ${SWIFT_DISK_IMAGE} ]]; then
-        if egrep -q ${SWIFT_DATA_DIR}/drives/sdb1 /proc/mounts; then
-            sudo umount ${SWIFT_DATA_DIR}/drives/sdb1
-            sudo rm -f ${SWIFT_DISK_IMAGE}
-        fi
-    fi
-
-    mkdir -p ${SWIFT_DATA_DIR}/drives/images
-    sudo touch ${SWIFT_DISK_IMAGE}
-    sudo chown ${STACK_USER}: ${SWIFT_DISK_IMAGE}
-
-    truncate -s ${SWIFT_LOOPBACK_DISK_SIZE} ${SWIFT_DISK_IMAGE}
-
-    # Make a fresh XFS filesystem
-    /sbin/mkfs.xfs -f -i size=1024  ${SWIFT_DISK_IMAGE}
-
-    # Mount the disk with mount options to make it as efficient as possible
-    mkdir -p ${SWIFT_DATA_DIR}/drives/sdb1
-    if ! egrep -q ${SWIFT_DATA_DIR}/drives/sdb1 /proc/mounts; then
-        sudo mount -t xfs -o loop,noatime,nodiratime,logbufs=8  \
-            ${SWIFT_DISK_IMAGE} ${SWIFT_DATA_DIR}/drives/sdb1
-    fi
+    create_disk ${SWIFT_DISK_IMAGE} ${SWIFT_DATA_DIR}/drives/sdb1 ${SWIFT_LOOPBACK_DISK_SIZE}
 
     # Create a link to the above mount and
     # create all of the directories needed to emulate a few different servers
