@@ -169,7 +169,7 @@ default_md              = default
 
 [ req ]
 default_bits            = 1024
-default_md              = sha1
+default_md              = sha256
 
 prompt                  = no
 distinguished_name      = req_distinguished_name
@@ -261,7 +261,7 @@ function make_cert {
     if [ ! -r "$ca_dir/$cert_name.crt" ]; then
         # Generate a signing request
         $OPENSSL req \
-            -sha1 \
+            -sha256 \
             -newkey rsa \
             -nodes \
             -keyout $ca_dir/private/$cert_name.key \
@@ -301,7 +301,7 @@ function make_int_CA {
     if [ ! -r "$ca_dir/cacert.pem" ]; then
         # Create a signing certificate request
         $OPENSSL req -config $ca_dir/ca.conf \
-            -sha1 \
+            -sha256 \
             -newkey rsa \
             -nodes \
             -keyout $ca_dir/private/cacert.key \
