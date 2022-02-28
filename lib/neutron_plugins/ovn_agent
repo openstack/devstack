@@ -253,7 +253,12 @@ function _run_process {
 
     local testcmd="test -e $OVS_RUNDIR/$service.pid"
     test_with_retry "$testcmd" "$service did not start" $SERVICE_TIMEOUT 1
-    sudo ovs-appctl -t $service vlog/set console:off syslog:info file:info
+    local service_ctl_file
+    service_ctl_file=$(ls $OVS_RUNDIR | grep $service | grep ctl)
+    if [ -z "$service_ctl_file" ]; then
+        die $LINENO "ctl file for service $service is not present."
+    fi
+    sudo ovs-appctl -t $OVS_RUNDIR/$service_ctl_file vlog/set console:off syslog:info file:info
 }
 
 function clone_repository {

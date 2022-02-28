@@ -68,7 +68,7 @@ function _neutron_ovs_base_install_ubuntu_dkms {
 function _neutron_ovs_base_install_agent_packages {
     if [ "$Q_BUILD_OVS_FROM_GIT" == "True" ]; then
         remove_ovs_packages
-        compile_ovs False /usr /var
+        compile_ovs False /usr/local /var
         load_conntrack_gre_module
         start_new_ovs
     else

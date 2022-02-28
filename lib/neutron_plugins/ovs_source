@@ -188,12 +188,12 @@ function action_openvswitch {
 # start_new_ovs() - removes old ovs database, creates a new one and starts ovs
 function start_new_ovs {
     sudo rm -f /etc/openvswitch/conf.db /etc/openvswitch/.conf.db~lock~
-    sudo /usr/share/openvswitch/scripts/ovs-ctl start
+    sudo /usr/local/share/openvswitch/scripts/ovs-ctl start
 }
 
 # stop_new_ovs() - stops ovs
 function stop_new_ovs {
-    local ovs_ctl='/usr/share/openvswitch/scripts/ovs-ctl'
+    local ovs_ctl='/usr/local/share/openvswitch/scripts/ovs-ctl'
 
     if [ -x $ovs_ctl ] ; then
         sudo $ovs_ctl stop
