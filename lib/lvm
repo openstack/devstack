@@ -53,28 +53,10 @@ function _remove_lvm_volume_group {
     sudo vgremove -f $vg
 }
 
-# _clean_lvm_backing_file() removes the backing file of the
-# volume group
-#
-# Usage: _clean_lvm_backing_file() $backing_file
-function _clean_lvm_backing_file {
-    local backing_file=$1
-
-    # If the backing physical device is a loop device, it was probably setup by DevStack
-    if [[ -n "$backing_file" ]] && [[ -e "$backing_file" ]]; then
-        local vg_dev
-        vg_dev=$(sudo losetup -j $backing_file | awk -F':' '/'$BACKING_FILE_SUFFIX'/ { print $1}')
-        if [[ -n "$vg_dev" ]]; then
-            sudo losetup -d $vg_dev
-        fi
-        rm -f $backing_file
-    fi
-}
-
 # clean_lvm_volume_group() cleans up the volume group and removes the
 # backing file
 #
-# Usage: clean_lvm_volume_group $vg
+# Usage: clean_lvm_volume_group() $vg
 function clean_lvm_volume_group {
     local vg=$1
 
@@ -83,10 +65,21 @@ function clean_lvm_volume_group {
     # if there is no logical volume left, it's safe to attempt a cleanup
     # of the backing file
     if [[ -z "$(sudo lvs --noheadings -o lv_name $vg 2>/dev/null)" ]]; then
-        _clean_lvm_backing_file $DATA_DIR/$vg$BACKING_FILE_SUFFIX
+        local backing_file=$DATA_DIR/$vg$BACKING_FILE_SUFFIX
+
+        if [[ -n "$vg$BACKING_FILE_SUFFIX" ]] && \
+           [[ -e "/etc/systemd/system/$vg$BACKING_FILE_SUFFIX.service" ]]; then
+            sudo systemctl disable --now $vg$BACKING_FILE_SUFFIX.service
+            sudo rm -f /etc/systemd/system/$vg$BACKING_FILE_SUFFIX.service
+            sudo systemctl daemon-reload
+        fi
+
+        # If the backing physical device is a loop device, it was probably setup by DevStack
+        if [[ -n "$backing_file" ]] && [[ -e "$backing_file" ]]; then
+            rm -f $backing_file
+        fi
     fi
 }
-
 
 # _create_lvm_volume_group creates default volume group
 #
@@ -106,8 +99,20 @@ function _create_lvm_volume_group {
             directio="--direct-io=on"
         fi
 
+        # Only create systemd service if it doesn't already exists
+        if [[ ! -e "/etc/systemd/system/$vg$BACKING_FILE_SUFFIX.service" ]]; then
+            sed -e "
+                s|%DIRECTIO%|${directio}|g;
+                s|%BACKING_FILE%|${backing_file}|g;
+            " $FILES/lvm-backing-file.template | sudo tee \
+                /etc/systemd/system/$vg$BACKING_FILE_SUFFIX.service
+
+            sudo systemctl daemon-reload
+            sudo systemctl enable --now $vg$BACKING_FILE_SUFFIX.service
+        fi
+
         local vg_dev
-        vg_dev=$(sudo losetup -f --show $directio $backing_file)
+        vg_dev=$(sudo losetup --associated $backing_file -O NAME -n)
 
         # Only create volume group if it doesn't already exist
         if ! sudo vgs $vg; then
