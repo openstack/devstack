@@ -27,6 +27,11 @@ set +o xtrace
 APACHE_USER=${APACHE_USER:-$STACK_USER}
 APACHE_GROUP=${APACHE_GROUP:-$(id -gn $APACHE_USER)}
 
+APACHE_LOCAL_HOST=$SERVICE_LOCAL_HOST
+if [[ "$SERVICE_IP_VERSION" == 6 ]]; then
+    APACHE_LOCAL_HOST=[$APACHE_LOCAL_HOST]
+fi
+
 
 # Set up apache name and configuration directory
 # Note that APACHE_CONF_DIR is really more accurately apache's vhost
@@ -323,7 +328,7 @@ function write_local_uwsgi_http_config {
     rm -rf $file
     iniset "$file" uwsgi wsgi-file "$wsgi"
     port=$(get_random_port)
-    iniset "$file" uwsgi http-socket "127.0.0.1:$port"
+    iniset "$file" uwsgi http-socket "$APACHE_LOCAL_HOST:$port"
     iniset "$file" uwsgi processes $API_WORKERS
     # This is running standalone
     iniset "$file" uwsgi master true
@@ -359,7 +364,7 @@ function write_local_uwsgi_http_config {
     apache_conf=$(apache_site_config_for $name)
     echo "KeepAlive Off" | sudo tee $apache_conf
     echo "SetEnv proxy-sendchunked 1" | sudo tee -a $apache_conf
-    echo "ProxyPass \"${url}\" \"http://127.0.0.1:$port\" retry=0 " | sudo tee -a $apache_conf
+    echo "ProxyPass \"${url}\" \"http://$APACHE_LOCAL_HOST:$port\" retry=0 " | sudo tee -a $apache_conf
     enable_apache_site $name
     restart_apache_server
 }

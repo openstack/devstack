@@ -86,10 +86,16 @@ function configure_database_mysql {
         exit_distro_not_supported "mysql configuration"
     fi
 
-    # Start mysql-server
+    # Change bind-address from localhost (127.0.0.1) to any (::)
+    iniset -sudo $my_conf mysqld bind-address "$(ipv6_unquote $SERVICE_LISTEN_ADDRESS)"
+
+    # (Re)Start mysql-server
     if is_fedora || is_suse; then
         # service is not started by default
         start_service $MYSQL_SERVICE_NAME
+    elif is_ubuntu; then
+        # required since bind-address could have changed above
+        restart_service $MYSQL_SERVICE_NAME
     fi
 
     # Set the root password - only works the first time. For Ubuntu, we already
@@ -102,7 +108,7 @@ function configure_database_mysql {
     if is_ubuntu && [ "$MYSQL_SERVICE_NAME" == "mariadb" ]; then
         local cmd_args="-uroot -p$DATABASE_PASSWORD "
     else
-        local cmd_args="-uroot -p$DATABASE_PASSWORD -h127.0.0.1 "
+        local cmd_args="-uroot -p$DATABASE_PASSWORD -h$SERVICE_LOCAL_HOST "
     fi
 
     # In mariadb e.g. on Ubuntu socket plugin is used for authentication
@@ -119,9 +125,7 @@ function configure_database_mysql {
 
     # Now update ``my.cnf`` for some local needs and restart the mysql service
 
-    # Change bind-address from localhost (127.0.0.1) to any (::) and
-    # set default db type to InnoDB
-    iniset -sudo $my_conf mysqld bind-address "$(ipv6_unquote $SERVICE_LISTEN_ADDRESS)"
+    # Set default db type to InnoDB
     iniset -sudo $my_conf mysqld sql_mode TRADITIONAL
     iniset -sudo $my_conf mysqld default-storage-engine InnoDB
     iniset -sudo $my_conf mysqld max_connections 1024
