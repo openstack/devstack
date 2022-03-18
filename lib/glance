@@ -309,13 +309,13 @@ function configure_glance_quotas {
     iniset $GLANCE_API_CONF oslo_limit username glance
     iniset $GLANCE_API_CONF oslo_limit auth_type password
     iniset $GLANCE_API_CONF oslo_limit auth_url $KEYSTONE_SERVICE_URI
-    iniset $GLANCE_API_CONF oslo_limit system_scope "'all'"
+    iniset $GLANCE_API_CONF oslo_limit system_scope all
     iniset $GLANCE_API_CONF oslo_limit endpoint_id \
            $(openstack --os-cloud devstack-system-admin endpoint list --service glance -f value -c ID)
 
     # Allow the glance service user to read quotas
-    openstack --os-cloud devstack-system-admin role add --user glance --user-domain Default \
-        --system all reader
+    openstack --os-cloud devstack-system-admin role add --user glance \
+        --user-domain $SERVICE_DOMAIN_NAME --system all reader
 }
 
 # configure_glance() - Set config files, create data dirs, etc
