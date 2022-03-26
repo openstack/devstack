@@ -1045,7 +1045,6 @@ function start_nova_rest {
     local old_path=$PATH
     export PATH=$NOVA_BIN_DIR:$PATH
 
-    local api_cell_conf=$NOVA_CONF
     local compute_cell_conf=$NOVA_CONF
 
     run_process n-sch "$NOVA_BIN_DIR/nova-scheduler --config-file $compute_cell_conf"
