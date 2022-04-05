@@ -692,6 +692,7 @@ function configure_tempest {
     DEFAULT_NET_EXT+=",qos-pps,ecmp_routes,bgp,floating-ip-port-forwarding-port-ranges"
     #New in Yoga
     DEFAULT_NET_EXT+=",security-groups-shared-filtering,security-groups-normalized-cidr,quota-check-limit"
+    DEFAULT_NET_EXT+=",port-resource-request-groups"
     local network_api_extensions=${NETWORK_API_EXTENSIONS:-$DEFAULT_NET_EXT}
     if [[ ! -z "$DISABLE_NETWORK_API_EXTENSIONS" ]]; then
         # Enabled extensions are either the ones explicitly specified or those available on the API endpoint
