@@ -190,3 +190,9 @@ if is_service_enabled cinder && is_package_installed lvm2; then
     clean_lvm_volume_group $DEFAULT_VOLUME_GROUP_NAME || /bin/true
     clean_lvm_filter
 fi
+
+
+# Clean any safe.directory items we wrote into the global
+# gitconfig. We can identify the relevant ones by checking that they
+# point to somewhere in our $DEST directory.
+sudo sed -i "/directory=${DEST}/ d" /etc/gitconfig
