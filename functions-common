@@ -590,6 +590,18 @@ function git_clone {
         fi
     fi
 
+    # NOTE(ianw) 2022-04-13 : commit [1] has broken many assumptions
+    # about how we clone and work with repos.  Mark them safe globally
+    # as a work-around.
+    #
+    # NOTE(danms): On bionic (and likely others) git-config may write
+    # ~stackuser/.gitconfig if not run with sudo -H. Using --system
+    # writes these changes to /etc/gitconfig which is more
+    # discoverable anyway.
+    #
+    # [1] https://github.com/git/git/commit/8959555cee7ec045958f9b6dd62e541affb7e7d9
+    sudo git config --system --add safe.directory ${git_dest}
+
     # print out the results so we know what change was used in the logs
     cd $git_dest
     git show --oneline | head -1
