@@ -184,3 +184,8 @@ if is_service_enabled cinder && is_package_installed lvm2; then
 fi
 
 clean_pyc_files
+
+# Clean any safe.directory items we wrote into the global
+# gitconfig. We can identify the relevant ones by checking that they
+# point to somewhere in our $DEST directory.
+sudo sed -i "/directory=${DEST}/ d" /etc/gitconfig
