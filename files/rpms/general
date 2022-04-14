@@ -17,6 +17,7 @@ libxml2-devel # lxml
 libxslt-devel # lxml
 libyaml-devel
 make # dist:openEuler-20.03
+mod_ssl # required for tls-proxy on centos 9 stream computes
 net-tools
 openssh-server
 openssl
