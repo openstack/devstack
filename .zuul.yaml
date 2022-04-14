@@ -603,7 +603,10 @@
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
+        # Making it non voting until we fix
+        # https://storyboard.openstack.org/#!/story/2010057
         - openstacksdk-functional-devstack:
+            voting: false
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
@@ -640,10 +643,10 @@
         #     irrelevant-files:
         #       - ^.*\.rst$
         #       - ^doc/.*$
-        - openstacksdk-functional-devstack:
-            irrelevant-files:
-              - ^.*\.rst$
-              - ^doc/.*$
+        #- openstacksdk-functional-devstack:
+        #    irrelevant-files:
+        #      - ^.*\.rst$
+        #      - ^doc/.*$
         - tempest-ipv6-only:
             irrelevant-files:
               - ^.*\.rst$
