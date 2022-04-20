@@ -56,6 +56,10 @@ function configure_nova_hypervisor {
     # arm64-specific configuration
     if is_arch "aarch64"; then
         iniset $NOVA_CONF libvirt cpu_mode "host-passthrough"
+        # NOTE(mnaser): We cannot have `cpu_model` set if the `cpu_mode` is
+        #               set to `host-passthrough`, or `nova-compute` refuses to
+        #               start.
+        inidelete $NOVA_CONF libvirt cpu_model
     fi
 
     if isset ENABLE_FILE_INJECTION; then
