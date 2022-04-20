@@ -44,6 +44,15 @@ fi
 if ! getent passwd $STACK_USER >/dev/null; then
     echo "Creating a user called $STACK_USER"
     useradd -g $STACK_USER -s /bin/bash -d $DEST -m $STACK_USER
+    # RHEL based distros create home dir with 700 permissions,
+    # And Ubuntu 21.04+ with 750, i.e missing executable
+    # permission for either group or others
+    # Devstack deploy will have issues with this, fix it by
+    # adding executable permission
+    if [[ $(stat -c '%A' $DEST|grep -o x|wc -l) -lt 3 ]]; then
+        echo "Executable permission missing for $DEST, adding it"
+        chmod +x $DEST
+    fi
 fi
 
 echo "Giving stack user passwordless sudo privileges"
