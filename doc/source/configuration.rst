@@ -279,7 +279,7 @@ number of days of old log files to keep.
 
 ::
 
-    LOGDAYS=1
+    LOGDAYS=2
 
 Some coloring is used during the DevStack runs to make it easier to
 see what is going on. This can be disabled with::
