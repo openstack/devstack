@@ -1,0 +1,15 @@
+- name: Generate statistics
+  shell:
+    executable: /bin/bash
+    cmd: |
+      source {{ devstack_conf_dir }}/stackrc
+      python3 {{ devstack_conf_dir }}/tools/get-stats.py \
+        --db-user="$DATABASE_USER" \
+        --db-pass="$DATABASE_PASSWORD" \
+        --db-host="$DATABASE_HOST" \
+        {{ apache_logs }} > {{ stage_dir }}/performance.json
+  vars:
+    apache_logs: >-
+      {% for i in debian_suse_apache_deref_logs.results | default([]) + redhat_apache_deref_logs.results | default([]) %}
+      --apache-log="{{ i.stat.path }}"
+      {% endfor %}

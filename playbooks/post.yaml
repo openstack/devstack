@@ -20,6 +20,9 @@
   roles:
     - export-devstack-journal
     - apache-logs-conf
+    # This should run as early as possible to make sure we don't skew
+    # the post-tempest results with other activities.
+    - capture-performance-data
     - devstack-project-conf
     # capture-system-logs should be the last role before stage-output
     - capture-system-logs

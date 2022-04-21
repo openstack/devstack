@@ -419,6 +419,7 @@
         '{{ devstack_log_dir }}/worlddump-latest.txt': logs
         '{{ devstack_full_log}}': logs
         '{{ stage_dir }}/verify_tempest_conf.log': logs
+        '{{ stage_dir }}/performance.json': logs
         '{{ stage_dir }}/apache': logs
         '{{ stage_dir }}/apache_config': logs
         '{{ stage_dir }}/etc': logs
