@@ -13,3 +13,4 @@
       {% for i in debian_suse_apache_deref_logs.results | default([]) + redhat_apache_deref_logs.results | default([]) %}
       --apache-log="{{ i.stat.path }}"
       {% endfor %}
+  ignore_errors: yes

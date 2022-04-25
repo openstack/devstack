@@ -6,12 +6,24 @@ import glob
 import itertools
 import json
 import os
-import psutil
 import re
 import socket
 import subprocess
 import sys
-import pymysql
+
+try:
+    import psutil
+except ImportError:
+    psutil = None
+    print('No psutil, process information will not be included',
+          file=sys.stderr)
+
+try:
+    import pymysql
+except ImportError:
+    pymysql = None
+    print('No pymysql, database information will not be included',
+          file=sys.stderr)
 
 # https://www.elastic.co/blog/found-crash-elasticsearch#mapping-explosion
 
@@ -144,10 +156,10 @@ if __name__ == '__main__':
 
     data = {
         'services': get_services_stats(),
-        'db': args.db_pass and get_db_stats(args.db_host,
-                                            args.db_user,
-                                            args.db_pass) or [],
-        'processes': get_processes_stats(args.process),
+        'db': pymysql and args.db_pass and get_db_stats(args.db_host,
+                                                        args.db_user,
+                                                        args.db_pass) or [],
+        'processes': psutil and get_processes_stats(args.process) or [],
         'api': get_http_stats(args.apache_log),
         'report': get_report_info(),
     }
