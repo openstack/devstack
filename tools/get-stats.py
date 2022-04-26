@@ -31,7 +31,7 @@ def get_service_stats(service):
         if not line:
             continue
         stat, val = line.split('=')
-        stats[stat] = int(val)
+        stats[stat] = tryint(val)
 
     return stats
 
