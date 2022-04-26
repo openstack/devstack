@@ -133,6 +133,9 @@ Q_NOTIFY_NOVA_PORT_DATA_CHANGES=${Q_NOTIFY_NOVA_PORT_DATA_CHANGES:-True}
 VIF_PLUGGING_IS_FATAL=${VIF_PLUGGING_IS_FATAL:-True}
 VIF_PLUGGING_TIMEOUT=${VIF_PLUGGING_TIMEOUT:-300}
 
+# Allow to skip stopping of OVN services
+SKIP_STOP_OVN=${SKIP_STOP_OVN:-False}
+
 # The directory which contains files for Q_PLUGIN_EXTRA_CONF_FILES.
 # /etc/neutron is assumed by many of devstack plugins.  Do not change.
 _Q_PLUGIN_EXTRA_CONF_PATH=/etc/neutron
@@ -603,7 +606,7 @@ function stop_mutnauq {
     stop_mutnauq_other
     stop_mutnauq_l2_agent
 
-    if [[ $Q_AGENT == "ovn" ]]; then
+    if [[ $Q_AGENT == "ovn" && $SKIP_STOP_OVN != "True" ]]; then
         stop_ovn
     fi
 }
