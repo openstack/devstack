@@ -57,16 +57,6 @@
           - controller
 
 - nodeset:
-    name: devstack-single-node-centos-8-stream
-    nodes:
-      - name: controller
-        label: centos-8-stream
-    groups:
-      - name: tempest
-        nodes:
-          - controller
-
-- nodeset:
     name: devstack-single-node-centos-9-stream
     nodes:
       - name: controller
@@ -123,36 +113,6 @@
         label: ubuntu-xenial
       - name: compute1
         label: ubuntu-xenial
-    groups:
-      # Node where tests are executed and test results collected
-      - name: tempest
-        nodes:
-          - controller
-      # Nodes running the compute service
-      - name: compute
-        nodes:
-          - controller
-          - compute1
-      # Nodes that are not the controller
-      - name: subnode
-        nodes:
-          - compute1
-      # Switch node for multinode networking setup
-      - name: switch
-        nodes:
-          - controller
-      # Peer nodes for multinode networking setup
-      - name: peers
-        nodes:
-          - compute1
-
-- nodeset:
-    name: openstack-two-node-centos-8-stream
-    nodes:
-      - name: controller
-        label: centos-8-stream
-      - name: compute1
-        label: centos-8-stream
     groups:
       # Node where tests are executed and test results collected
       - name: tempest
@@ -695,16 +655,6 @@
 # and these platforms don't have the round-the-clock support to avoid
 # becoming blockers in that situation.
 - job:
-    name: devstack-platform-centos-8-stream
-    parent: tempest-full-py3
-    description: CentOS 8 Stream platform test
-    nodeset: devstack-single-node-centos-8-stream
-    voting: false
-    timeout: 9000
-    vars:
-      configure_swap_size: 4096
-
-- job:
     name: devstack-platform-centos-9-stream
     parent: tempest-full-py3
     description: CentOS 9 Stream platform test
@@ -877,7 +827,6 @@
         - devstack-ipv6
         - devstack-enforce-scope
         - devstack-platform-fedora-latest
-        - devstack-platform-centos-8-stream
         - devstack-platform-centos-9-stream
         - devstack-platform-debian-bullseye
         - devstack-multinode
