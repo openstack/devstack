@@ -625,6 +625,7 @@
               - ^.*\.rst$
               - ^doc/.*$
         - neutron-grenade:
+            voting: false
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
@@ -673,10 +674,10 @@
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
-        - neutron-grenade:
-            irrelevant-files:
-              - ^.*\.rst$
-              - ^doc/.*$
+        # - neutron-grenade:
+        #     irrelevant-files:
+        #       - ^.*\.rst$
+        #       - ^doc/.*$
         # - grenade:
         #     irrelevant-files:
         #       - ^.*\.rst$
