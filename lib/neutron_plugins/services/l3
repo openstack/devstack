@@ -403,7 +403,10 @@ function _neutron_configure_router_v6 {
             ext_gw_interface=$(_neutron_get_ext_gw_interface)
             local ipv6_cidr_len=${IPV6_PUBLIC_RANGE#*/}
 
-            # Configure interface for public bridge
+            # Configure interface for public bridge by setting the interface
+            # to "up" in case the job is running entirely private network based
+            # testing.
+            sudo ip link set $ext_gw_interface up
             sudo ip -6 addr replace $ipv6_ext_gw_ip/$ipv6_cidr_len dev $ext_gw_interface
             # Any IPv6 private subnet that uses the default IPV6 subnet pool
             # and that is plugged into the default router (Q_ROUTER_NAME) will
