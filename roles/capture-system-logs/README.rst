@@ -9,6 +9,7 @@ Stage a number of different logs / reports:
 - coredumps
 - dns resolver
 - listen53
+- services
 - unbound.log
 - deprecation messages
 
