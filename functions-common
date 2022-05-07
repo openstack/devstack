@@ -1166,7 +1166,7 @@ function is_ironic_hardware {
 }
 
 function is_ironic_enforce_scope {
-    is_service_enabled ironic && [[ "$IRONIC_ENFORCE_SCOPE" == "True" ]] && return 0
+    is_service_enabled ironic && [[ "$IRONIC_ENFORCE_SCOPE" == "True" || "$ENFORCE_SCOPE" == "True" ]] && return 0
     return 1
 }
 
