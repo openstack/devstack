@@ -169,6 +169,17 @@ Q_LOG_DRIVER_LOG_BASE=${Q_LOG_DRIVER_LOG_BASE:-acl_log_meter}
 # Utility Functions
 # -----------------
 
+function wait_for_db_file {
+    local count=0
+    while [ ! -f $1 ]; do
+        sleep 1
+        count=$((count+1))
+        if [ "$count" -gt 5 ]; then
+            die $LINENO "DB File $1 not found"
+        fi
+    done
+}
+
 function wait_for_sock_file {
     local count=0
     while [ ! -S $1 ]; do
@@ -695,8 +706,11 @@ function start_ovn {
         fi
 
         # Wait for the service to be ready
+        # Check for socket and db files for both OVN NB and SB
         wait_for_sock_file $OVS_RUNDIR/ovnnb_db.sock
         wait_for_sock_file $OVS_RUNDIR/ovnsb_db.sock
+        wait_for_db_file $OVN_DATADIR/ovnnb_db.db
+        wait_for_db_file $OVN_DATADIR/ovnsb_db.db
 
         if is_service_enabled tls-proxy; then
             sudo ovn-nbctl --db=unix:$OVS_RUNDIR/ovnnb_db.sock set-ssl $INT_CA_DIR/private/$DEVSTACK_CERT_NAME.key $INT_CA_DIR/$DEVSTACK_CERT_NAME.crt $INT_CA_DIR/ca-chain.pem
