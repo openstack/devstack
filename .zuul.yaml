@@ -398,6 +398,7 @@
         '{{ stage_dir }}/rpm-qa.txt': logs
         '{{ stage_dir }}/core': logs
         '{{ stage_dir }}/listen53.txt': logs
+        '{{ stage_dir }}/services.txt': logs
         '{{ stage_dir }}/deprecations.log': logs
         '{{ stage_dir }}/audit.log': logs
         /etc/ceph: logs
