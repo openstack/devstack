@@ -83,13 +83,11 @@ def get_processes_stats(matches):
 def get_db_stats(host, user, passwd):
     dbs = []
     db = pymysql.connect(host=host, user=user, password=passwd,
-                         database='performance_schema',
+                         database='stats',
                          cursorclass=pymysql.cursors.DictCursor)
     with db:
         with db.cursor() as cur:
-            cur.execute(
-                'SELECT COUNT(*) AS queries,current_schema AS db FROM '
-                'events_statements_history_long GROUP BY current_schema')
+            cur.execute('SELECT db,op,count FROM queries')
             for row in cur:
                 dbs.append({k: tryint(v) for k, v in row.items()})
     return dbs
