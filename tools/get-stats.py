@@ -1,10 +1,12 @@
 #!/usr/bin/python3
 
 import argparse
+import csv
 import datetime
 import glob
 import itertools
 import json
+import logging
 import os
 import re
 import socket
@@ -24,6 +26,8 @@ except ImportError:
     pymysql = None
     print('No pymysql, database information will not be included',
           file=sys.stderr)
+
+LOG = logging.getLogger('perf')
 
 # https://www.elastic.co/blog/found-crash-elasticsearch#mapping-explosion
 
@@ -95,26 +99,56 @@ def get_db_stats(host, user, passwd):
 
 def get_http_stats_for_log(logfile):
     stats = {}
-    for line in open(logfile).readlines():
-        m = re.search('"([A-Z]+) /([^" ]+)( HTTP/1.1)?" ([0-9]{3}) ([0-9]+)',
-                      line)
-        if m:
-            method = m.group(1)
-            path = m.group(2)
-            status = m.group(4)
-            size = int(m.group(5))
+    apache_fields = ('host', 'a', 'b', 'date', 'tz', 'request', 'status',
+                     'length', 'c', 'agent')
+    ignore_agents = ('curl', 'uwsgi', 'nova-status')
+    for line in csv.reader(open(logfile), delimiter=' '):
+        fields = dict(zip(apache_fields, line))
+        if len(fields) != len(apache_fields):
+            # Not a combined access log, so we can bail completely
+            return []
+        try:
+            method, url, http = fields['request'].split(' ')
+        except ValueError:
+            method = url = http = ''
+        if 'HTTP' not in http:
+            # Not a combined access log, so we can bail completely
+            return []
 
-            try:
-                service, rest = path.split('/', 1)
-            except ValueError:
-                # Root calls like "GET /identity"
-                service = path
-                rest = ''
+        # Tempest's User-Agent is unchanged, but client libraries and
+        # inter-service API calls use proper strings. So assume
+        # 'python-urllib' is tempest so we can tell it apart.
+        if 'python-urllib' in fields['agent'].lower():
+            agent = 'tempest'
+        else:
+            agent = fields['agent'].split(' ')[0]
+            if agent.startswith('python-'):
+                agent = agent.replace('python-', '')
+            if '/' in agent:
+                agent = agent.split('/')[0]
 
-            stats.setdefault(service, {'largest': 0})
-            stats[service].setdefault(method, 0)
-            stats[service][method] += 1
-            stats[service]['largest'] = max(stats[service]['largest'], size)
+        if agent in ignore_agents:
+            continue
+
+        try:
+            service, rest = url.strip('/').split('/', 1)
+        except ValueError:
+            # Root calls like "GET /identity"
+            service = url.strip('/')
+            rest = ''
+
+        method_key = '%s-%s' % (agent, method)
+        try:
+            length = int(fields['length'])
+        except ValueError:
+            LOG.warning('[%s] Failed to parse length %r from line %r' % (
+                logfile, fields['length'], line))
+            length = 0
+        stats.setdefault(service, {'largest': 0})
+        stats[service].setdefault(method_key, 0)
+        stats[service][method_key] += 1
+        stats[service]['largest'] = max(stats[service]['largest'],
+                                        length)
 
     # Flatten this for ES
     return [{'service': service, 'log': os.path.basename(logfile),
@@ -131,6 +165,7 @@ def get_report_info():
     return {
         'timestamp': datetime.datetime.now().isoformat(),
         'hostname': socket.gethostname(),
+        'version': 2,
     }
 
 
@@ -151,6 +186,8 @@ if __name__ == '__main__':
                         help=('Include process stats for this cmdline regex '
                               '(default is %s)' % ','.join(process_defaults)))
     args = parser.parse_args()
+
+    logging.basicConfig(level=logging.WARNING)
 
     data = {
         'services': get_services_stats(),
