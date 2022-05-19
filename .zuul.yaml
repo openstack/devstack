@@ -731,6 +731,7 @@
     parent: tempest-full-py3
     description: Ubuntu 22.04 LTS (jammy) platform test
     nodeset: openstack-single-node-jammy
+    voting: false
     timeout: 9000
     vars:
       configure_swap_size: 4096
@@ -742,6 +743,7 @@
     name: devstack-platform-ubuntu-jammy-ovn-source
     parent: devstack-platform-ubuntu-jammy
     description: Ubuntu 22.04 LTS (jammy) platform test (OVN from source)
+    voting: false
     vars:
       devstack_localrc:
         OVN_BUILD_FROM_SOURCE: True
@@ -754,6 +756,7 @@
     parent: tempest-full-py3
     description: Ubuntu 22.04 LTS (jammy) platform test (OVS)
     nodeset: openstack-single-node-jammy
+    voting: false
     timeout: 9000
     vars:
       configure_swap_size: 8192
