@@ -16,7 +16,6 @@ libjpeg-turbo-devel # Pillow 3.0.0
 libxml2-devel # lxml
 libxslt-devel # lxml
 libyaml-devel
-make # dist:openEuler-20.03
 mod_ssl # required for tls-proxy on centos 9 stream computes
 net-tools
 openssh-server
@@ -29,8 +28,7 @@ psmisc
 python3-devel
 python3-pip
 python3-systemd
-redhat-rpm-config # not:openEuler-20.03    missing dep for gcc hardening flags, see rhbz#1217376
-systemd-devel # dist:openEuler-20.03
+redhat-rpm-config # missing dep for gcc hardening flags, see rhbz#1217376
 tar
 tcpdump
 unzip

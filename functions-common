@@ -399,7 +399,7 @@ function _ensure_lsb_release {
     elif [[ -x $(command -v zypper 2>/dev/null) ]]; then
         sudo zypper -n install lsb-release
     elif [[ -x $(command -v dnf 2>/dev/null) ]]; then
-        sudo dnf install -y redhat-lsb-core || sudo dnf install -y openeuler-lsb
+        sudo dnf install -y redhat-lsb-core
     else
         die $LINENO "Unable to find or auto-install lsb_release"
     fi
@@ -471,10 +471,6 @@ function GetDistro {
         # Drop the . release as we assume it's compatible
         # XXX re-evaluate when we get RHEL10
         DISTRO="rhel${os_RELEASE::1}"
-    elif [[ "$os_VENDOR" =~ (openEuler) ]]; then
-        # The DISTRO here is `openEuler-20.03`. While, actually only openEuler
-        # 20.03 LTS SP2 is fully tested. Other SP version maybe have bugs.
-        DISTRO="openEuler-$os_RELEASE"
     else
         # We can't make a good choice here.  Setting a sensible DISTRO
         # is part of the problem, but not the major issue -- we really
@@ -526,7 +522,6 @@ function is_fedora {
     fi
 
     [ "$os_VENDOR" = "Fedora" ] || [ "$os_VENDOR" = "Red Hat" ] || \
-        [ "$os_VENDOR" = "openEuler" ] || \
         [ "$os_VENDOR" = "RedHatEnterpriseServer" ] || \
         [ "$os_VENDOR" = "RedHatEnterprise" ] || \
         [ "$os_VENDOR" = "CentOS" ] || [ "$os_VENDOR" = "CentOSStream" ] || \
@@ -576,12 +571,6 @@ function is_ubuntu {
     [ "$os_PACKAGE" = "deb" ]
 }
 
-function is_openeuler {
-    if [[ -z "$os_PACKAGE" ]]; then
-        GetOSVersion
-    fi
-    [ "$os_VENDOR" = "openEuler" ]
-}
 # Git Functions
 # =============
 

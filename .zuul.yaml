@@ -107,16 +107,6 @@
           - controller
 
 - nodeset:
-    name: devstack-single-node-openeuler-20.03-sp2
-    nodes:
-      - name: controller
-        label: openEuler-20-03-LTS-SP2
-    groups:
-      - name: tempest
-        nodes:
-          - controller
-
-- nodeset:
     name: openstack-two-node
     nodes:
       - name: controller
@@ -713,20 +703,6 @@
           q-agt: true
 
 - job:
-    name: devstack-platform-openEuler-20.03-SP2
-    parent: tempest-full-py3
-    description: openEuler 20.03 SP2 platform test
-    nodeset: devstack-single-node-openeuler-20.03-sp2
-    voting: false
-    timeout: 9000
-    vars:
-      configure_swap_size: 4096
-      devstack_localrc:
-        # NOTE(wxy):  OVN package is not supported by openEuler yet. Build it
-        # from source instead.
-        OVN_BUILD_FROM_SOURCE: True
-
-- job:
     name: devstack-platform-ubuntu-jammy
     parent: tempest-full-py3
     description: Ubuntu 22.04 LTS (jammy) platform test
@@ -1001,7 +977,6 @@
 
     experimental:
       jobs:
-        - devstack-platform-openEuler-20.03-SP2
         - nova-multi-cell
         - nova-next
         - neutron-fullstack-with-uwsgi

@@ -153,32 +153,8 @@ function fixup_ubuntu {
     sudo rm -rf /usr/lib/python3/dist-packages/simplejson-*.egg-info
 }
 
-function fixup_openeuler {
-    if ! is_openeuler; then
-        return
-    fi
-
-    if is_arch "x86_64"; then
-        arch="x86_64"
-    elif is_arch "aarch64"; then
-        arch="aarch64"
-    fi
-
-    # Some packages' version in openEuler are too old, use the newer ones we
-    # provide in oepkg. (oepkg is an openEuler third part yum repo which is
-    # endorsed by openEuler community)
-    (echo '[openstack-ci]'
-    echo 'name=openstack'
-    echo 'baseurl=https://repo.oepkgs.net/openEuler/rpm/openEuler-20.03-LTS-SP2/budding-openeuler/openstack-master-ci/'$arch'/'
-    echo 'enabled=1'
-    echo 'gpgcheck=0') | sudo tee -a /etc/yum.repos.d/openstack-master.repo > /dev/null
-
-    yum_install liberasurecode-devel
-}
-
 function fixup_all {
     fixup_ubuntu
     fixup_fedora
     fixup_suse
-    fixup_openeuler
 }
