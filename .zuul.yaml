@@ -731,7 +731,6 @@
     parent: tempest-full-py3
     description: Ubuntu 22.04 LTS (jammy) platform test
     nodeset: openstack-single-node-jammy
-    voting: false
     timeout: 9000
     vars:
       configure_swap_size: 4096
@@ -950,6 +949,7 @@
         - devstack
         - devstack-ipv6
         - devstack-platform-centos-9-stream
+        - devstack-platform-ubuntu-jammy
         - devstack-enforce-scope
         - devstack-multinode
         - devstack-unit-tests
