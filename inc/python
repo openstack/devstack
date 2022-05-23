@@ -186,9 +186,6 @@ function pip_install {
 
     $xtrace
 
-    # adding SETUPTOOLS_SYS_PATH_TECHNIQUE is a workaround to keep
-    # the same behaviour of setuptools before version 25.0.0.
-    # related issue: https://github.com/pypa/pip/issues/3874
     $sudo_pip \
         http_proxy="${http_proxy:-}" \
         https_proxy="${https_proxy:-}" \
