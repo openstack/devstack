@@ -86,9 +86,17 @@ def get_processes_stats(matches):
 
 def get_db_stats(host, user, passwd):
     dbs = []
-    db = pymysql.connect(host=host, user=user, password=passwd,
-                         database='stats',
-                         cursorclass=pymysql.cursors.DictCursor)
+    try:
+        db = pymysql.connect(host=host, user=user, password=passwd,
+                             database='stats',
+                             cursorclass=pymysql.cursors.DictCursor)
+    except pymysql.err.OperationalError as e:
+        if 'Unknown database' in str(e):
+            print('No stats database; assuming devstack failed',
+                  file=sys.stderr)
+            return []
+        raise
+
     with db:
         with db.cursor() as cur:
             cur.execute('SELECT db,op,count FROM queries')
