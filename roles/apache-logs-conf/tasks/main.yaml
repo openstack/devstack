@@ -64,7 +64,6 @@
       'Debian': '/etc/apache2/sites-enabled/'
       'Suse': '/etc/apache2/conf.d/'
       'RedHat': '/etc/httpd/conf.d/'
-      'openEuler': '/etc/httpd/conf.d/'
 
 - name: Discover configurations
   find:
