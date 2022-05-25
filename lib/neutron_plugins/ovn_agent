@@ -642,7 +642,7 @@ function _start_ovs {
         sudo ovs-vsctl --no-wait set open_vswitch . external-ids:ovn-bridge="br-int"
         sudo ovs-vsctl --no-wait set open_vswitch . external-ids:ovn-encap-type="geneve"
         sudo ovs-vsctl --no-wait set open_vswitch . external-ids:ovn-encap-ip="$TUNNEL_IP"
-        sudo ovs-vsctl --no-wait set open_vswitch . external-ids:hostname="$LOCAL_HOSTNAME"
+        sudo ovs-vsctl --no-wait set open_vswitch . external-ids:hostname=$(hostname)
         # Select this chassis to host gateway routers
         if [[ "$ENABLE_CHASSIS_AS_GW" == "True" ]]; then
             sudo ovs-vsctl --no-wait set open_vswitch . external-ids:ovn-cms-options="enable-chassis-as-gw"
