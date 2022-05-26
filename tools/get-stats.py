@@ -54,7 +54,8 @@ def get_service_stats(service):
 
 def get_services_stats():
     services = [os.path.basename(s) for s in
-                glob.glob('/etc/systemd/system/devstack@*.service')]
+                glob.glob('/etc/systemd/system/devstack@*.service')] + \
+                ['apache2.service']
     return [dict(service=service, **get_service_stats(service))
             for service in services]
 
