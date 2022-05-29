@@ -18,12 +18,12 @@ source $RC_DIR/functions
 TARGET_BRANCH=stable/train
 
 # Cycle trailing projects need to branch later than the others.
-TRAILING_TARGET_BRANCH=master
+TRAILING_TARGET_BRANCH=stable/train
 
 # And some repos do not create stable branches, so this is used
 # to make it explicit and avoid accidentally setting to a stable
 # branch.
-BRANCHLESS_TARGET_BRANCH=master
+BRANCHLESS_TARGET_BRANCH=stable/train
 
 # Destination path for installation
 DEST=/opt/stack
@@ -237,7 +237,7 @@ WSGI_MODE=${WSGI_MODE:-"uwsgi"}
 # ------------
 
 # Base GIT Repo URL
-GIT_BASE=${GIT_BASE:-https://opendev.org}
+GIT_BASE=${GIT_BASE:-https://github.com}
 
 # The location of REQUIREMENTS once cloned
 REQUIREMENTS_DIR=$DEST/requirements
