@@ -57,6 +57,14 @@ to run DevStack with
 
    $ sudo useradd -s /bin/bash -d /opt/stack -m stack
 
+Ensure home directory for the ``stack`` user has executable permission for all,
+as RHEL based distros create it with ``700`` and Ubuntu 21.04+ with ``750``
+which can cause issues during deployment.
+
+.. code-block:: console
+
+    $ sudo chmod +x /opt/stack
+
 Since this user will be making many changes to your system, it should
 have sudo privileges:
 
