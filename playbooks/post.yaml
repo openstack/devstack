@@ -17,6 +17,12 @@
         dest: "{{ stage_dir }}/verify_tempest_conf.log"
         state: hard
       when: tempest_log.stat.exists
+    - name: Capture most recent qemu crash dump, if any
+      shell:
+        executable: /bin/bash
+        cmd: |
+          coredumpctl -o {{ devstack_log_dir }}/qemu.coredump dump /usr/bin/qemu-system-x86_64
+      ignore_errors: yes
   roles:
     - export-devstack-journal
     - apache-logs-conf
