@@ -139,15 +139,18 @@ if is_fedora && [[ ${DISTRO} == f* || ${DISTRO} == rhel9 ]]; then
     # recent enough anyway.  This is included via rpms/general
     : # Simply fall through
 elif is_ubuntu; then
-    : # pip on Ubuntu 20.04 is new enough, too
+    # pip on Ubuntu 20.04 is new enough, too
+    # drop setuptools from u-c
+    sed -i -e '/setuptools/d' $REQUIREMENTS_DIR/upper-constraints.txt
 else
     install_get_pip
+
+    # Note setuptools is part of requirements.txt and we want to make sure
+    # we obey any versioning as described there.
+    pip_install_gr setuptools
 fi
 
 set -x
 
-# Note setuptools is part of requirements.txt and we want to make sure
-# we obey any versioning as described there.
-pip_install_gr setuptools
 
 get_versions
