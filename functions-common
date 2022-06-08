@@ -1575,6 +1575,7 @@ function write_user_unit_file {
     local command="$2"
     local group=$3
     local user=$4
+    local env_vars="$5"
     local extra=""
     if [[ -n "$group" ]]; then
         extra="Group=$group"
@@ -1588,6 +1589,9 @@ function write_user_unit_file {
     iniset -sudo $unitfile "Service" "KillMode" "process"
     iniset -sudo $unitfile "Service" "TimeoutStopSec" "300"
     iniset -sudo $unitfile "Service" "ExecReload" "$KILL_PATH -HUP \$MAINPID"
+    if [[ -n "$env_vars" ]] ; then
+        iniset -sudo $unitfile "Service" "Environment" "$env_vars"
+    fi
     if [[ -n "$group" ]]; then
         iniset -sudo $unitfile "Service" "Group" "$group"
     fi
@@ -1602,6 +1606,7 @@ function write_uwsgi_user_unit_file {
     local command="$2"
     local group=$3
     local user=$4
+    local env_vars="$5"
     local unitfile="$SYSTEMD_DIR/$service"
     mkdir -p $SYSTEMD_DIR
 
@@ -1616,6 +1621,9 @@ function write_uwsgi_user_unit_file {
     iniset -sudo $unitfile "Service" "NotifyAccess" "all"
     iniset -sudo $unitfile "Service" "RestartForceExitStatus" "100"
 
+    if [[ -n "$env_vars" ]] ; then
+        iniset -sudo $unitfile "Service" "Environment" "$env_vars"
+    fi
     if [[ -n "$group" ]]; then
         iniset -sudo $unitfile "Service" "Group" "$group"
     fi
@@ -1663,10 +1671,14 @@ function _run_under_systemd {
     local systemd_service="devstack@$service.service"
     local group=$3
     local user=${4:-$STACK_USER}
+    if [[ -z "$user" ]]; then
+        user=$STACK_USER
+    fi
+    local env_vars="$5"
     if [[ "$command" =~ "uwsgi" ]] ; then
-        write_uwsgi_user_unit_file $systemd_service "$cmd" "$group" "$user"
+        write_uwsgi_user_unit_file $systemd_service "$cmd" "$group" "$user" "$env_vars"
     else
-        write_user_unit_file $systemd_service "$cmd" "$group" "$user"
+        write_user_unit_file $systemd_service "$cmd" "$group" "$user" "$env_vars"
     fi
 
     $SYSTEMCTL enable $systemd_service
@@ -1687,18 +1699,20 @@ function is_running {
 # If the command includes shell metachatacters (;<>*) it must be run using a shell
 # If an optional group is provided sg will be used to run the
 # command as that group.
-# run_process service "command-line" [group] [user]
+# run_process service "command-line" [group] [user] [env_vars]
+# env_vars must be a space separated list of variable assigments, ie: "A=1 B=2"
 function run_process {
     local service=$1
     local command="$2"
     local group=$3
     local user=$4
+    local env_vars="$5"
 
     local name=$service
 
     time_start "run_process"
     if is_service_enabled $service; then
-        _run_under_systemd "$name" "$command" "$group" "$user"
+        _run_under_systemd "$name" "$command" "$group" "$user" "$env_vars"
     fi
     time_stop "run_process"
 }

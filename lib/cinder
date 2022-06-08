@@ -552,8 +552,13 @@ function start_cinder {
     fi
 
     run_process c-sch "$CINDER_BIN_DIR/cinder-scheduler --config-file $CINDER_CONF"
-    run_process c-bak "$CINDER_BIN_DIR/cinder-backup --config-file $CINDER_CONF"
-    run_process c-vol "$CINDER_BIN_DIR/cinder-volume --config-file $CINDER_CONF"
+    # Tune glibc for Python Services using single malloc arena for all threads
+    # and disabling dynamic thresholds to reduce memory usage when using native
+    # threads directly or via eventlet.tpool
+    # https://www.gnu.org/software/libc/manual/html_node/Memory-Allocation-Tunables.html
+    malloc_tuning="MALLOC_ARENA_MAX=1 MALLOC_MMAP_THRESHOLD_=131072 MALLOC_TRIM_THRESHOLD_=262144"
+    run_process c-bak "$CINDER_BIN_DIR/cinder-backup --config-file $CINDER_CONF" "" "" "$malloc_tuning"
+    run_process c-vol "$CINDER_BIN_DIR/cinder-volume --config-file $CINDER_CONF" "" "" "$malloc_tuning"
 
     # NOTE(jdg): For cinder, startup order matters.  To ensure that repor_capabilities is received
     # by the scheduler start the cinder-volume service last (or restart it) after the scheduler
