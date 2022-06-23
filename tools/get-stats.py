@@ -111,6 +111,7 @@ def get_http_stats_for_log(logfile):
     apache_fields = ('host', 'a', 'b', 'date', 'tz', 'request', 'status',
                      'length', 'c', 'agent')
     ignore_agents = ('curl', 'uwsgi', 'nova-status')
+    ignored_services = set()
     for line in csv.reader(open(logfile), delimiter=' '):
         fields = dict(zip(apache_fields, line))
         if len(fields) != len(apache_fields):
@@ -146,6 +147,10 @@ def get_http_stats_for_log(logfile):
             service = url.strip('/')
             rest = ''
 
+        if not service.isalpha():
+            ignored_services.add(service)
+            continue
+
         method_key = '%s-%s' % (agent, method)
         try:
             length = int(fields['length'])
@@ -158,6 +163,10 @@ def get_http_stats_for_log(logfile):
         stats[service][method_key] += 1
         stats[service]['largest'] = max(stats[service]['largest'],
                                         length)
+
+    if ignored_services:
+        LOG.warning('Ignored services: %s' % ','.join(
+            sorted(ignored_services)))
 
     # Flatten this for ES
     return [{'service': service, 'log': os.path.basename(logfile),
