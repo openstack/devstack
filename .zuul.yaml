@@ -672,7 +672,6 @@
     parent: tempest-full-py3
     description: Debian Bullseye platform test
     nodeset: devstack-single-node-debian-bullseye
-    voting: false
     timeout: 9000
     vars:
       configure_swap_size: 4096
@@ -902,6 +901,7 @@
         # TODO(kopecmartin) n-v until the following is resolved:
         # https://bugs.launchpad.net/neutron/+bug/1979047
         # - devstack-platform-centos-9-stream
+        - devstack-platform-debian-bullseye
         - devstack-platform-ubuntu-jammy
         - devstack-enforce-scope
         - devstack-multinode
