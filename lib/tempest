@@ -619,13 +619,13 @@ function configure_tempest {
     local tmp_cfg_file
     tmp_cfg_file=$(mktemp)
     cd $TEMPEST_DIR
-    if [[ "$OFFLINE" != "True" ]]; then
-        tox -revenv-tempest --notest
-    fi
 
     local tmp_u_c_m
     tmp_u_c_m=$(mktemp -t tempest_u_c_m.XXXXXXXXXX)
     set_tempest_venv_constraints $tmp_u_c_m
+    if [[ "$OFFLINE" != "True" ]]; then
+        tox -revenv-tempest --notest
+    fi
     tox -evenv-tempest -- pip install -c $tmp_u_c_m -r requirements.txt
     rm -f $tmp_u_c_m
 
