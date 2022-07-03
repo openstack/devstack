@@ -176,7 +176,7 @@ function wait_for_db_file {
     while [ ! -f $1 ]; do
         sleep 1
         count=$((count+1))
-        if [ "$count" -gt 5 ]; then
+        if [ "$count" -gt 40 ]; then
             die $LINENO "DB File $1 not found"
         fi
     done
@@ -187,7 +187,7 @@ function wait_for_sock_file {
     while [ ! -S $1 ]; do
         sleep 1
         count=$((count+1))
-        if [ "$count" -gt 5 ]; then
+        if [ "$count" -gt 40 ]; then
             die $LINENO "Socket $1 not found"
         fi
     done
