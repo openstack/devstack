@@ -646,7 +646,7 @@ function git_clone {
             # remove the existing ignored files (like pyc) as they cause breakage
             # (due to the py files having older timestamps than our pyc, so python
             # thinks the pyc files are correct using them)
-            find $git_dest -name '*.pyc' -delete
+            sudo find $git_dest -name '*.pyc' -delete
 
             # handle git_ref accordingly to type (tag, branch)
             if [[ -n "`git show-ref refs/tags/$git_ref`" ]]; then
