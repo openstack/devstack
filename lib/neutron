@@ -229,6 +229,10 @@ function configure_neutron_new {
         else
             mech_drivers+=",linuxbridge"
         fi
+        if [[ "$mech_drivers" == *"linuxbridge"* ]]; then
+            iniset $NEUTRON_CONF experimental linuxbridge True
+        fi
+
         iniset $NEUTRON_CORE_PLUGIN_CONF ml2 mechanism_drivers $mech_drivers
         iniset $NEUTRON_CORE_PLUGIN_CONF ml2 overlay_ip_version $TUNNEL_IP_VERSION
 
