@@ -213,7 +213,6 @@ function configure_neutron_new {
         iniset $NEUTRON_CONF DEFAULT core_plugin $NEUTRON_CORE_PLUGIN
 
         iniset $NEUTRON_CONF DEFAULT policy_file $policy_file
-        iniset $NEUTRON_CONF DEFAULT allow_overlapping_ips True
         iniset $NEUTRON_CONF DEFAULT router_distributed $NEUTRON_DISTRIBUTED_ROUTING
 
         iniset $NEUTRON_CONF DEFAULT auth_strategy $NEUTRON_AUTH_STRATEGY

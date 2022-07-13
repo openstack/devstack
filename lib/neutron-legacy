@@ -916,7 +916,6 @@ function _configure_neutron_service {
 
     iniset $NEUTRON_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
     iniset $NEUTRON_CONF oslo_policy policy_file $Q_POLICY_FILE
-    iniset $NEUTRON_CONF DEFAULT allow_overlapping_ips $Q_ALLOW_OVERLAPPING_IP
 
     iniset $NEUTRON_CONF DEFAULT auth_strategy $Q_AUTH_STRATEGY
     configure_keystone_authtoken_middleware $NEUTRON_CONF $Q_ADMIN_USERNAME
