@@ -89,7 +89,7 @@ password:
 
 ::
 
-    echo "stack ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+    echo "stack ALL=(ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/stack
 
 From here on use the ``stack`` user. **Logout** and **login** as the
 ``stack`` user.
