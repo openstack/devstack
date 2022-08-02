@@ -903,8 +903,6 @@ fi
 # Default is dependent on TUNNEL_IP_VERSION above.
 TUNNEL_ENDPOINT_IP=${TUNNEL_ENDPOINT_IP:-${DEF_TUNNEL_ENDPOINT_IP}}
 
-REGION_NAME=${REGION_NAME:-RegionOne}
-
 # Configure services to use syslog instead of writing to individual log files
 SYSLOG=$(trueorfalse False SYSLOG)
 SYSLOG_HOST=${SYSLOG_HOST:-$HOST_IP}
