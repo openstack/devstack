@@ -114,6 +114,12 @@ NEUTRON_TENANT_VLAN_RANGE=${NEUTRON_TENANT_VLAN_RANGE:-${TENANT_VLAN_RANGE:-100:
 # Physical network for VLAN network usage.
 NEUTRON_PHYSICAL_NETWORK=${NEUTRON_PHYSICAL_NETWORK:-}
 
+# The name of the service in the endpoint URL
+NEUTRON_ENDPOINT_SERVICE_NAME=${NEUTRON_ENDPOINT_SERVICE_NAME-"networking"}
+if [[ "$NEUTRON_DEPLOY_MOD_WSGI" == "True" && -z "$NEUTRON_ENDPOINT_SERVICE_NAME" ]]; then
+    NEUTRON_ENDPOINT_SERVICE_NAME="networking"
+fi
+
 
 # Additional neutron api config files
 declare -a -g _NEUTRON_SERVER_EXTRA_CONF_FILES_ABS
@@ -397,9 +403,12 @@ function create_neutron_accounts_new {
     local neutron_url
 
     if [ "$NEUTRON_DEPLOY_MOD_WSGI" == "True" ]; then
-        neutron_url=$NEUTRON_SERVICE_PROTOCOL://$NEUTRON_SERVICE_HOST/networking/
+        neutron_url=$NEUTRON_SERVICE_PROTOCOL://$NEUTRON_SERVICE_HOST/
     else
         neutron_url=$NEUTRON_SERVICE_PROTOCOL://$NEUTRON_SERVICE_HOST:$NEUTRON_SERVICE_PORT/
+    fi
+    if [ ! -z "$NEUTRON_ENDPOINT_SERVICE_NAME" ]; then
+        neutron_url=$neutron_url$NEUTRON_ENDPOINT_SERVICE_NAME
     fi
 
 
@@ -481,18 +490,21 @@ function start_neutron_api {
 
     if [ "$NEUTRON_DEPLOY_MOD_WSGI" == "True" ]; then
         run_process neutron-api "$(which uwsgi) --procname-prefix neutron-api --ini $NEUTRON_UWSGI_CONF"
-        neutron_url=$service_protocol://$NEUTRON_SERVICE_HOST/networking/
+        neutron_url=$service_protocol://$NEUTRON_SERVICE_HOST/
         enable_service neutron-rpc-server
         run_process neutron-rpc-server "$NEUTRON_BIN_DIR/neutron-rpc-server $opts"
     else
         # Start the Neutron service
         # TODO(sc68cal) Stop hard coding this
         run_process neutron-api "$NEUTRON_BIN_DIR/neutron-server $opts"
-        neutron_url=$service_protocol://$NEUTRON_SERVICE_HOST:$service_port
+        neutron_url=$service_protocol://$NEUTRON_SERVICE_HOST:$service_port/
         # Start proxy if enabled
         if is_service_enabled tls-proxy; then
             start_tls_proxy neutron '*' $NEUTRON_SERVICE_PORT $NEUTRON_SERVICE_HOST $NEUTRON_SERVICE_PORT_INT
         fi
+    fi
+    if [ ! -z "$NEUTRON_ENDPOINT_SERVICE_NAME" ]; then
+        neutron_url=$neutron_url$NEUTRON_ENDPOINT_SERVICE_NAME
     fi
 
     if ! wait_for_service $SERVICE_TIMEOUT $neutron_url; then

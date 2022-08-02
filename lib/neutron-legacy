@@ -145,6 +145,12 @@ SKIP_STOP_OVN=${SKIP_STOP_OVN:-False}
 # /etc/neutron is assumed by many of devstack plugins.  Do not change.
 _Q_PLUGIN_EXTRA_CONF_PATH=/etc/neutron
 
+# The name of the service in the endpoint URL
+NEUTRON_ENDPOINT_SERVICE_NAME=${NEUTRON_ENDPOINT_SERVICE_NAME-"networking"}
+if [[ "$NEUTRON_DEPLOY_MOD_WSGI" == "True" && -z "$NEUTRON_ENDPOINT_SERVICE_NAME" ]]; then
+    NEUTRON_ENDPOINT_SERVICE_NAME="networking"
+fi
+
 # List of config file names in addition to the main plugin config file
 # To add additional plugin config files, use ``neutron_server_config_add``
 # utility function.  For example:
@@ -431,9 +437,12 @@ function create_nova_conf_neutron {
 function create_mutnauq_accounts {
     local neutron_url
     if [ "$NEUTRON_DEPLOY_MOD_WSGI" == "True" ]; then
-        neutron_url=$Q_PROTOCOL://$SERVICE_HOST/networking/
+        neutron_url=$Q_PROTOCOL://$SERVICE_HOST/
     else
         neutron_url=$Q_PROTOCOL://$SERVICE_HOST:$Q_PORT/
+    fi
+    if [ ! -z "$NEUTRON_ENDPOINT_SERVICE_NAME" ]; then
+        neutron_url=$neutron_url$NEUTRON_ENDPOINT_SERVICE_NAME
     fi
 
     if [[ "$ENABLED_SERVICES" =~ "q-svc" ]]; then
@@ -538,16 +547,19 @@ function start_neutron_service_and_check {
     if [ "$NEUTRON_DEPLOY_MOD_WSGI" == "True" ]; then
         enable_service neutron-api
         run_process neutron-api "$(which uwsgi) --procname-prefix neutron-api --ini $NEUTRON_UWSGI_CONF"
-        neutron_url=$Q_PROTOCOL://$Q_HOST/networking/
+        neutron_url=$Q_PROTOCOL://$Q_HOST/
         enable_service neutron-rpc-server
         run_process neutron-rpc-server "$NEUTRON_BIN_DIR/neutron-rpc-server $cfg_file_options"
     else
         run_process q-svc "$NEUTRON_BIN_DIR/neutron-server $cfg_file_options"
-        neutron_url=$service_protocol://$Q_HOST:$service_port
+        neutron_url=$service_protocol://$Q_HOST:$service_port/
         # Start proxy if enabled
         if is_service_enabled tls-proxy; then
             start_tls_proxy neutron '*' $Q_PORT $Q_HOST $Q_PORT_INT
         fi
+    fi
+    if [ ! -z "$NEUTRON_ENDPOINT_SERVICE_NAME" ]; then
+        neutron_url=$neutron_url$NEUTRON_ENDPOINT_SERVICE_NAME
     fi
     echo "Waiting for Neutron to start..."
 
@@ -905,11 +917,24 @@ function _configure_neutron_plugin_agent {
     neutron_plugin_configure_plugin_agent
 }
 
+function _replace_api_paste_composite {
+    local sep
+    sep=$(echo -ne "\x01")
+    # Replace it
+    $sudo sed -i -e "s/\/\: neutronversions_composite/\/"${NEUTRON_ENDPOINT_SERVICE_NAME}"\/\: neutronversions_composite/" "$Q_API_PASTE_FILE"
+    $sudo sed -i -e "s/\/healthcheck\: healthcheck/\/"${NEUTRON_ENDPOINT_SERVICE_NAME}"\/healthcheck\: healthcheck/" "$Q_API_PASTE_FILE"
+    $sudo sed -i -e "s/\/v2.0\: neutronapi_v2_0/\/"${NEUTRON_ENDPOINT_SERVICE_NAME}"\/v2.0\: neutronapi_v2_0/" "$Q_API_PASTE_FILE"
+}
+
 # _configure_neutron_service() - Set config files for neutron service
 # It is called when q-svc is enabled.
 function _configure_neutron_service {
     Q_API_PASTE_FILE=$NEUTRON_CONF_DIR/api-paste.ini
     cp $NEUTRON_DIR/etc/api-paste.ini $Q_API_PASTE_FILE
+
+    if [[ -n "$NEUTRON_ENDPOINT_SERVICE_NAME" ]]; then
+        _replace_api_paste_composite
+    fi
 
     # Update either configuration file with plugin
     iniset $NEUTRON_CONF DEFAULT core_plugin $Q_PLUGIN_CLASS
