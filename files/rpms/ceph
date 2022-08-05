@@ -1,3 +1,3 @@
 ceph    # NOPRIME
-redhat-lsb-core # not:rhel9
+redhat-lsb-core # not:rhel9,openEuler-22.03
 xfsprogs

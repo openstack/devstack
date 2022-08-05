@@ -109,6 +109,16 @@
           - controller
 
 - nodeset:
+    name: devstack-single-node-openeuler-22.03
+    nodes:
+      - name: controller
+        label: openEuler-22-03-LTS
+    groups:
+      - name: tempest
+        nodes:
+          - controller
+
+- nodeset:
     name: openstack-two-node
     nodes:
       - name: controller
@@ -778,6 +788,62 @@
           q-agt: true
 
 - job:
+    name: devstack-platform-openEuler-22.03-ovn-source
+    parent: tempest-full-py3
+    description: openEuler 22.03 LTS platform test (OVN)
+    nodeset: devstack-single-node-openeuler-22.03
+    voting: false
+    timeout: 9000
+    vars:
+      configure_swap_size: 4096
+      devstack_localrc:
+        # NOTE(wxy):  OVN package is not supported by openEuler yet. Build it
+        # from source instead.
+        OVN_BUILD_FROM_SOURCE: True
+        OVN_BRANCH: "v21.06.0"
+        OVS_BRANCH: "a4b04276ab5934d087669ff2d191a23931335c87"
+        OVS_SYSCONFDIR: "/usr/local/etc/openvswitch"
+
+- job:
+    name: devstack-platform-openEuler-22.03-ovs
+    parent: tempest-full-py3
+    description: openEuler 22.03 LTS platform test (OVS)
+    nodeset: devstack-single-node-openeuler-22.03
+    voting: false
+    timeout: 9000
+    vars:
+      configure_swap_size: 8192
+      devstack_localrc:
+        Q_AGENT: openvswitch
+        Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch
+        Q_ML2_TENANT_NETWORK_TYPE: vxlan
+      devstack_services:
+        # Disable OVN services
+        ovn-northd: false
+        ovn-controller: false
+        ovs-vswitchd: false
+        ovsdb-server: false
+        # Disable Neutron ML2/OVN services
+        q-ovn-metadata-agent: false
+        # Enable Neutron ML2/OVS services
+        q-agt: true
+        q-dhcp: true
+        q-l3: true
+        q-meta: true
+        q-metering: true
+    group-vars:
+      subnode:
+        devstack_services:
+          # Disable OVN services
+          ovn-controller: false
+          ovs-vswitchd: false
+          ovsdb-server: false
+          # Disable Neutron ML2/OVN services
+          q-ovn-metadata-agent: false
+          # Enable Neutron ML2/OVS services
+          q-agt: true
+
+- job:
     name: devstack-no-tls-proxy
     parent: tempest-full-py3
     description: |
@@ -885,6 +951,8 @@
         - devstack-platform-ubuntu-focal
         - devstack-platform-ubuntu-jammy-ovn-source
         - devstack-platform-ubuntu-jammy-ovs
+        - devstack-platform-openEuler-22.03-ovn-source
+        - devstack-platform-openEuler-22.03-ovs
         - devstack-multinode
         - devstack-unit-tests
         - openstack-tox-bashate
@@ -1017,3 +1085,7 @@
     periodic:
       jobs:
         - devstack-no-tls-proxy
+    periodic-weekly:
+      jobs:
+        - devstack-platform-openEuler-22.03-ovn-source
+        - devstack-platform-openEuler-22.03-ovs

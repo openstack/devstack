@@ -82,11 +82,17 @@ function install_libvirt {
             sudo dnf copr enable -y @virtmaint-sig/virt-preview
         fi
 
+        if is_openeuler; then
+            qemu_package=qemu
+        else
+            qemu_package=qemu-kvm
+        fi
+
         # Note that in CentOS/RHEL this needs to come from the RDO
         # repositories (qemu-kvm-ev ... which provides this package)
         # as the base system version is too old.  We should have
         # pre-installed these
-        install_package qemu-kvm
+        install_package $qemu_package
         install_package libvirt libvirt-devel python3-libvirt
 
         if is_arch "aarch64"; then
