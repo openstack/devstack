@@ -44,6 +44,9 @@ empty =
 multi = foo1
 multi = foo2
 
+[fff]
+ampersand =
+
 [key_with_spaces]
 rgw special key = something
 
@@ -85,7 +88,7 @@ fi
 
 # test iniget_sections
 VAL=$(iniget_sections "${TEST_INI}")
-assert_equal "$VAL" "default aaa bbb ccc ddd eee key_with_spaces \
+assert_equal "$VAL" "default aaa bbb ccc ddd eee fff key_with_spaces \
 del_separate_options del_same_option del_missing_option \
 del_missing_option_multi del_no_options"
 
@@ -123,6 +126,13 @@ assert_equal "$VAL" "ee,ff" "iniget at EOF"
 iniset ${SUDO_ARG} ${TEST_INI} bbb handlers "33,44"
 VAL=$(iniget ${TEST_INI} bbb handlers)
 assert_equal "$VAL" "33,44" "inset at EOF"
+
+# Test with ampersand in values
+for i in `seq 3`; do
+    iniset ${TEST_INI} fff ampersand '&y'
+done
+VAL=$(iniget ${TEST_INI} fff ampersand)
+assert_equal "$VAL" "&y" "iniset ampersands in option"
 
 # test empty option
 if ini_has_option ${SUDO_ARG} ${TEST_INI} ddd empty; then

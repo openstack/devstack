@@ -189,6 +189,9 @@ function iniset {
     local option=$3
     local value=$4
 
+    # Escape the ampersand character (&)
+    value=$(echo $value | sed -e 's/&/\\&/g')
+
     if [[ -z $section || -z $option ]]; then
         $xtrace
         return
