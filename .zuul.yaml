@@ -59,6 +59,16 @@
           - controller
 
 - nodeset:
+    name: devstack-single-node-centos-9-stream
+    nodes:
+      - name: controller
+        label: centos-9-stream
+    groups:
+      - name: tempest
+        nodes:
+          - controller
+
+- nodeset:
     name: devstack-single-node-opensuse-15
     nodes:
       - name: controller
@@ -584,6 +594,16 @@
       configure_swap_size: 4096
 
 - job:
+    name: devstack-platform-centos-9-stream
+    parent: tempest-full-py3
+    description: CentOS 9 Stream platform test
+    nodeset: devstack-single-node-centos-9-stream
+    voting: false
+    timeout: 9000
+    vars:
+      configure_swap_size: 4096
+
+- job:
     name: devstack-async
     parent: tempest-full-py3
     description: Async mode enabled
@@ -669,6 +689,7 @@
         - devstack-platform-bionic
         - devstack-platform-centos-8-stream
         - devstack-async
+        - devstack-platform-centos-9-stream
         - devstack-multinode
         - devstack-unit-tests
         - openstack-tox-bashate

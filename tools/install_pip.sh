@@ -137,23 +137,29 @@ if [[ -n $PYPI_ALTERNATIVE_URL ]]; then
     configure_pypi_alternative_url
 fi
 
-# Eradicate any and all system packages
-
-# Python in fedora/suse depends on the python-pip package so removing it
-# results in a nonfunctional system. pip on fedora installs to /usr so pip
-# can safely override the system pip for all versions of fedora
-if ! is_fedora  && ! is_suse; then
-    if is_package_installed python3-pip ; then
-        uninstall_package python3-pip
+if is_fedora && [[ ${DISTRO} == f* || ${DISTRO} == rhel9 ]]; then
+    # get-pip.py will not install over the python3-pip package in
+    # Fedora 34 any more.
+    #  https://bugzilla.redhat.com/show_bug.cgi?id=1988935
+    #  https://github.com/pypa/pip/issues/9904
+    # You can still install using get-pip.py if python3-pip is *not*
+    # installed; this *should* remain separate under /usr/local and not break
+    # if python3-pip is later installed.
+    # For general sanity, we just use the packaged pip.  It should be
+    # recent enough anyway.  This is included via rpms/general
+    : # Simply fall through
+else
+    if ! is_fedora && ! is_suse; then
+        if is_package_installed python3-pip ; then
+            uninstall_package python3-pip
+        fi
     fi
+    install_get_pip
+    # Note setuptools is part of requirements.txt and we want to make sure
+    # we obey any versioning as described there.
+    pip_install_gr setuptools
 fi
 
-install_get_pip
-
 set -x
-
-# Note setuptools is part of requirements.txt and we want to make sure
-# we obey any versioning as described there.
-pip_install_gr setuptools
 
 get_versions

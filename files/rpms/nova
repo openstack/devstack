@@ -4,7 +4,7 @@ dnsmasq # for q-dhcp
 dnsmasq-utils # for dhcp_release
 ebtables
 gawk
-genisoimage # required for config_drive
+genisoimage # not:rhel9 required for config_drive
 iptables
 iputils
 kernel-modules
@@ -14,3 +14,4 @@ polkit
 rabbitmq-server # NOPRIME
 sqlite
 sudo
+xorriso # not:rhel8

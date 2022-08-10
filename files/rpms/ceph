@@ -1,3 +1,3 @@
 ceph    # NOPRIME
-redhat-lsb-core
+redhat-lsb-core # not:rhel9
 xfsprogs
