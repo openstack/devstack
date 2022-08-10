@@ -63,7 +63,7 @@ to have sudo privileges:
 .. code-block:: console
 
     $ apt-get install sudo -y || yum install -y sudo
-    $ echo "stack ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+    $ echo "stack ALL=(ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/stack
 
 .. note:: On some systems you may need to use ``sudo visudo``.
 
