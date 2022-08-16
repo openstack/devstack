@@ -414,10 +414,10 @@ function upload_image {
         # kernel for use when uploading the root filesystem.
         local kernel_id="" ramdisk_id="";
         if [ -n "$kernel" ]; then
-            kernel_id=$(openstack --os-cloud=devstack-admin --os-region-name="$REGION_NAME" image create "$image_name-kernel" $(_image_properties_to_arg $img_property) --public --container-format aki --disk-format aki < "$kernel" | grep ' id ' | get_field 2)
+            kernel_id=$(openstack --os-cloud=devstack-admin --os-region-name="$REGION_NAME" image create "$image_name-kernel" $(_image_properties_to_arg $img_property) --public --container-format aki --disk-format aki < "$kernel" -f value -c id)
         fi
         if [ -n "$ramdisk" ]; then
-            ramdisk_id=$(openstack --os-cloud=devstack-admin --os-region-name="$REGION_NAME" image create "$image_name-ramdisk" $(_image_properties_to_arg $img_property) --public --container-format ari --disk-format ari < "$ramdisk" | grep ' id ' | get_field 2)
+            ramdisk_id=$(openstack --os-cloud=devstack-admin --os-region-name="$REGION_NAME" image create "$image_name-ramdisk" $(_image_properties_to_arg $img_property) --public --container-format ari --disk-format ari < "$ramdisk" -f value -c id)
         fi
         _upload_image "${image_name%.img}" ami ami "$image" ${kernel_id:+ kernel_id=$kernel_id} ${ramdisk_id:+ ramdisk_id=$ramdisk_id} $img_property
     fi
