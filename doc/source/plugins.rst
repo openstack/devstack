@@ -238,7 +238,7 @@ package dependencies, packages may be listed at the following
 locations in the top-level of the plugin repository:
 
 - ``./devstack/files/debs/$plugin_name`` - Packages to install when running
-  on Ubuntu, Debian or Linux Mint.
+  on Ubuntu or Debian.
 
 - ``./devstack/files/rpms/$plugin_name`` - Packages to install when running
   on Red Hat, Fedora, or CentOS.

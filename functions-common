@@ -426,7 +426,7 @@ function GetOSVersion {
         os_VENDOR=$(lsb_release -i -s)
     fi
 
-    if [[ $os_VENDOR =~ (Debian|Ubuntu|LinuxMint) ]]; then
+    if [[ $os_VENDOR =~ (Debian|Ubuntu) ]]; then
         os_PACKAGE="deb"
     else
         os_PACKAGE="rpm"
@@ -444,9 +444,8 @@ declare -g DISTRO
 
 function GetDistro {
     GetOSVersion
-    if [[ "$os_VENDOR" =~ (Ubuntu) || "$os_VENDOR" =~ (Debian) || \
-            "$os_VENDOR" =~ (LinuxMint) ]]; then
-        # 'Everyone' refers to Ubuntu / Debian / Mint releases by
+    if [[ "$os_VENDOR" =~ (Ubuntu) || "$os_VENDOR" =~ (Debian) ]]; then
+        # 'Everyone' refers to Ubuntu / Debian releases by
         # the code name adjective
         DISTRO=$os_CODENAME
     elif [[ "$os_VENDOR" =~ (Fedora) ]]; then
