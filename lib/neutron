@@ -567,7 +567,6 @@ function stop_neutron_new {
     fi
 
     if is_service_enabled neutron-metadata-agent; then
-        sudo pkill -9 -f neutron-ns-metadata-proxy || :
         stop_process neutron-metadata-agent
     fi
 }

@@ -628,7 +628,6 @@ function stop_mutnauq_other {
     fi
 
     if is_service_enabled q-meta; then
-        sudo pkill -9 -f neutron-ns-metadata-proxy || :
         stop_process q-meta
     fi
 
