@@ -1,7 +1,5 @@
 conntrack
 curl
-dnsmasq-base
-dnsmasq-utils # for dhcp_release
 ebtables
 genisoimage # required for config_drive
 iptables

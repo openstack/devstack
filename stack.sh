@@ -1152,7 +1152,8 @@ fi
 # ----
 
 if is_service_enabled q-dhcp; then
-    # Delete traces of nova networks from prior runs
+    # TODO(frickler): These are remnants from n-net, check which parts are really
+    # still needed for Neutron.
     # Do not kill any dnsmasq instance spawned by NetworkManager
     netman_pid=$(pidof NetworkManager || true)
     if [ -z "$netman_pid" ]; then
@@ -1212,12 +1213,7 @@ if is_service_enabled nova; then
     echo_summary "Configuring Nova"
     init_nova
 
-    # Additional Nova configuration that is dependent on other services
-    # TODO(stephenfin): Is it possible for neutron to *not* be enabled now? If
-    # not, remove the if here
-    if is_service_enabled neutron; then
-        async_runfunc configure_neutron_nova
-    fi
+    async_runfunc configure_neutron_nova
 fi
 
 
