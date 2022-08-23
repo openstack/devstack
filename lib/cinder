@@ -388,16 +388,24 @@ function configure_cinder {
 
 # create_cinder_accounts() - Set up common required cinder accounts
 
-# Tenant               User       Roles
+# Project              User       Roles
 # ------------------------------------------------------------------
-# service              cinder     admin        # if enabled
+# SERVICE_PROJECT_NAME cinder     service
+# SERVICE_PROJECT_NAME cinder     creator (if Barbican is enabled)
 
 # Migrated from keystone_data.sh
 function create_cinder_accounts {
     # Cinder
     if [[ "$ENABLED_SERVICES" =~ "c-api" ]]; then
 
-        create_service_user "cinder"
+        local extra_role=""
+
+        # cinder needs the "creator" role in order to interact with barbican
+        if is_service_enabled barbican; then
+            extra_role=$(get_or_create_role "creator")
+        fi
+
+        create_service_user "cinder" $extra_role
 
         # block-storage is the official service type
         get_or_create_service "cinder" "block-storage" "Cinder Volume Service"
