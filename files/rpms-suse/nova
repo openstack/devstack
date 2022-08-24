@@ -1,8 +1,6 @@
 cdrkit-cdrtools-compat # dist:sle12
 conntrack-tools
 curl
-dnsmasq
-dnsmasq-utils # dist:opensuse-12.3,opensuse-13.1
 ebtables
 iptables
 iputils

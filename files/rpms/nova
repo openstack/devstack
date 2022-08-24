@@ -1,7 +1,5 @@
 conntrack-tools
 curl
-dnsmasq # for q-dhcp
-dnsmasq-utils # for dhcp_release
 ebtables
 genisoimage # not:rhel9 required for config_drive
 iptables
