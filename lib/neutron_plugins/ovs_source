@@ -87,9 +87,15 @@ function prepare_for_ovs_compilation {
 
         install_package kernel-devel-$KERNEL_VERSION
         install_package kernel-headers-$KERNEL_VERSION
+        if is_service_enabled tls-proxy; then
+            install_package openssl-devel
+        fi
 
     elif is_ubuntu ; then
         install_package linux-headers-$KERNEL_VERSION
+        if is_service_enabled tls-proxy; then
+            install_package libssl-dev
+        fi
     fi
 }
 
