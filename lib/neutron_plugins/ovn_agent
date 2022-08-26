@@ -616,7 +616,7 @@ function _start_ovs {
                 dbcmd+=" --remote=db:hardware_vtep,Global,managers $OVS_DATADIR/vtep.db"
             fi
             dbcmd+=" $OVS_DATADIR/conf.db"
-            _run_process ovsdb-server "$dbcmd"
+            _run_process ovsdb-server "$dbcmd" "" "$STACK_GROUP" "root"
 
             # Note: ovn-controller will create and configure br-int once it is started.
             # So, no need to create it now because nothing depends on that bridge here.
@@ -704,7 +704,7 @@ function start_ovn {
             local cmd="/bin/bash $SCRIPTDIR/ovn-ctl --no-monitor start_northd"
             local stop_cmd="/bin/bash $SCRIPTDIR/ovn-ctl stop_northd"
 
-            _run_process ovn-northd "$cmd" "$stop_cmd"
+            _run_process ovn-northd "$cmd" "$stop_cmd" "$STACK_GROUP" "root"
         else
             _start_process "$OVN_NORTHD_SERVICE"
         fi
