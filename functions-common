@@ -418,6 +418,9 @@ function GetOSVersion {
         os_RELEASE=${VERSION_ID}
         os_CODENAME="n/a"
         os_VENDOR=$(echo $NAME | tr -d '[:space:]')
+    elif [[ "${ID}${VERSION}" =~ "rocky9" ]]; then
+        os_VENDOR="Rocky"
+        os_RELEASE=${VERSION_ID}
     else
         _ensure_lsb_release
 
@@ -466,6 +469,7 @@ function GetDistro {
         "$os_VENDOR" =~ (AlmaLinux) || \
         "$os_VENDOR" =~ (Scientific) || \
         "$os_VENDOR" =~ (OracleServer) || \
+        "$os_VENDOR" =~ (Rocky) || \
         "$os_VENDOR" =~ (Virtuozzo) ]]; then
         # Drop the . release as we assume it's compatible
         # XXX re-evaluate when we get RHEL10
@@ -513,7 +517,7 @@ function is_oraclelinux {
 
 
 # Determine if current distribution is a Fedora-based distribution
-# (Fedora, RHEL, CentOS, etc).
+# (Fedora, RHEL, CentOS, Rocky, etc).
 # is_fedora
 function is_fedora {
     if [[ -z "$os_VENDOR" ]]; then
@@ -523,6 +527,7 @@ function is_fedora {
     [ "$os_VENDOR" = "Fedora" ] || [ "$os_VENDOR" = "Red Hat" ] || \
         [ "$os_VENDOR" = "RedHatEnterpriseServer" ] || \
         [ "$os_VENDOR" = "RedHatEnterprise" ] || \
+        [ "$os_VENDOR" = "Rocky" ] || \
         [ "$os_VENDOR" = "CentOS" ] || [ "$os_VENDOR" = "CentOSStream" ] || \
         [ "$os_VENDOR" = "AlmaLinux" ] || \
         [ "$os_VENDOR" = "OracleServer" ] || [ "$os_VENDOR" = "Virtuozzo" ]
