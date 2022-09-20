@@ -79,30 +79,10 @@
           - controller
 
 - nodeset:
-    name: devstack-single-node-fedora-latest
-    nodes:
-      - name: controller
-        label: fedora-35
-    groups:
-      - name: tempest
-        nodes:
-          - controller
-
-- nodeset:
     name: devstack-single-node-debian-bullseye
     nodes:
       - name: controller
         label: debian-bullseye
-    groups:
-      - name: tempest
-        nodes:
-          - controller
-
-- nodeset:
-    name: devstack-single-node-openeuler-20.03-sp2
-    nodes:
-      - name: controller
-        label: openEuler-20-03-LTS-SP2
     groups:
       - name: tempest
         nodes:
@@ -716,20 +696,6 @@
           q-agt: true
 
 - job:
-    name: devstack-platform-openEuler-20.03-SP2
-    parent: tempest-full-py3
-    description: openEuler 20.03 SP2 platform test
-    nodeset: devstack-single-node-openeuler-20.03-sp2
-    voting: false
-    timeout: 9000
-    vars:
-      configure_swap_size: 4096
-      devstack_localrc:
-        # NOTE(wxy):  OVN package is not supported by openEuler yet. Build it
-        # from source instead.
-        OVN_BUILD_FROM_SOURCE: True
-
-- job:
     name: devstack-no-tls-proxy
     parent: tempest-full-py3
     description: |
@@ -739,30 +705,6 @@
     vars:
       devstack_services:
         tls-proxy: false
-
-- job:
-    name: devstack-platform-fedora-latest
-    parent: tempest-full-py3
-    description: Fedora latest platform test
-    nodeset: devstack-single-node-fedora-latest
-    voting: false
-    vars:
-      configure_swap_size: 4096
-      # Python 3.10 dependency issues; see
-      # https://bugs.launchpad.net/horizon/+bug/1960204
-      devstack_services:
-        horizon: false
-
-- job:
-    name: devstack-platform-fedora-latest-virt-preview
-    parent: tempest-full-py3
-    description: Fedora latest platform test using the virt-preview repo.
-    nodeset: devstack-single-node-fedora-latest
-    voting: false
-    vars:
-      configure_swap_size: 4096
-      devstack_localrc:
-        ENABLE_FEDORA_VIRT_PREVIEW_REPO: true
 
 - job:
     name: devstack-tox-base
@@ -837,11 +779,9 @@
         - devstack
         - devstack-ipv6
         - devstack-enforce-scope
-        - devstack-platform-fedora-latest
         - devstack-platform-centos-8-stream
         - devstack-platform-centos-9-stream
         - devstack-platform-debian-bullseye
-        - devstack-platform-openEuler-20.03-SP2
         - devstack-multinode
         - devstack-unit-tests
         - openstack-tox-bashate
@@ -933,10 +873,6 @@
     #    Next cycle we can remove this if everything run out stable enough.
     # * nova-multi-cell: maintained by nova and currently non-voting in the
     #    check queue for nova changes but relies on devstack configuration
-    # * devstack-platform-fedora-latest-virt-preview: Maintained by lyarwood
-    #    for Nova to allow early testing of the latest versions of Libvirt and
-    #    QEMU. Should only graduate out of experimental if it ever moves into
-    #    the check queue for Nova.
 
     experimental:
       jobs:
@@ -965,7 +901,6 @@
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
-        - devstack-platform-fedora-latest-virt-preview
         - devstack-no-tls-proxy
     periodic:
       jobs:
