@@ -455,7 +455,7 @@ function configure_tempest {
     # NOTE- To avoid microversion tests failure on stable branch, we need to change "tempest_compute_max_microversion"
     #       for stable branch on each release which should be changed from "latest" to max supported version of that release.
     local tempest_compute_min_microversion=${TEMPEST_COMPUTE_MIN_MICROVERSION:-None}
-    local tempest_compute_max_microversion=${TEMPEST_COMPUTE_MAX_MICROVERSION:-"latest"}
+    local tempest_compute_max_microversion=${TEMPEST_COMPUTE_MAX_MICROVERSION:-"2.93"}
     # Reset microversions to None where v2.0 is running which does not support microversion.
     # Both "None" means no microversion testing.
     if [[ "$TEMPEST_COMPUTE_TYPE" == "compute_legacy" ]]; then
@@ -548,7 +548,7 @@ function configure_tempest {
     fi
     iniset $TEMPEST_CONFIG volume-feature-enabled volume_revert $(trueorfalse False TEMPEST_VOLUME_REVERT_TO_SNAPSHOT)
     local tempest_volume_min_microversion=${TEMPEST_VOLUME_MIN_MICROVERSION:-None}
-    local tempest_volume_max_microversion=${TEMPEST_VOLUME_MAX_MICROVERSION:-"latest"}
+    local tempest_volume_max_microversion=${TEMPEST_VOLUME_MAX_MICROVERSION:-"3.70"}
     if [ "$tempest_volume_min_microversion" == "None" ]; then
         inicomment $TEMPEST_CONFIG volume min_microversion
     else
@@ -603,7 +603,7 @@ function configure_tempest {
     # NOTE- To avoid microversion tests failure on stable branch, we need to change "tempest_placement_max_microversion"
     #       for stable branch on each release which should be changed from "latest" to max supported version of that release.
     local tempest_placement_min_microversion=${TEMPEST_PLACEMENT_MIN_MICROVERSION:-None}
-    local tempest_placement_max_microversion=${TEMPEST_PLACEMENT_MAX_MICROVERSION:-"latest"}
+    local tempest_placement_max_microversion=${TEMPEST_PLACEMENT_MAX_MICROVERSION:-"1.39"}
     if [ "$tempest_placement_min_microversion" == "None" ]; then
         inicomment $TEMPEST_CONFIG placement min_microversion
     else
