@@ -15,7 +15,7 @@ source $RC_DIR/functions
 
 # Set the target branch. This is used so that stable branching
 # does not need to update each repo below.
-TARGET_BRANCH=master
+TARGET_BRANCH=stable/zed
 
 # Cycle trailing projects need to branch later than the others.
 TRAILING_TARGET_BRANCH=master
