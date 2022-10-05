@@ -1,3 +1,5 @@
+.. _kvm_nested_virt:
+
 =======================================================
 Configure DevStack with KVM-based Nested Virtualization
 =======================================================
