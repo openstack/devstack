@@ -169,6 +169,36 @@
           - compute1
 
 - nodeset:
+    name: openstack-two-node-jammy
+    nodes:
+      - name: controller
+        label: ubuntu-jammy
+      - name: compute1
+        label: ubuntu-jammy
+    groups:
+      # Node where tests are executed and test results collected
+      - name: tempest
+        nodes:
+          - controller
+      # Nodes running the compute service
+      - name: compute
+        nodes:
+          - controller
+          - compute1
+      # Nodes that are not the controller
+      - name: subnode
+        nodes:
+          - compute1
+      # Switch node for multinode networking setup
+      - name: switch
+        nodes:
+          - controller
+      # Peer nodes for multinode networking setup
+      - name: peers
+        nodes:
+          - compute1
+
+- nodeset:
     name: openstack-two-node-focal
     nodes:
       - name: controller
@@ -455,7 +485,7 @@
     description: |
       Minimal devstack base job, intended for use by jobs that need
       less than the normal minimum set of required-projects.
-    nodeset: openstack-single-node-focal
+    nodeset: openstack-single-node-jammy
     required-projects:
       - opendev.org/openstack/requirements
     vars:
@@ -526,6 +556,7 @@
       - opendev.org/openstack/swift
     timeout: 7200
     vars:
+      configure_swap_size: 4096
       devstack_localrc:
         # Common OpenStack services settings
         SWIFT_REPLICAS: 1
@@ -651,7 +682,7 @@
 - job:
     name: devstack-multinode
     parent: devstack
-    nodeset: openstack-two-node-focal
+    nodeset: openstack-two-node-jammy
     description: |
       Simple multinode test to verify multinode functionality on devstack side.
       This is not meant to be used as a parent job.
@@ -669,8 +700,6 @@
     # TODO(kopecmartin) n-v until the following is resolved:
     # https://bugs.launchpad.net/neutron/+bug/1979047
     voting: false
-    vars:
-      configure_swap_size: 4096
 
 - job:
     name: devstack-platform-debian-bullseye
@@ -693,13 +722,11 @@
       configure_swap_size: 4096
 
 - job:
-    name: devstack-platform-ubuntu-jammy
+    name: devstack-platform-ubuntu-focal
     parent: tempest-full-py3
-    description: Ubuntu 22.04 LTS (jammy) platform test
-    nodeset: openstack-single-node-jammy
+    description: Ubuntu 20.04 LTS (focal) platform test
+    nodeset: openstack-single-node-focal
     timeout: 9000
-    vars:
-      configure_swap_size: 4096
 
 - job:
     name: devstack-platform-ubuntu-jammy-ovn-source
@@ -769,8 +796,6 @@
     description: Fedora latest platform test
     nodeset: devstack-single-node-fedora-latest
     voting: false
-    vars:
-      configure_swap_size: 4096
 
 - job:
     name: devstack-platform-fedora-latest-virt-preview
@@ -779,7 +804,6 @@
     nodeset: devstack-single-node-fedora-latest
     voting: false
     vars:
-      configure_swap_size: 4096
       devstack_localrc:
         ENABLE_FEDORA_VIRT_PREVIEW_REPO: true
 
@@ -839,7 +863,7 @@
 
 - job:
     name: devstack-unit-tests
-    nodeset: ubuntu-focal
+    nodeset: ubuntu-jammy
     description: |
       Runs unit tests on devstack project.
 
@@ -860,7 +884,7 @@
         - devstack-platform-centos-9-stream
         - devstack-platform-debian-bullseye
         - devstack-platform-rocky-blue-onyx
-        - devstack-platform-ubuntu-jammy
+        - devstack-platform-ubuntu-focal
         - devstack-platform-ubuntu-jammy-ovn-source
         - devstack-platform-ubuntu-jammy-ovs
         - devstack-multinode
@@ -910,7 +934,7 @@
         # https://bugs.launchpad.net/neutron/+bug/1979047
         # - devstack-platform-centos-9-stream
         - devstack-platform-debian-bullseye
-        - devstack-platform-ubuntu-jammy
+        - devstack-platform-ubuntu-focal
         - devstack-enforce-scope
         - devstack-multinode
         - devstack-unit-tests
