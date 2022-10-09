@@ -29,26 +29,6 @@
           - controller
 
 - nodeset:
-    name: devstack-single-node-centos-7
-    nodes:
-      - name: controller
-        label: centos-7
-    groups:
-      - name: tempest
-        nodes:
-          - controller
-
-- nodeset:
-    name: devstack-single-node-opensuse-15
-    nodes:
-      - name: controller
-        label: opensuse-15
-    groups:
-      - name: tempest
-        nodes:
-          - controller
-
-- nodeset:
     name: openstack-two-node
     nodes:
       - name: controller
@@ -516,27 +496,6 @@
 # and these platforms don't have the round-the-clock support to avoid
 # becoming blockers in that situation.
 - job:
-    name: devstack-platform-centos-7
-    parent: tempest-full
-    description: Centos 7 platform test
-    nodeset: devstack-single-node-centos-7
-    voting: false
-
-- job:
-    name: devstack-platform-opensuse-15
-    parent: tempest-full
-    description: openSUSE 15.x platform test
-    nodeset: devstack-single-node-opensuse-15
-    voting: false
-
-- job:
-    name: devstack-platform-fedora-latest
-    parent: tempest-full
-    description: Fedora latest platform test
-    nodeset: devstack-single-node-fedora-latest
-    voting: false
-
-- job:
     name: devstack-platform-xenial
     parent: tempest-full
     description: Ubuntu Xenial platform test
@@ -623,8 +582,6 @@
             voting: false
         - devstack-ipv6:
             voting: false
-        - devstack-platform-centos-7
-        - devstack-platform-fedora-latest
         - devstack-platform-xenial
         - devstack-multinode
         - devstack-multinode-xenial:
