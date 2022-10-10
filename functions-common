@@ -966,29 +966,22 @@ function _get_domain_args {
 # Usage: get_or_add_user_project_role <role> <user> <project> [<user_domain> <project_domain>]
 function get_or_add_user_project_role {
     local user_role_id
+    local domain_args
 
     domain_args=$(_get_domain_args $4 $5)
 
-    # Gets user role id
+    # Note this is idempotent so we are safe across multiple
+    # duplicate calls.
+    openstack --os-cloud devstack-system-admin role add $1 \
+        --user $2 \
+        --project $3 \
+        $domain_args
     user_role_id=$(openstack --os-cloud devstack-system-admin role assignment list \
         --role $1 \
         --user $2 \
         --project $3 \
         $domain_args \
-        | grep '^|\s[a-f0-9]\+' | get_field 1)
-    if [[ -z "$user_role_id" ]]; then
-        # Adds role to user and get it
-        openstack --os-cloud devstack-system-admin role add $1 \
-            --user $2 \
-            --project $3 \
-            $domain_args
-        user_role_id=$(openstack --os-cloud devstack-system-admin role assignment list \
-            --role $1 \
-            --user $2 \
-            --project $3 \
-            $domain_args \
-            | grep '^|\s[a-f0-9]\+' | get_field 1)
-    fi
+        -c Role -f value)
     echo $user_role_id
 }
 
@@ -996,23 +989,18 @@ function get_or_add_user_project_role {
 # Usage: get_or_add_user_domain_role <role> <user> <domain>
 function get_or_add_user_domain_role {
     local user_role_id
-    # Gets user role id
+
+    # Note this is idempotent so we are safe across multiple
+    # duplicate calls.
+    openstack --os-cloud devstack-system-admin role add $1 \
+        --user $2 \
+        --domain $3
     user_role_id=$(openstack --os-cloud devstack-system-admin role assignment list \
         --role $1 \
         --user $2 \
         --domain $3 \
-        | grep '^|\s[a-f0-9]\+' | get_field 1)
-    if [[ -z "$user_role_id" ]]; then
-        # Adds role to user and get it
-        openstack --os-cloud devstack-system-admin role add $1 \
-            --user $2 \
-            --domain $3
-        user_role_id=$(openstack --os-cloud devstack-system-admin role assignment list \
-            --role $1 \
-            --user $2 \
-            --domain $3 \
-            | grep '^|\s[a-f0-9]\+' | get_field 1)
-    fi
+        -c Role -f value)
+
     echo $user_role_id
 }
 
@@ -1051,23 +1039,18 @@ function get_or_add_user_system_role {
 # Usage: get_or_add_group_project_role <role> <group> <project>
 function get_or_add_group_project_role {
     local group_role_id
-    # Gets group role id
+
+    # Note this is idempotent so we are safe across multiple
+    # duplicate calls.
+    openstack role add $1 \
+        --group $2 \
+        --project $3
     group_role_id=$(openstack --os-cloud devstack-system-admin role assignment list \
         --role $1 \
         --group $2 \
         --project $3 \
-        -f value)
-    if [[ -z "$group_role_id" ]]; then
-        # Adds role to group and get it
-        openstack --os-cloud devstack-system-admin role add $1 \
-            --group $2 \
-            --project $3
-        group_role_id=$(openstack --os-cloud devstack-system-admin role assignment list \
-            --role $1 \
-            --group $2 \
-            --project $3 \
-            -f value)
-    fi
+        -f value -c Role)
+
     echo $group_role_id
 }
 
