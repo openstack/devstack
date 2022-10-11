@@ -106,6 +106,9 @@ do the following:
 -  Set the service password. This is used by the OpenStack services
    (Nova, Glance, etc) to authenticate with Keystone.
 
+.. warning:: Only use alphanumeric characters in your passwords, as some
+   services fail to work when using special characters.
+
 ``local.conf`` should look something like this:
 
 .. code-block:: ini

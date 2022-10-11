@@ -101,7 +101,10 @@ devstack git repo.
 This is the minimum required config to get started with DevStack.
 
 .. note:: There is a sample :download:`local.conf </assets/local.conf>` file
-    under the *samples* directory in the devstack repository.
+   under the *samples* directory in the devstack repository.
+
+.. warning:: Only use alphanumeric characters in your passwords, as some
+   services fail to work when using special characters.
 
 Start the install
 -----------------
