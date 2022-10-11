@@ -636,7 +636,7 @@ tests can be run as follows:
 ::
 
     $ cd /opt/stack/tempest
-    $ tox -efull  tempest.scenario.test_network_basic_ops
+    $ tox -e smoke
 
 By default tempest is downloaded and the config file is generated, but the
 tempest package is not installed in the system's global site-packages (the
