@@ -335,7 +335,6 @@
     required-projects:
       - opendev.org/openstack/devstack
     roles:
-      - zuul: opendev.org/openstack/devstack-gate
       - zuul: opendev.org/openstack/openstack-zuul-jobs
     vars:
       devstack_localrc:
@@ -676,9 +675,6 @@
     timeout: 9000
     vars:
       configure_swap_size: 4096
-      devstack_services:
-        # Horizon doesn't like py310
-        horizon: false
 
 - job:
     name: devstack-platform-ubuntu-jammy-ovn-source
@@ -706,8 +702,6 @@
         Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch
         Q_ML2_TENANT_NETWORK_TYPE: vxlan
       devstack_services:
-        # Horizon doesn't like py310
-        horizon: false
         # Disable OVN services
         ovn-northd: false
         ovn-controller: false
@@ -752,10 +746,6 @@
     voting: false
     vars:
       configure_swap_size: 4096
-      # Python 3.10 dependency issues; see
-      # https://bugs.launchpad.net/horizon/+bug/1960204
-      devstack_services:
-        horizon: false
 
 - job:
     name: devstack-platform-fedora-latest-virt-preview
