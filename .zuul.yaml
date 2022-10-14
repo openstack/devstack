@@ -99,6 +99,16 @@
           - controller
 
 - nodeset:
+    name: devstack-single-node-rockylinux-9
+    nodes:
+      - name: controller
+        label: rockylinux-9
+    groups:
+      - name: tempest
+        nodes:
+          - controller
+
+- nodeset:
     name: openstack-two-node
     nodes:
       - name: controller
@@ -668,6 +678,15 @@
       configure_swap_size: 4096
 
 - job:
+    name: devstack-platform-rocky-blue-onyx
+    parent: tempest-full-py3
+    description: Rocky Linux 9 Blue Onyx platform test
+    nodeset: devstack-single-node-rockylinux-9
+    timeout: 9000
+    vars:
+      configure_swap_size: 4096
+
+- job:
     name: devstack-platform-ubuntu-jammy
     parent: tempest-full-py3
     description: Ubuntu 22.04 LTS (jammy) platform test
@@ -834,6 +853,7 @@
         - devstack-platform-fedora-latest
         - devstack-platform-centos-9-stream
         - devstack-platform-debian-bullseye
+        - devstack-platform-rocky-blue-onyx
         - devstack-platform-ubuntu-jammy
         - devstack-platform-ubuntu-jammy-ovn-source
         - devstack-platform-ubuntu-jammy-ovs
