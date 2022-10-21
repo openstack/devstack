@@ -181,6 +181,9 @@ values that most often need to be set.
 If the ``*_PASSWORD`` variables are not set here you will be prompted to
 enter values for them by ``stack.sh``.
 
+.. warning:: Only use alphanumeric characters in your passwords, as some
+   services fail to work when using special characters.
+
 The network ranges must not overlap with any networks in use on the
 host. Overlap is not uncommon as RFC-1918 'private' ranges are commonly
 used for both the local networking and Nova's fixed and floating ranges.
