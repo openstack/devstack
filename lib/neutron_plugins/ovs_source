@@ -33,9 +33,9 @@ function load_module {
     local fatal=$2
 
     if [ "$(trueorfalse True fatal)" == "True" ]; then
-        sudo modprobe $module || (dmesg && die $LINENO "FAILED TO LOAD $module")
+        sudo modprobe $module || (sudo dmesg && die $LINENO "FAILED TO LOAD $module")
     else
-        sudo modprobe $module || (echo "FAILED TO LOAD $module" && dmesg)
+        sudo modprobe $module || (echo "FAILED TO LOAD $module" && sudo dmesg)
     fi
 }
 
@@ -103,7 +103,7 @@ function prepare_for_ovs_compilation {
 function load_ovs_kernel_modules {
     load_module openvswitch
     load_module vport-geneve False
-    dmesg | tail
+    sudo dmesg | tail
 }
 
 # reload_ovs_kernel_modules() - reload openvswitch kernel module
