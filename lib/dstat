@@ -40,12 +40,18 @@ function start_dstat {
     if is_service_enabled peakmem_tracker; then
         die $LINENO "The peakmem_tracker service has been removed, use memory_tracker instead"
     fi
+
+    # To enable file_tracker add:
+    #    enable_service file_tracker
+    # to your localrc
+    run_process file_tracker "$TOP_DIR/tools/file_tracker.sh"
 }
 
 # stop_dstat() stop dstat process
 function stop_dstat {
     stop_process dstat
     stop_process memory_tracker
+    stop_process file_tracker
 }
 
 # Restore xtrace

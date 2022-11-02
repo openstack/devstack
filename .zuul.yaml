@@ -469,6 +469,7 @@
         dstat: false
         etcd3: true
         memory_tracker: true
+        file_tracker: true
         mysql: true
         rabbit: true
     group-vars:
@@ -477,6 +478,7 @@
           # Shared services
           dstat: false
           memory_tracker: true
+          file_tracker: true
         devstack_localrc:
           # Multinode specific settings
           HOST_IP: "{{ hostvars[inventory_hostname]['nodepool']['private_ipv4'] }}"
@@ -544,6 +546,7 @@
         dstat: false
         etcd3: true
         memory_tracker: true
+        file_tracker: true
         mysql: true
         rabbit: true
         tls-proxy: true
@@ -593,6 +596,7 @@
           # Shared services
           dstat: false
           memory_tracker: true
+          file_tracker: true
           tls-proxy: true
           # Nova services
           n-cpu: true
