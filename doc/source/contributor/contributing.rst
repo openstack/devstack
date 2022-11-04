@@ -42,8 +42,9 @@ Getting Your Patch Merged
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 All changes proposed to the Devstack require two ``Code-Review +2`` votes from
 Devstack core reviewers before one of the core reviewers can approve the patch
-by giving ``Workflow +1`` vote. One exception is for patches to unblock the gate
-which can be approved by single core reviewers.
+by giving ``Workflow +1`` vote. There are 2 exceptions, approving patches to
+unblock the gate and patches that do not relate to the Devstack's core logic,
+like for example old job cleanups, can be approved by single core reviewers.
 
 Project Team Lead Duties
 ~~~~~~~~~~~~~~~~~~~~~~~~
