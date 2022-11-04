@@ -572,27 +572,6 @@
       Simple multinode test to verify multinode functionality on devstack side.
       This is not meant to be used as a parent job.
 
-# NOTE(ianw) Platform tests have traditionally been non-voting because
-# we often have to rush things through devstack to stabilise the gate,
-# and these platforms don't have the round-the-clock support to avoid
-# becoming blockers in that situation.
-- job:
-    name: devstack-platform-bionic
-    parent: tempest-full-py3
-    description: Ubuntu Bionic platform test
-    nodeset: openstack-single-node-bionic
-    voting: false
-
-- job:
-    name: devstack-platform-centos-8-stream
-    parent: tempest-full-py3
-    description: CentOS 8 Stream platform test
-    nodeset: devstack-single-node-centos-8-stream
-    voting: false
-    timeout: 9000
-    vars:
-      configure_swap_size: 4096
-
 - job:
     name: devstack-platform-centos-9-stream
     parent: tempest-full-py3
@@ -686,8 +665,6 @@
       jobs:
         - devstack
         - devstack-ipv6
-        - devstack-platform-bionic
-        - devstack-platform-centos-8-stream
         - devstack-async
         - devstack-platform-centos-9-stream
         - devstack-multinode
