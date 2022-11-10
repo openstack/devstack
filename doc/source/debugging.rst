@@ -20,6 +20,12 @@ provides consumption output when available memory is seen to be
 falling (i.e. processes are consuming memory).  It also provides
 output showing locked (unswappable) memory.
 
+file_tracker
+------------
+
+The ``file_tracker`` service periodically monitors the number of
+open files in the system.
+
 tcpdump
 -------
 
