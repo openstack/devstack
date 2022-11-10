@@ -50,7 +50,7 @@ function configure_cinder_backend_lvm {
     iniset $CINDER_CONF $be_name volume_backend_name $be_name
     iniset $CINDER_CONF $be_name volume_driver "cinder.tests.fake_driver.FakeGateDriver"
     iniset $CINDER_CONF $be_name volume_group $VOLUME_GROUP_NAME-$be_name
-    iniset $CINDER_CONF $be_name target_helper "$CINDER_ISCSI_HELPER"
+    iniset $CINDER_CONF $be_name target_helper "$CINDER_TARGET_HELPER"
     iniset $CINDER_CONF $be_name lvm_type "$CINDER_LVM_TYPE"
 
     if [[ "$CINDER_VOLUME_CLEAR" == "non" ]]; then

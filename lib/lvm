@@ -130,7 +130,7 @@ function init_lvm_volume_group {
     local size=$2
 
     # Start the tgtd service on Fedora and SUSE if tgtadm is used
-    if  is_fedora || is_suse  && [[ "$CINDER_ISCSI_HELPER" = "tgtadm" ]]; then
+    if  is_fedora || is_suse  && [[ "$CINDER_TARGET_HELPER" = "tgtadm" ]]; then
         start_service tgtd
     fi
 
@@ -138,10 +138,14 @@ function init_lvm_volume_group {
     _create_lvm_volume_group $vg $size
 
     # Remove iscsi targets
-    if [ "$CINDER_ISCSI_HELPER" = "lioadm" ]; then
+    if [ "$CINDER_TARGET_HELPER" = "lioadm" ]; then
         sudo cinder-rtstool get-targets | sudo xargs -rn 1 cinder-rtstool delete
-    else
+    elif [ "$CINDER_TARGET_HELPER" = "tgtadm" ]; then
         sudo tgtadm --op show --mode target | awk '/Target/ {print $3}' | sudo xargs -r -n1 tgt-admin --delete
+    elif [ "$CINDER_TARGET_HELPER" = "nvmet" ]; then
+        # If we don't disconnect everything vgremove will block
+        sudo nvme disconnect-all
+        sudo nvmetcli clear
     fi
     _clean_lvm_volume_group $vg
 }
