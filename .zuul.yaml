@@ -9,26 +9,6 @@
           - controller
 
 - nodeset:
-    name: devstack-single-node-centos-7
-    nodes:
-      - name: controller
-        label: centos-7
-    groups:
-      - name: tempest
-        nodes:
-          - controller
-
-- nodeset:
-    name: devstack-single-node-opensuse-tumbleweed
-    nodes:
-      - name: controller
-        label: opensuse-tumbleweed
-    groups:
-      - name: tempest
-        nodes:
-          - controller
-
-- nodeset:
     name: openstack-two-node
     nodes:
       - name: controller
@@ -366,31 +346,6 @@
       Simple multinode test to verify multinode functionality on devstack side.
       This is not meant to be used as a parent job.
 
-# NOTE(ianw) Platform tests have traditionally been non-voting because
-# we often have to rush things through devstack to stabilise the gate,
-# and these platforms don't have the round-the-clock support to avoid
-# becoming blockers in that situation.
-- job:
-    name: devstack-platform-centos-7
-    parent: tempest-full
-    description: Centos 7 platform test
-    nodeset: devstack-single-node-centos-7
-    voting: false
-
-- job:
-    name: devstack-platform-opensuse-tumbleweed
-    parent: tempest-full
-    description: openSUSE Tumbleweed platform test
-    nodeset: devstack-single-node-opensuse-tumbleweed
-    voting: false
-
-- job:
-    name: devstack-platform-fedora-latest
-    parent: tempest-full
-    description: Fedora latest platform test
-    nodeset: devstack-single-node-fedora-latest
-    voting: false
-
 - job:
     name: devstack-tox-base
     parent: devstack
@@ -462,15 +417,16 @@
       - publish-openstack-sphinx-docs
     check:
       jobs:
-        - devstack
-        - devstack-platform-centos-7
-        - devstack-platform-opensuse-tumbleweed
-        - devstack-platform-fedora-latest
-        - devstack-multinode
+        - tempest-full:
+            voting: false
+        - tempest-full-py3:
+            voting: false
+        - devstack:
+            voting: false
+        - devstack-multinode:
+            voting: false
         - devstack-unit-tests
         - openstack-tox-bashate
-        - ironic-tempest-dsvm-ipa-wholedisk-bios-agent_ipmitool-tinyipa:
-            voting: false
         - swift-dsvm-functional:
             voting: false
             irrelevant-files:
@@ -497,21 +453,17 @@
               - ^doc/.*$
     gate:
       jobs:
-        - devstack
+        - tempest-full:
+            voting: false
+        - tempest-full-py3:
+            voting: false
+        # - devstack
         - devstack-unit-tests
         - openstack-tox-bashate
-        #- neutron-grenade-multinode:
-        #    irrelevant-files:
-        #      - ^.*\.rst$
-        #      - ^doc/.*$
         - neutron-tempest-linuxbridge:
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
-        #- neutron-grenade:
-        #    irrelevant-files:
-        #      - ^.*\.rst$
-        #      - ^doc/.*$
     # Please add a note on each job and conditions for the job not
     # being experimental any more, so we can keep this list somewhat
     # pruned.
@@ -533,10 +485,6 @@
 
     experimental:
       jobs:
-        - nova-cells-v1:
-            irrelevant-files:
-              - ^.*\.rst$
-              - ^doc/.*$
         - nova-next
         - neutron-fullstack-with-uwsgi
         - neutron-functional-with-uwsgi
