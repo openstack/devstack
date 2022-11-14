@@ -911,8 +911,23 @@ function install_nova {
         # a websockets/html5 or flash powered VNC console for vm instances
         NOVNC_FROM_PACKAGE=$(trueorfalse False NOVNC_FROM_PACKAGE)
         if [ "$NOVNC_FROM_PACKAGE" = "True" ]; then
+            # Installing novnc on Debian bullseye breaks the global pip
+            # install. This happens because novnc pulls in distro cryptography
+            # which will be prefered by distro pip, but if anything has
+            # installed pyOpenSSL from pypi (keystone) that is not compatible
+            # with distro cryptography. Fix this by installing
+            # python3-openssl (pyOpenSSL) from the distro which pip will prefer
+            # on Debian. Ubuntu has inverse problems so we only do this for
+            # Debian.
+            local novnc_packages
+            novnc_packages="novnc"
+            GetOSVersion
+            if [[ "$os_VENDOR" = "Debian" ]] ; then
+                novnc_packages="$novnc_packages python3-openssl"
+            fi
+
             NOVNC_WEB_DIR=/usr/share/novnc
-            install_package novnc
+            install_package $novnc_packages
         else
             NOVNC_WEB_DIR=$DEST/novnc
             git_clone $NOVNC_REPO $NOVNC_WEB_DIR $NOVNC_BRANCH
