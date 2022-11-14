@@ -674,8 +674,6 @@
     description: Debian Bullseye platform test
     nodeset: devstack-single-node-debian-bullseye
     timeout: 9000
-    # TODO(danms) n-v until the known issue is resolved
-    voting: false
     vars:
       configure_swap_size: 4096
 
