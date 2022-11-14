@@ -19,7 +19,6 @@
 
 import argparse
 import datetime
-from distutils import spawn
 import fnmatch
 import io
 import os
@@ -76,7 +75,7 @@ def _dump_cmd(cmd):
 
 
 def _find_cmd(cmd):
-    if not spawn.find_executable(cmd):
+    if not shutil.which(cmd):
         print("*** %s not found: skipping" % cmd)
         return False
     return True
