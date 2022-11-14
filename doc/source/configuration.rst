@@ -751,7 +751,7 @@ or at runtime via:
 
 ::
 
-    openstack --os-cloud devstack-system-admin registered limit update \
+    openstack --os-cloud devstack-system-admin registered limit set \
       --service glance --default-limit 5000 --region RegionOne image_size_total
 
 .. _arch-configuration:
