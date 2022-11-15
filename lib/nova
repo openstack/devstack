@@ -97,6 +97,12 @@ NOVA_SERVICE_LISTEN_ADDRESS=${NOVA_SERVICE_LISTEN_ADDRESS:-$(ipv6_unquote $SERVI
 METADATA_SERVICE_PORT=${METADATA_SERVICE_PORT:-8775}
 NOVA_ENABLE_CACHE=${NOVA_ENABLE_CACHE:-True}
 
+# Flag to set the oslo_policy.enforce_scope and oslo_policy.enforce_new_defaults.
+# This is used to switch the compute API policies enable the scope and new defaults.
+# By Default, these flag are False.
+# For more detail: https://docs.openstack.org/oslo.policy/latest/configuration/index.html#oslo_policy.enforce_scope
+NOVA_ENFORCE_SCOPE=$(trueorfalse False NOVA_ENFORCE_SCOPE)
+
 if [[ $SERVICE_IP_VERSION == 6 ]]; then
     NOVA_MY_IP="$HOST_IPV6"
 else
@@ -481,6 +487,10 @@ function create_nova_conf {
             NOVA_ENABLED_APIS=$(echo $NOVA_ENABLED_APIS | sed "s/,metadata//")
         fi
         iniset $NOVA_CONF DEFAULT enabled_apis "$NOVA_ENABLED_APIS"
+        if [[ "$NOVA_ENFORCE_SCOPE" == "True" || "$ENFORCE_SCOPE" == "True" ]]; then
+            iniset $NOVA_CONF oslo_policy enforce_new_defaults True
+            iniset $NOVA_CONF oslo_policy enforce_scope True
+        fi
         if is_service_enabled tls-proxy && [ "$NOVA_USE_MOD_WSGI" == "False" ]; then
             # Set the service port for a proxy to take the original
             iniset $NOVA_CONF DEFAULT osapi_compute_listen_port "$NOVA_SERVICE_PORT_INT"

@@ -674,6 +674,10 @@ function configure_tempest {
         iniset $TEMPEST_CONFIG auth admin_project_name ''
     fi
 
+    if [[ "$NOVA_ENFORCE_SCOPE" == True || "$ENFORCE_SCOPE" == True ]] ; then
+        iniset $TEMPEST_CONFIG enforce_scope nova true
+    fi
+
     if [[ "$GLANCE_ENFORCE_SCOPE" == True || "$ENFORCE_SCOPE" == True ]] ; then
         iniset $TEMPEST_CONFIG enforce_scope glance true
     fi
