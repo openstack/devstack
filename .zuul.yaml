@@ -650,6 +650,7 @@
     parent: tempest-full-py3
     description: CentOS 9 Stream platform test
     nodeset: devstack-single-node-centos-9-stream
+    voting: false
     timeout: 9000
     vars:
       configure_swap_size: 4096
@@ -825,7 +826,6 @@
       jobs:
         - devstack
         - devstack-ipv6
-        - devstack-platform-centos-9-stream
         - devstack-enforce-scope
         - devstack-multinode
         - devstack-unit-tests
