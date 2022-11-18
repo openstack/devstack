@@ -6,7 +6,7 @@ function configure_qos_service_plugin {
 
 
 function configure_qos_core_plugin {
-    configure_qos_$NEUTRON_CORE_PLUGIN
+    configure_qos_$Q_PLUGIN
 }
 
 

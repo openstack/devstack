@@ -1,32 +1,85 @@
 #!/bin/bash
 #
 # lib/neutron
-# Install and start **Neutron** network services
+# functions - functions specific to neutron
 
 # Dependencies:
-#
 # ``functions`` file
 # ``DEST`` must be defined
+# ``STACK_USER`` must be defined
 
 # ``stack.sh`` calls the entry points in this order:
 #
-# - is_XXXX_enabled
-# - install_XXXX
-# - configure_XXXX
-# - init_XXXX
-# - start_XXXX
-# - stop_XXXX
-# - cleanup_XXXX
+# - install_neutron_agent_packages
+# - install_neutronclient
+# - install_neutron
+# - install_neutron_third_party
+# - configure_neutron
+# - init_neutron
+# - configure_neutron_third_party
+# - init_neutron_third_party
+# - start_neutron_third_party
+# - create_nova_conf_neutron
+# - configure_neutron_after_post_config
+# - start_neutron_service_and_check
+# - check_neutron_third_party_integration
+# - start_neutron_agents
+# - create_neutron_initial_network
+#
+# ``unstack.sh`` calls the entry points in this order:
+#
+# - stop_neutron
+# - stop_neutron_third_party
+# - cleanup_neutron
 
-# Save trace setting
-XTRACE=$(set +o | grep xtrace)
-set +o xtrace
+# Functions in lib/neutron are classified into the following categories:
+#
+# - entry points (called from stack.sh or unstack.sh)
+# - internal functions
+# - neutron exercises
+# - 3rd party programs
 
-# Defaults
+
+# Neutron Networking
+# ------------------
+
+# Make sure that neutron is enabled in ``ENABLED_SERVICES``.  If you want
+# to run Neutron on this host, make sure that q-svc is also in
+# ``ENABLED_SERVICES``.
+#
+# See "Neutron Network Configuration" below for additional variables
+# that must be set in localrc for connectivity across hosts with
+# Neutron.
+
+# Settings
 # --------
+
+
+# Neutron Network Configuration
+# -----------------------------
+
+if is_service_enabled tls-proxy; then
+    Q_PROTOCOL="https"
+fi
+
 
 # Set up default directories
 GITDIR["python-neutronclient"]=$DEST/python-neutronclient
+
+
+NEUTRON_DIR=$DEST/neutron
+NEUTRON_FWAAS_DIR=$DEST/neutron-fwaas
+
+# Support entry points installation of console scripts
+if [[ -d $NEUTRON_DIR/bin/neutron-server ]]; then
+    NEUTRON_BIN_DIR=$NEUTRON_DIR/bin
+else
+    NEUTRON_BIN_DIR=$(get_python_exec_prefix)
+fi
+
+NEUTRON_CONF_DIR=/etc/neutron
+NEUTRON_CONF=$NEUTRON_CONF_DIR/neutron.conf
+export NEUTRON_TEST_CONFIG_FILE=${NEUTRON_TEST_CONFIG_FILE:-"$NEUTRON_CONF_DIR/debug.ini"}
 
 # NEUTRON_DEPLOY_MOD_WSGI defines how neutron is deployed, allowed values:
 # - False (default) : Run neutron under Eventlet
@@ -34,85 +87,69 @@ GITDIR["python-neutronclient"]=$DEST/python-neutronclient
 # TODO(annp): Switching to uwsgi in next cycle if things turn out to be stable
 # enough
 NEUTRON_DEPLOY_MOD_WSGI=$(trueorfalse False NEUTRON_DEPLOY_MOD_WSGI)
-NEUTRON_AGENT=${NEUTRON_AGENT:-openvswitch}
-NEUTRON_DIR=$DEST/neutron
+
+NEUTRON_UWSGI_CONF=$NEUTRON_CONF_DIR/neutron-api-uwsgi.ini
 
 # If NEUTRON_ENFORCE_SCOPE == True, it will set "enforce_scope"
 # and "enforce_new_defaults" to True in the Neutron's config to enforce usage
 # of the new RBAC policies and scopes.
 NEUTRON_ENFORCE_SCOPE=$(trueorfalse False NEUTRON_ENFORCE_SCOPE)
 
-NEUTRON_DISTRIBUTED_ROUTING=$(trueorfalse False NEUTRON_DISTRIBUTED_ROUTING)
-# Distributed Virtual Router (DVR) configuration
-# Can be:
-# - ``legacy``          - No DVR functionality
-# - ``dvr_snat``        - Controller or single node DVR
-# - ``dvr``             - Compute node in multi-node DVR
-# - ``dvr_no_external`` - Compute node in multi-node DVR, no external network
-#
-# Default is 'dvr_snat' since it can handle both DVR and legacy routers
-NEUTRON_DVR_MODE=${NEUTRON_DVR_MODE:-dvr_snat}
+# Agent binaries.  Note, binary paths for other agents are set in per-service
+# scripts in lib/neutron_plugins/services/
+AGENT_DHCP_BINARY="$NEUTRON_BIN_DIR/neutron-dhcp-agent"
+AGENT_L3_BINARY=${AGENT_L3_BINARY:-"$NEUTRON_BIN_DIR/neutron-l3-agent"}
+AGENT_META_BINARY="$NEUTRON_BIN_DIR/neutron-metadata-agent"
 
-NEUTRON_BIN_DIR=$(get_python_exec_prefix)
-NEUTRON_DHCP_BINARY="neutron-dhcp-agent"
+# Agent config files. Note, plugin-specific Q_PLUGIN_CONF_FILE is set and
+# loaded from per-plugin  scripts in lib/neutron_plugins/
+Q_DHCP_CONF_FILE=$NEUTRON_CONF_DIR/dhcp_agent.ini
+# NOTE(slaweq): NEUTRON_DHCP_CONF is used e.g. in neutron repository,
+# it was previously defined in the lib/neutron module which is now deleted.
+NEUTRON_DHCP_CONF=$Q_DHCP_CONF_FILE
+Q_L3_CONF_FILE=$NEUTRON_CONF_DIR/l3_agent.ini
+# NOTE(slaweq): NEUTRON_L3_CONF is used e.g. in neutron repository,
+# it was previously defined in the lib/neutron module which is now deleted.
+NEUTRON_L3_CONF=$Q_L3_CONF_FILE
+Q_META_CONF_FILE=$NEUTRON_CONF_DIR/metadata_agent.ini
 
-NEUTRON_CONF_DIR=/etc/neutron
-NEUTRON_CONF=$NEUTRON_CONF_DIR/neutron.conf
-NEUTRON_META_CONF=$NEUTRON_CONF_DIR/metadata_agent.ini
-NEUTRON_META_DATA_HOST=${NEUTRON_META_DATA_HOST:-$(ipv6_unquote $SERVICE_HOST)}
+# Default name for Neutron database
+Q_DB_NAME=${Q_DB_NAME:-neutron}
+# Default Neutron Plugin
+Q_PLUGIN=${Q_PLUGIN:-ml2}
+# Default Neutron Port
+Q_PORT=${Q_PORT:-9696}
+# Default Neutron Internal Port when using TLS proxy
+Q_PORT_INT=${Q_PORT_INT:-19696}
+# Default Neutron Host
+Q_HOST=${Q_HOST:-$SERVICE_HOST}
+# Default protocol
+Q_PROTOCOL=${Q_PROTOCOL:-$SERVICE_PROTOCOL}
+# Default listen address
+Q_LISTEN_ADDRESS=${Q_LISTEN_ADDRESS:-$(ipv6_unquote $SERVICE_LISTEN_ADDRESS)}
+# Default admin username
+Q_ADMIN_USERNAME=${Q_ADMIN_USERNAME:-neutron}
+# Default auth strategy
+Q_AUTH_STRATEGY=${Q_AUTH_STRATEGY:-keystone}
+# RHEL's support for namespaces requires using veths with ovs
+Q_OVS_USE_VETH=${Q_OVS_USE_VETH:-False}
+Q_USE_ROOTWRAP=${Q_USE_ROOTWRAP:-True}
+Q_USE_ROOTWRAP_DAEMON=$(trueorfalse True Q_USE_ROOTWRAP_DAEMON)
+# Meta data IP
+Q_META_DATA_IP=${Q_META_DATA_IP:-$(ipv6_unquote $SERVICE_HOST)}
+# Allow Overlapping IP among subnets
+Q_ALLOW_OVERLAPPING_IP=${Q_ALLOW_OVERLAPPING_IP:-True}
+Q_NOTIFY_NOVA_PORT_STATUS_CHANGES=${Q_NOTIFY_NOVA_PORT_STATUS_CHANGES:-True}
+Q_NOTIFY_NOVA_PORT_DATA_CHANGES=${Q_NOTIFY_NOVA_PORT_DATA_CHANGES:-True}
+VIF_PLUGGING_IS_FATAL=${VIF_PLUGGING_IS_FATAL:-True}
+VIF_PLUGGING_TIMEOUT=${VIF_PLUGGING_TIMEOUT:-300}
 
-NEUTRON_DHCP_CONF=$NEUTRON_CONF_DIR/dhcp_agent.ini
-NEUTRON_L3_CONF=$NEUTRON_CONF_DIR/l3_agent.ini
-NEUTRON_AGENT_CONF=$NEUTRON_CONF_DIR/
-NEUTRON_CREATE_INITIAL_NETWORKS=${NEUTRON_CREATE_INITIAL_NETWORKS:-True}
+# Allow to skip stopping of OVN services
+SKIP_STOP_OVN=${SKIP_STOP_OVN:-False}
 
-NEUTRON_STATE_PATH=${NEUTRON_STATE_PATH:=$DATA_DIR/neutron}
-
-NEUTRON_UWSGI_CONF=$NEUTRON_CONF_DIR/neutron-api-uwsgi.ini
-
-# By default, use the ML2 plugin
-NEUTRON_CORE_PLUGIN=${NEUTRON_CORE_PLUGIN:-ml2}
-NEUTRON_CORE_PLUGIN_CONF_FILENAME=${NEUTRON_CORE_PLUGIN_CONF_FILENAME:-ml2_conf.ini}
-NEUTRON_CORE_PLUGIN_CONF_PATH=$NEUTRON_CONF_DIR/plugins/$NEUTRON_CORE_PLUGIN
-NEUTRON_CORE_PLUGIN_CONF=$NEUTRON_CORE_PLUGIN_CONF_PATH/$NEUTRON_CORE_PLUGIN_CONF_FILENAME
-
-NEUTRON_METERING_AGENT_CONF_FILENAME=${NEUTRON_METERING_AGENT_CONF_FILENAME:-metering_agent.ini}
-NEUTRON_METERING_AGENT_CONF=$NEUTRON_CONF_DIR/$NEUTRON_METERING_AGENT_CONF_FILENAME
-
-NEUTRON_AGENT_BINARY=${NEUTRON_AGENT_BINARY:-neutron-$NEUTRON_AGENT-agent}
-NEUTRON_L3_BINARY=${NEUTRON_L3_BINARY:-neutron-l3-agent}
-NEUTRON_META_BINARY=${NEUTRON_META_BINARY:-neutron-metadata-agent}
-NEUTRON_METERING_BINARY=${NEUTRON_METERING_BINARY:-neutron-metering-agent}
-
-# Public facing bits
-if is_service_enabled tls-proxy; then
-    NEUTRON_SERVICE_PROTOCOL="https"
-fi
-NEUTRON_SERVICE_HOST=${NEUTRON_SERVICE_HOST:-$SERVICE_HOST}
-NEUTRON_SERVICE_PORT=${NEUTRON_SERVICE_PORT:-9696}
-NEUTRON_SERVICE_PORT_INT=${NEUTRON_SERVICE_PORT_INT:-19696}
-NEUTRON_SERVICE_PROTOCOL=${NEUTRON_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
-
-NEUTRON_AUTH_STRATEGY=${NEUTRON_AUTH_STRATEGY:-keystone}
-NEUTRON_ROOTWRAP=$(get_rootwrap_location neutron)
-NEUTRON_ROOTWRAP_CONF_FILE=$NEUTRON_CONF_DIR/rootwrap.conf
-NEUTRON_ROOTWRAP_CMD="$NEUTRON_ROOTWRAP $NEUTRON_ROOTWRAP_CONF_FILE"
-NEUTRON_ROOTWRAP_DAEMON_CMD="$NEUTRON_ROOTWRAP-daemon $NEUTRON_ROOTWRAP_CONF_FILE"
-
-# This is needed because _neutron_ovs_base_configure_l3_agent uses it to create
-# an external network bridge
-PUBLIC_BRIDGE=${PUBLIC_BRIDGE:-br-ex}
-PUBLIC_BRIDGE_MTU=${PUBLIC_BRIDGE_MTU:-1500}
-
-# Network type - default vxlan, however enables vlan based jobs to override
-# using the legacy environment variable as well as a new variable in greater
-# alignment with the naming scheme of this plugin.
-NEUTRON_TENANT_NETWORK_TYPE=${NEUTRON_TENANT_NETWORK_TYPE:-vxlan}
-
-NEUTRON_TENANT_VLAN_RANGE=${NEUTRON_TENANT_VLAN_RANGE:-${TENANT_VLAN_RANGE:-100:150}}
-
-# Physical network for VLAN network usage.
-NEUTRON_PHYSICAL_NETWORK=${NEUTRON_PHYSICAL_NETWORK:-}
+# The directory which contains files for Q_PLUGIN_EXTRA_CONF_FILES.
+# /etc/neutron is assumed by many of devstack plugins.  Do not change.
+_Q_PLUGIN_EXTRA_CONF_PATH=/etc/neutron
 
 # The name of the service in the endpoint URL
 NEUTRON_ENDPOINT_SERVICE_NAME=${NEUTRON_ENDPOINT_SERVICE_NAME-"networking"}
@@ -120,9 +157,155 @@ if [[ "$NEUTRON_DEPLOY_MOD_WSGI" == "True" && -z "$NEUTRON_ENDPOINT_SERVICE_NAME
     NEUTRON_ENDPOINT_SERVICE_NAME="networking"
 fi
 
+# List of config file names in addition to the main plugin config file
+# To add additional plugin config files, use ``neutron_server_config_add``
+# utility function.  For example:
+#
+#    ``neutron_server_config_add file1``
+#
+# These config files are relative to ``/etc/neutron``.  The above
+# example would specify ``--config-file /etc/neutron/file1`` for
+# neutron server.
+declare -a -g Q_PLUGIN_EXTRA_CONF_FILES
 
-# Additional neutron api config files
-declare -a -g _NEUTRON_SERVER_EXTRA_CONF_FILES_ABS
+# same as Q_PLUGIN_EXTRA_CONF_FILES, but with absolute path.
+declare -a -g _Q_PLUGIN_EXTRA_CONF_FILES_ABS
+
+
+Q_RR_CONF_FILE=$NEUTRON_CONF_DIR/rootwrap.conf
+if [[ "$Q_USE_ROOTWRAP" == "False" ]]; then
+    Q_RR_COMMAND="sudo"
+else
+    NEUTRON_ROOTWRAP=$(get_rootwrap_location neutron)
+    Q_RR_COMMAND="sudo $NEUTRON_ROOTWRAP $Q_RR_CONF_FILE"
+    if [[ "$Q_USE_ROOTWRAP_DAEMON" == "True" ]]; then
+        Q_RR_DAEMON_COMMAND="sudo $NEUTRON_ROOTWRAP-daemon $Q_RR_CONF_FILE"
+    fi
+fi
+
+
+# Distributed Virtual Router (DVR) configuration
+# Can be:
+# - ``legacy``   - No DVR functionality
+# - ``dvr_snat`` - Controller or single node DVR
+# - ``dvr``      - Compute node in multi-node DVR
+# - ``dvr_no_external`` - Compute node in multi-node DVR, no external network
+#
+Q_DVR_MODE=${Q_DVR_MODE:-legacy}
+if [[ "$Q_DVR_MODE" != "legacy" ]]; then
+    Q_ML2_PLUGIN_MECHANISM_DRIVERS=openvswitch,l2population
+fi
+
+# Provider Network Configurations
+# --------------------------------
+
+# The following variables control the Neutron ML2 plugins' allocation
+# of tenant networks and availability of provider networks. If these
+# are not configured in ``localrc``, tenant networks will be local to
+# the host (with no remote connectivity), and no physical resources
+# will be available for the allocation of provider networks.
+
+# To disable tunnels (GRE or VXLAN) for tenant networks,
+# set to False in ``local.conf``.
+# GRE tunnels are only supported by the openvswitch.
+ENABLE_TENANT_TUNNELS=${ENABLE_TENANT_TUNNELS:-True}
+
+# If using GRE, VXLAN or GENEVE tunnels for tenant networks,
+# specify the range of IDs from which tenant networks are
+# allocated. Can be overridden in ``localrc`` if necessary.
+TENANT_TUNNEL_RANGES=${TENANT_TUNNEL_RANGES:-1:1000}
+
+# To use VLANs for tenant networks, set to True in localrc. VLANs
+# are supported by the ML2 plugins, requiring additional configuration
+# described below.
+ENABLE_TENANT_VLANS=${ENABLE_TENANT_VLANS:-False}
+
+# If using VLANs for tenant networks, set in ``localrc`` to specify
+# the range of VLAN VIDs from which tenant networks are
+# allocated. An external network switch must be configured to
+# trunk these VLANs between hosts for multi-host connectivity.
+#
+# Example: ``TENANT_VLAN_RANGE=1000:1999``
+TENANT_VLAN_RANGE=${TENANT_VLAN_RANGE:-}
+
+# If using VLANs for tenant networks, or if using flat or VLAN
+# provider networks, set in ``localrc`` to the name of the physical
+# network, and also configure ``OVS_PHYSICAL_BRIDGE`` for the
+# openvswitch agent or ``LB_PHYSICAL_INTERFACE`` for the linuxbridge
+# agent, as described below.
+#
+# Example: ``PHYSICAL_NETWORK=default``
+PHYSICAL_NETWORK=${PHYSICAL_NETWORK:-public}
+
+# With the openvswitch agent, if using VLANs for tenant networks,
+# or if using flat or VLAN provider networks, set in ``localrc`` to
+# the name of the OVS bridge to use for the physical network. The
+# bridge will be created if it does not already exist, but a
+# physical interface must be manually added to the bridge as a
+# port for external connectivity.
+#
+# Example: ``OVS_PHYSICAL_BRIDGE=br-eth1``
+OVS_PHYSICAL_BRIDGE=${OVS_PHYSICAL_BRIDGE:-br-ex}
+
+# With the linuxbridge agent, if using VLANs for tenant networks,
+# or if using flat or VLAN provider networks, set in ``localrc`` to
+# the name of the network interface to use for the physical
+# network.
+#
+# Example: ``LB_PHYSICAL_INTERFACE=eth1``
+if [[ $Q_AGENT == "linuxbridge" && -z ${LB_PHYSICAL_INTERFACE} ]]; then
+    default_route_dev=$( (ip route; ip -6 route) | grep ^default | head -n 1 | awk '{print $5}')
+    die_if_not_set $LINENO default_route_dev "Failure retrieving default route device"
+    LB_PHYSICAL_INTERFACE=$default_route_dev
+fi
+
+# With the openvswitch plugin, set to True in ``localrc`` to enable
+# provider GRE tunnels when ``ENABLE_TENANT_TUNNELS`` is False.
+#
+# Example: ``OVS_ENABLE_TUNNELING=True``
+OVS_ENABLE_TUNNELING=${OVS_ENABLE_TUNNELING:-$ENABLE_TENANT_TUNNELS}
+
+# Use DHCP agent for providing metadata service in the case of
+# without L3 agent (No Route Agent), set to True in localrc.
+ENABLE_ISOLATED_METADATA=${ENABLE_ISOLATED_METADATA:-False}
+
+# Add a static route as dhcp option, so the request to 169.254.169.254
+# will be able to reach through a route(DHCP agent)
+# This option require ENABLE_ISOLATED_METADATA = True
+ENABLE_METADATA_NETWORK=${ENABLE_METADATA_NETWORK:-False}
+# Neutron plugin specific functions
+# ---------------------------------
+
+# Please refer to ``lib/neutron_plugins/README.md`` for details.
+if [ -f $TOP_DIR/lib/neutron_plugins/$Q_PLUGIN ]; then
+    source $TOP_DIR/lib/neutron_plugins/$Q_PLUGIN
+fi
+
+# Agent metering service plugin functions
+# -------------------------------------------
+
+# Hardcoding for 1 service plugin for now
+source $TOP_DIR/lib/neutron_plugins/services/metering
+
+# L3 Service functions
+source $TOP_DIR/lib/neutron_plugins/services/l3
+
+# Additional Neutron service plugins
+source $TOP_DIR/lib/neutron_plugins/services/placement
+source $TOP_DIR/lib/neutron_plugins/services/trunk
+source $TOP_DIR/lib/neutron_plugins/services/qos
+
+# Use security group or not
+if has_neutron_plugin_security_group; then
+    Q_USE_SECGROUP=${Q_USE_SECGROUP:-True}
+else
+    Q_USE_SECGROUP=False
+fi
+
+# Save trace setting
+_XTRACE_NEUTRON=$(set +o | grep xtrace)
+set +o xtrace
+
 
 # Functions
 # ---------
@@ -136,310 +319,194 @@ function is_neutron_enabled {
 }
 
 # Test if any Neutron services are enabled
-# is_neutron_enabled
+# TODO(slaweq): this is not really needed now and we should remove it as soon
+# as it will not be called from any other Devstack plugins, like e.g. Neutron
+# plugin
 function is_neutron_legacy_enabled {
-    # first we need to remove all "neutron-" from DISABLED_SERVICES list
-    disabled_services_copy=$(echo $DISABLED_SERVICES | sed 's/neutron-//g')
-    [[ ,${disabled_services_copy} =~ ,"neutron" ]] && return 1
-    [[ ,${ENABLED_SERVICES} =~ ,"q-" ]] && return 0
-    return 1
+    return 0
 }
 
-if is_neutron_legacy_enabled; then
-    source $TOP_DIR/lib/neutron-legacy
-fi
-
-# cleanup_neutron() - Remove residual data files, anything left over from previous
-# runs that a clean run would need to clean up
-function cleanup_neutron_new {
-    deprecated "Using lib/neutron is deprecated, and it will be removed in AA release!"
-    source $TOP_DIR/lib/neutron_plugins/${NEUTRON_AGENT}_agent
-    if is_neutron_ovs_base_plugin; then
-        neutron_ovs_base_cleanup
+function _determine_config_server {
+    if [[ "$Q_PLUGIN_EXTRA_CONF_PATH" != '' ]]; then
+        if [[ "$Q_PLUGIN_EXTRA_CONF_PATH" = "$_Q_PLUGIN_EXTRA_CONF_PATH" ]]; then
+            deprecated "Q_PLUGIN_EXTRA_CONF_PATH is deprecated"
+        else
+            die $LINENO "Q_PLUGIN_EXTRA_CONF_PATH is deprecated"
+        fi
     fi
-
-    if [[ $NEUTRON_AGENT == "linuxbridge" ]]; then
-        neutron_lb_cleanup
+    if [[ ${#Q_PLUGIN_EXTRA_CONF_FILES[@]} > 0 ]]; then
+        deprecated "Q_PLUGIN_EXTRA_CONF_FILES is deprecated.  Use neutron_server_config_add instead."
     fi
-    # delete all namespaces created by neutron
-    for ns in $(sudo ip netns list | grep -o -E '(qdhcp|qrouter|qlbaas|fip|snat)-[0-9a-f-]*'); do
-        sudo ip netns delete ${ns}
+    for cfg_file in ${Q_PLUGIN_EXTRA_CONF_FILES[@]}; do
+        _Q_PLUGIN_EXTRA_CONF_FILES_ABS+=($_Q_PLUGIN_EXTRA_CONF_PATH/$cfg_file)
     done
+
+    local cfg_file
+    local opts="--config-file $NEUTRON_CONF --config-file /$Q_PLUGIN_CONF_FILE"
+    for cfg_file in ${_Q_PLUGIN_EXTRA_CONF_FILES_ABS[@]}; do
+        opts+=" --config-file $cfg_file"
+    done
+    echo "$opts"
 }
 
-# configure_root_helper_options() - Configure agent rootwrap helper options
-function configure_root_helper_options {
-    local conffile=$1
-    iniset $conffile agent root_helper "sudo $NEUTRON_ROOTWRAP_CMD"
-    iniset $conffile agent root_helper_daemon "sudo $NEUTRON_ROOTWRAP_DAEMON_CMD"
+function _determine_config_l3 {
+    local opts="--config-file $NEUTRON_CONF --config-file $Q_L3_CONF_FILE"
+    echo "$opts"
 }
 
-# configure_neutron() - Set config files, create data dirs, etc
-function configure_neutron_new {
-    deprecated "Using lib/neutron is deprecated, and it will be removed in AA release!"
-    sudo install -d -o $STACK_USER $NEUTRON_CONF_DIR
-
-    (cd $NEUTRON_DIR && exec ./tools/generate_config_file_samples.sh)
-
-    cp $NEUTRON_DIR/etc/neutron.conf.sample $NEUTRON_CONF
-
-    configure_neutron_rootwrap
-
-    mkdir -p $NEUTRON_CORE_PLUGIN_CONF_PATH
-
-    # NOTE(yamamoto): A decomposed plugin should prepare the config file in
-    # its devstack plugin.
-    if [ -f $NEUTRON_DIR/etc/neutron/plugins/$NEUTRON_CORE_PLUGIN/$NEUTRON_CORE_PLUGIN_CONF_FILENAME.sample ]; then
-        cp $NEUTRON_DIR/etc/neutron/plugins/$NEUTRON_CORE_PLUGIN/$NEUTRON_CORE_PLUGIN_CONF_FILENAME.sample $NEUTRON_CORE_PLUGIN_CONF
+# For services and agents that require it, dynamically construct a list of
+# --config-file arguments that are passed to the binary.
+function determine_config_files {
+    local opts=""
+    case "$1" in
+        "neutron-server") opts="$(_determine_config_server)" ;;
+        "neutron-l3-agent") opts="$(_determine_config_l3)" ;;
+    esac
+    if [ -z "$opts" ] ; then
+        die $LINENO "Could not determine config files for $1."
     fi
+    echo "$opts"
+}
 
-    iniset $NEUTRON_CONF database connection `database_connection_url neutron`
-    iniset $NEUTRON_CONF DEFAULT state_path $NEUTRON_STATE_PATH
-    iniset $NEUTRON_CONF oslo_concurrency lock_path $NEUTRON_STATE_PATH/lock
-    iniset $NEUTRON_CONF DEFAULT use_syslog $SYSLOG
-
-    iniset $NEUTRON_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
-
+# configure_neutron()
+# Set common config for all neutron server and agents.
+function configure_neutron {
+    _configure_neutron_common
     iniset_rpc_backend neutron $NEUTRON_CONF
 
-    # Neutron API server & Neutron plugin
-    if is_service_enabled neutron-api; then
-        local policy_file=$NEUTRON_CONF_DIR/policy.json
-        # Allow neutron user to administer neutron to match neutron account
-        # NOTE(amotoki): This is required for nova works correctly with neutron.
-        if [ -f $NEUTRON_DIR/etc/policy.json ]; then
-            cp $NEUTRON_DIR/etc/policy.json $policy_file
-            sed -i 's/"context_is_admin":  "role:admin"/"context_is_admin":  "role:admin or user_name:neutron"/g' $policy_file
-        else
-            echo '{"context_is_admin":  "role:admin or user_name:neutron"}' > $policy_file
-        fi
-
-        cp $NEUTRON_DIR/etc/api-paste.ini $NEUTRON_CONF_DIR/api-paste.ini
-
-        iniset $NEUTRON_CONF DEFAULT core_plugin $NEUTRON_CORE_PLUGIN
-
-        iniset $NEUTRON_CONF DEFAULT policy_file $policy_file
-        iniset $NEUTRON_CONF DEFAULT router_distributed $NEUTRON_DISTRIBUTED_ROUTING
-
-        iniset $NEUTRON_CONF DEFAULT auth_strategy $NEUTRON_AUTH_STRATEGY
-        configure_keystone_authtoken_middleware $NEUTRON_CONF neutron
-        configure_keystone_authtoken_middleware $NEUTRON_CONF nova nova
-
-        # Configure tenant network type
-        iniset $NEUTRON_CORE_PLUGIN_CONF ml2 tenant_network_types $NEUTRON_TENANT_NETWORK_TYPE
-
-        local mech_drivers="openvswitch"
-        if [[ "$NEUTRON_DISTRIBUTED_ROUTING" = "True" ]]; then
-            mech_drivers+=",l2population"
-        else
-            mech_drivers+=",linuxbridge"
-        fi
-        if [[ "$mech_drivers" == *"linuxbridge"* ]]; then
-            iniset $NEUTRON_CONF experimental linuxbridge True
-        fi
-
-        iniset $NEUTRON_CORE_PLUGIN_CONF ml2 mechanism_drivers $mech_drivers
-        iniset $NEUTRON_CORE_PLUGIN_CONF ml2 overlay_ip_version $TUNNEL_IP_VERSION
-
-        iniset $NEUTRON_CORE_PLUGIN_CONF ml2_type_vxlan vni_ranges 1001:2000
-        iniset $NEUTRON_CORE_PLUGIN_CONF ml2_type_flat flat_networks $PUBLIC_NETWORK_NAME
-        if [[ "$NEUTRON_TENANT_NETWORK_TYPE" =~ "vlan" ]] && [[ "$NEUTRON_PHYSICAL_NETWORK" != "" ]]; then
-            iniset $NEUTRON_CORE_PLUGIN_CONF ml2_type_vlan network_vlan_ranges ${NEUTRON_PHYSICAL_NETWORK}:${NEUTRON_TENANT_VLAN_RANGE}
-        fi
-        if [[ "$NEUTRON_PORT_SECURITY" = "True" ]]; then
-            neutron_ml2_extension_driver_add port_security
-        fi
-        configure_rbac_policies
+    if is_service_enabled q-metering neutron-metering; then
+        _configure_neutron_metering
+    fi
+    if is_service_enabled q-agt neutron-agent; then
+        _configure_neutron_plugin_agent
+    fi
+    if is_service_enabled q-dhcp neutron-dhcp; then
+        _configure_neutron_dhcp_agent
+    fi
+    if is_service_enabled q-l3 neutron-l3; then
+        _configure_neutron_l3_agent
+    fi
+    if is_service_enabled q-meta neutron-metadata-agent; then
+        _configure_neutron_metadata_agent
     fi
 
-    # Neutron OVS or LB agent
-    if is_service_enabled neutron-agent; then
-        iniset $NEUTRON_CORE_PLUGIN_CONF agent tunnel_types vxlan
-        iniset $NEUTRON_CORE_PLUGIN_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
-        configure_root_helper_options $NEUTRON_CORE_PLUGIN_CONF
+    if [[ "$Q_DVR_MODE" != "legacy" ]]; then
+        _configure_dvr
+    fi
+    if is_service_enabled ceilometer; then
+        _configure_neutron_ceilometer_notifications
+    fi
 
-        # Configure the neutron agent
-        if [[ $NEUTRON_AGENT == "linuxbridge" ]]; then
-            iniset $NEUTRON_CORE_PLUGIN_CONF securitygroup firewall_driver iptables
-            iniset $NEUTRON_CORE_PLUGIN_CONF vxlan local_ip $TUNNEL_ENDPOINT_IP
-        elif [[ $NEUTRON_AGENT == "openvswitch" ]]; then
-            iniset $NEUTRON_CORE_PLUGIN_CONF securitygroup firewall_driver openvswitch
-            iniset $NEUTRON_CORE_PLUGIN_CONF ovs local_ip $TUNNEL_ENDPOINT_IP
+    if [[ $Q_AGENT == "ovn" ]]; then
+        configure_ovn
+        configure_ovn_plugin
+    fi
 
-            if [[ "$NEUTRON_DISTRIBUTED_ROUTING" = "True" ]]; then
-                iniset $NEUTRON_CORE_PLUGIN_CONF agent l2_population True
-                iniset $NEUTRON_CORE_PLUGIN_CONF agent enable_distributed_routing True
-                iniset $NEUTRON_CORE_PLUGIN_CONF agent arp_responder True
-            fi
-        fi
-
-        if ! running_in_container; then
-            enable_kernel_bridge_firewall
+    # Configure Neutron's advanced services
+    if is_service_enabled q-placement neutron-placement; then
+        configure_placement_extension
+    fi
+    if is_service_enabled q-trunk neutron-trunk; then
+        configure_trunk_extension
+    fi
+    if is_service_enabled q-qos neutron-qos; then
+        configure_qos
+        if is_service_enabled q-l3 neutron-l3; then
+            configure_l3_agent_extension_fip_qos
+            configure_l3_agent_extension_gateway_ip_qos
         fi
     fi
 
-    # DHCP Agent
-    if is_service_enabled neutron-dhcp; then
-        cp $NEUTRON_DIR/etc/dhcp_agent.ini.sample $NEUTRON_DHCP_CONF
-
-        iniset $NEUTRON_DHCP_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
-        # make it so we have working DNS from guests
-        iniset $NEUTRON_DHCP_CONF DEFAULT dnsmasq_local_resolv True
-
-        configure_root_helper_options $NEUTRON_DHCP_CONF
-        iniset $NEUTRON_DHCP_CONF DEFAULT interface_driver $NEUTRON_AGENT
-        neutron_plugin_configure_dhcp_agent $NEUTRON_DHCP_CONF
+    # Finally configure Neutron server and core plugin
+    if is_service_enabled q-agt neutron-agent q-svc neutron-api; then
+        _configure_neutron_service
     fi
 
-    if is_service_enabled neutron-l3; then
-        cp $NEUTRON_DIR/etc/l3_agent.ini.sample $NEUTRON_L3_CONF
-        iniset $NEUTRON_L3_CONF DEFAULT interface_driver $NEUTRON_AGENT
-        neutron_service_plugin_class_add router
-        configure_root_helper_options $NEUTRON_L3_CONF
-        iniset $NEUTRON_L3_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
-        neutron_plugin_configure_l3_agent $NEUTRON_L3_CONF
+    iniset $NEUTRON_CONF DEFAULT api_workers "$API_WORKERS"
+    # devstack is not a tool for running uber scale OpenStack
+    # clouds, therefore running without a dedicated RPC worker
+    # for state reports is more than adequate.
+    iniset $NEUTRON_CONF DEFAULT rpc_state_report_workers 0
 
-        # Configure the neutron agent to serve external network ports
-        if [[ $NEUTRON_AGENT == "linuxbridge" ]]; then
-            iniset $NEUTRON_CORE_PLUGIN_CONF linux_bridge bridge_mappings "$PUBLIC_NETWORK_NAME:$PUBLIC_BRIDGE"
-        else
-            iniset $NEUTRON_CORE_PLUGIN_CONF ovs bridge_mappings "$PUBLIC_NETWORK_NAME:$PUBLIC_BRIDGE"
-        fi
-
-        if [[ "$NEUTRON_DISTRIBUTED_ROUTING" = "True" ]]; then
-            iniset $NEUTRON_L3_CONF DEFAULT agent_mode $NEUTRON_DVR_MODE
-        fi
-    fi
-
-    # Metadata
-    if is_service_enabled neutron-metadata-agent; then
-        cp $NEUTRON_DIR/etc/metadata_agent.ini.sample $NEUTRON_META_CONF
-
-        iniset $NEUTRON_META_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
-        iniset $NEUTRON_META_CONF DEFAULT nova_metadata_host $NEUTRON_META_DATA_HOST
-        iniset $NEUTRON_META_CONF DEFAULT metadata_workers $API_WORKERS
-        # TODO(ihrachys) do we really need to set rootwrap for metadata agent?
-        configure_root_helper_options $NEUTRON_META_CONF
-
-        # TODO(dtroyer): remove the v2.0 hard code below
-        iniset $NEUTRON_META_CONF DEFAULT auth_url $KEYSTONE_SERVICE_URI
-        configure_keystone_authtoken_middleware $NEUTRON_META_CONF neutron DEFAULT
-    fi
-
-    # Format logging
-    setup_logging $NEUTRON_CONF
-
-    if is_service_enabled tls-proxy && [ "$NEUTRON_DEPLOY_MOD_WSGI" == "False" ]; then
-        # Set the service port for a proxy to take the original
-        iniset $NEUTRON_CONF DEFAULT bind_port "$NEUTRON_SERVICE_PORT_INT"
-        iniset $NEUTRON_CONF oslo_middleware enable_proxy_headers_parsing True
-    fi
-
-    # Metering
-    if is_service_enabled neutron-metering; then
-        cp $NEUTRON_DIR/etc/metering_agent.ini.sample $NEUTRON_METERING_AGENT_CONF
-        neutron_service_plugin_class_add metering
+    if [ "$NEUTRON_DEPLOY_MOD_WSGI" == "True" ]; then
+        write_uwsgi_config "$NEUTRON_UWSGI_CONF" "$NEUTRON_BIN_DIR/neutron-api" "/networking"
     fi
 }
 
-# configure_neutron_rootwrap() - configure Neutron's rootwrap
-function configure_neutron_rootwrap {
-    # Deploy new rootwrap filters files (owned by root).
-    # Wipe any existing rootwrap.d files first
-    if [[ -d $NEUTRON_CONF_DIR/rootwrap.d ]]; then
-        sudo rm -rf $NEUTRON_CONF_DIR/rootwrap.d
+function configure_neutron_nova {
+    create_nova_conf_neutron $NOVA_CONF
+    if [[ "${CELLSV2_SETUP}" == "superconductor" ]]; then
+        for i in $(seq 1 $NOVA_NUM_CELLS); do
+            local conf
+            conf=$(conductor_conf $i)
+            create_nova_conf_neutron $conf
+        done
     fi
-
-    # Deploy filters to /etc/neutron/rootwrap.d
-    sudo install -d -o root -g root -m 755 $NEUTRON_CONF_DIR/rootwrap.d
-    sudo install -o root -g root -m 644 $NEUTRON_DIR/etc/neutron/rootwrap.d/*.filters $NEUTRON_CONF_DIR/rootwrap.d
-
-    # Set up ``rootwrap.conf``, pointing to ``$NEUTRON_CONF_DIR/rootwrap.d``
-    sudo install -o root -g root -m 644 $NEUTRON_DIR/etc/rootwrap.conf $NEUTRON_CONF_DIR
-    sudo sed -e "s:^filters_path=.*$:filters_path=$NEUTRON_CONF_DIR/rootwrap.d:" -i $NEUTRON_CONF_DIR/rootwrap.conf
-
-    # Set up the rootwrap sudoers for Neutron
-    tempfile=`mktemp`
-    echo "$STACK_USER ALL=(root) NOPASSWD: $NEUTRON_ROOTWRAP_CMD *" >$tempfile
-    echo "$STACK_USER ALL=(root) NOPASSWD: $NEUTRON_ROOTWRAP_DAEMON_CMD" >>$tempfile
-    chmod 0440 $tempfile
-    sudo chown root:root $tempfile
-    sudo mv $tempfile /etc/sudoers.d/neutron-rootwrap
 }
 
-# Make Neutron-required changes to nova.conf
-# Takes a single optional argument which is the config file to update,
-# if not passed $NOVA_CONF is used.
-function configure_neutron_nova_new {
-    deprecated "Using lib/neutron is deprecated, and it will be removed in AA release!"
+function create_nova_conf_neutron {
     local conf=${1:-$NOVA_CONF}
     iniset $conf neutron auth_type "password"
     iniset $conf neutron auth_url "$KEYSTONE_SERVICE_URI"
-    iniset $conf neutron username neutron
+    iniset $conf neutron username "$Q_ADMIN_USERNAME"
     iniset $conf neutron password "$SERVICE_PASSWORD"
-    iniset $conf neutron user_domain_name "Default"
-    iniset $conf neutron project_name "$SERVICE_TENANT_NAME"
-    iniset $conf neutron project_domain_name "Default"
-    iniset $conf neutron auth_strategy $NEUTRON_AUTH_STRATEGY
+    iniset $conf neutron user_domain_name "$SERVICE_DOMAIN_NAME"
+    iniset $conf neutron project_name "$SERVICE_PROJECT_NAME"
+    iniset $conf neutron project_domain_name "$SERVICE_DOMAIN_NAME"
+    iniset $conf neutron auth_strategy "$Q_AUTH_STRATEGY"
     iniset $conf neutron region_name "$REGION_NAME"
 
     # optionally set options in nova_conf
     neutron_plugin_create_nova_conf $conf
 
-    if is_service_enabled neutron-metadata-agent; then
+    if is_service_enabled q-meta neutron-metadata-agent; then
         iniset $conf neutron service_metadata_proxy "True"
     fi
 
+    iniset $conf DEFAULT vif_plugging_is_fatal "$VIF_PLUGGING_IS_FATAL"
+    iniset $conf DEFAULT vif_plugging_timeout "$VIF_PLUGGING_TIMEOUT"
 }
+
+# create_neutron_accounts() - Set up common required neutron accounts
 
 # Tenant               User       Roles
 # ------------------------------------------------------------------
 # service              neutron    admin        # if enabled
 
-# create_neutron_accounts() - Create required service accounts
-function create_neutron_accounts_new {
-    deprecated "Using lib/neutron is deprecated, and it will be removed in AA release!"
+# Migrated from keystone_data.sh
+function create_neutron_accounts {
     local neutron_url
-
     if [ "$NEUTRON_DEPLOY_MOD_WSGI" == "True" ]; then
-        neutron_url=$NEUTRON_SERVICE_PROTOCOL://$NEUTRON_SERVICE_HOST/
+        neutron_url=$Q_PROTOCOL://$SERVICE_HOST/
     else
-        neutron_url=$NEUTRON_SERVICE_PROTOCOL://$NEUTRON_SERVICE_HOST:$NEUTRON_SERVICE_PORT/
+        neutron_url=$Q_PROTOCOL://$SERVICE_HOST:$Q_PORT/
     fi
     if [ ! -z "$NEUTRON_ENDPOINT_SERVICE_NAME" ]; then
         neutron_url=$neutron_url$NEUTRON_ENDPOINT_SERVICE_NAME
     fi
 
-
-    if [[ "$ENABLED_SERVICES" =~ "neutron-api" ]]; then
+    if is_service_enabled q-svc neutron-api; then
 
         create_service_user "neutron"
 
-        neutron_service=$(get_or_create_service "neutron" \
-            "network" "Neutron Service")
-        get_or_create_endpoint $neutron_service \
+        get_or_create_service "neutron" "network" "Neutron Service"
+        get_or_create_endpoint \
+            "network" \
             "$REGION_NAME" "$neutron_url"
     fi
 }
 
 # init_neutron() - Initialize databases, etc.
-function init_neutron_new {
-
-    deprecated "Using lib/neutron is deprecated, and it will be removed in AA release!"
-    recreate_database neutron
-
+function init_neutron {
+    recreate_database $Q_DB_NAME
     time_start "dbsync"
     # Run Neutron db migrations
-    $NEUTRON_BIN_DIR/neutron-db-manage upgrade heads
+    $NEUTRON_BIN_DIR/neutron-db-manage --config-file $NEUTRON_CONF --config-file /$Q_PLUGIN_CONF_FILE upgrade head
     time_stop "dbsync"
 }
 
 # install_neutron() - Collect source and prepare
-function install_neutron_new {
-    deprecated "Using lib/neutron is deprecated, and it will be removed in AA release!"
-    git_clone $NEUTRON_REPO $NEUTRON_DIR $NEUTRON_BRANCH
-    setup_develop $NEUTRON_DIR
-
+function install_neutron {
     # Install neutron-lib from git so we make sure we're testing
     # the latest code.
     if use_library_from_git "neutron-lib"; then
@@ -447,17 +514,12 @@ function install_neutron_new {
         setup_dev_lib "neutron-lib"
     fi
 
-    # L3 service requires radvd
-    if is_service_enabled neutron-l3; then
-        install_package radvd
-    fi
+    git_clone $NEUTRON_REPO $NEUTRON_DIR $NEUTRON_BRANCH
+    setup_develop $NEUTRON_DIR
 
-    if is_service_enabled neutron-agent neutron-dhcp neutron-l3; then
-        #TODO(sc68cal) - kind of ugly
-        source $TOP_DIR/lib/neutron_plugins/${NEUTRON_AGENT}_agent
-        neutron_plugin_install_agent_packages
+    if [[ $Q_AGENT == "ovn" ]]; then
+        install_ovn
     fi
-
 }
 
 # install_neutronclient() - Collect source and prepare
@@ -469,185 +531,30 @@ function install_neutronclient {
     fi
 }
 
-# start_neutron_api() - Start the API process ahead of other things
-function start_neutron_api {
-    local service_port=$NEUTRON_SERVICE_PORT
-    local service_protocol=$NEUTRON_SERVICE_PROTOCOL
-    local neutron_url
-    if is_service_enabled tls-proxy; then
-        service_port=$NEUTRON_SERVICE_PORT_INT
-        service_protocol="http"
+# install_neutron_agent_packages() - Collect source and prepare
+function install_neutron_agent_packages {
+    # radvd doesn't come with the OS. Install it if the l3 service is enabled.
+    if is_service_enabled q-l3 neutron-l3; then
+        install_package radvd
     fi
-
-    local opts=""
-    opts+=" --config-file $NEUTRON_CONF"
-    opts+=" --config-file $NEUTRON_CORE_PLUGIN_CONF"
-    local cfg_file
-    for cfg_file in ${_NEUTRON_SERVER_EXTRA_CONF_FILES_ABS[@]}; do
-        opts+=" --config-file $cfg_file"
-    done
-
-    if [ "$NEUTRON_DEPLOY_MOD_WSGI" == "True" ]; then
-        run_process neutron-api "$(which uwsgi) --procname-prefix neutron-api --ini $NEUTRON_UWSGI_CONF"
-        neutron_url=$service_protocol://$NEUTRON_SERVICE_HOST/
-        enable_service neutron-rpc-server
-        run_process neutron-rpc-server "$NEUTRON_BIN_DIR/neutron-rpc-server $opts"
-    else
-        # Start the Neutron service
-        # TODO(sc68cal) Stop hard coding this
-        run_process neutron-api "$NEUTRON_BIN_DIR/neutron-server $opts"
-        neutron_url=$service_protocol://$NEUTRON_SERVICE_HOST:$service_port/
-        # Start proxy if enabled
-        if is_service_enabled tls-proxy; then
-            start_tls_proxy neutron '*' $NEUTRON_SERVICE_PORT $NEUTRON_SERVICE_HOST $NEUTRON_SERVICE_PORT_INT
-        fi
-    fi
-    if [ ! -z "$NEUTRON_ENDPOINT_SERVICE_NAME" ]; then
-        neutron_url=$neutron_url$NEUTRON_ENDPOINT_SERVICE_NAME
-    fi
-
-    if ! wait_for_service $SERVICE_TIMEOUT $neutron_url; then
-        die $LINENO "neutron-api did not start"
+    # install packages that are specific to plugin agent(s)
+    if is_service_enabled q-agt neutron-agent q-dhcp neutron-dhcp q-l3 neutron-l3; then
+        neutron_plugin_install_agent_packages
     fi
 }
 
-# start_neutron() - Start running processes
-function start_neutron_new {
-    deprecated "Using lib/neutron is deprecated, and it will be removed in AA release!"
-    # Start up the neutron agents if enabled
-    # TODO(sc68cal) Make this pluggable so different DevStack plugins for different Neutron plugins
-    # can resolve the $NEUTRON_AGENT_BINARY
-    if is_service_enabled neutron-agent; then
-        # TODO(ihrachys) stop loading ml2_conf.ini into agents, instead load agent specific files
-        run_process neutron-agent "$NEUTRON_BIN_DIR/$NEUTRON_AGENT_BINARY --config-file $NEUTRON_CONF --config-file $NEUTRON_CORE_PLUGIN_CONF"
+# Finish neutron configuration
+function configure_neutron_after_post_config {
+    if [[ $Q_SERVICE_PLUGIN_CLASSES != '' ]]; then
+        iniset $NEUTRON_CONF DEFAULT service_plugins $Q_SERVICE_PLUGIN_CLASSES
     fi
-    if is_service_enabled neutron-dhcp; then
-        neutron_plugin_configure_dhcp_agent $NEUTRON_DHCP_CONF
-        run_process neutron-dhcp "$NEUTRON_BIN_DIR/$NEUTRON_DHCP_BINARY --config-file $NEUTRON_CONF --config-file $NEUTRON_DHCP_CONF"
-    fi
-    if is_service_enabled neutron-l3; then
-        run_process neutron-l3 "$NEUTRON_BIN_DIR/$NEUTRON_L3_BINARY --config-file $NEUTRON_CONF --config-file $NEUTRON_L3_CONF"
-    fi
-    if is_service_enabled neutron-api && [[ "$NEUTRON_CREATE_INITIAL_NETWORKS" == "True" ]]; then
-        # XXX(sc68cal) - Here's where plugins can wire up their own networks instead
-        # of the code in lib/neutron_plugins/services/l3
-        if type -p neutron_plugin_create_initial_networks > /dev/null; then
-            neutron_plugin_create_initial_networks
-        else
-            # XXX(sc68cal) Load up the built in Neutron networking code and build a topology
-            source $TOP_DIR/lib/neutron_plugins/services/l3
-            # Create the networks using servic
-            create_neutron_initial_network
-        fi
-    fi
-    if is_service_enabled neutron-metadata-agent; then
-        run_process neutron-metadata-agent "$NEUTRON_BIN_DIR/$NEUTRON_META_BINARY --config-file $NEUTRON_CONF --config-file $NEUTRON_META_CONF"
-    fi
-
-    if is_service_enabled neutron-metering; then
-        run_process neutron-metering "$NEUTRON_BIN_DIR/$NEUTRON_METERING_BINARY --config-file $NEUTRON_CONF --config-file $NEUTRON_METERING_AGENT_CONF"
-    fi
-}
-
-# stop_neutron() - Stop running processes
-function stop_neutron_new {
-    deprecated "Using lib/neutron is deprecated, and it will be removed in AA release!"
-    for serv in neutron-api neutron-agent neutron-l3; do
-        stop_process $serv
-    done
-
-    if is_service_enabled neutron-rpc-server; then
-        stop_process neutron-rpc-server
-    fi
-
-    if is_service_enabled neutron-dhcp; then
-        stop_process neutron-dhcp
-        pid=$(ps aux | awk '/[d]nsmasq.+interface=(tap|ns-)/ { print $2 }')
-        [ ! -z "$pid" ] && sudo kill -9 $pid
-    fi
-
-    if is_service_enabled neutron-metadata-agent; then
-        stop_process neutron-metadata-agent
-    fi
-}
-
-# neutron_service_plugin_class_add() - add service plugin class
-function neutron_service_plugin_class_add_new {
-    deprecated "Using lib/neutron is deprecated, and it will be removed in AA release!"
-    local service_plugin_class=$1
-    local plugins=""
-
-    plugins=$(iniget $NEUTRON_CONF DEFAULT service_plugins)
-    if [ $plugins ]; then
-        plugins+=","
-    fi
-    plugins+="${service_plugin_class}"
-    iniset $NEUTRON_CONF DEFAULT service_plugins $plugins
-}
-
-function _neutron_ml2_extension_driver_add {
-    local driver=$1
-    local drivers=""
-
-    drivers=$(iniget $NEUTRON_CORE_PLUGIN_CONF ml2 extension_drivers)
-    if [ $drivers ]; then
-        drivers+=","
-    fi
-    drivers+="${driver}"
-    iniset $NEUTRON_CORE_PLUGIN_CONF ml2 extension_drivers $drivers
-}
-
-function neutron_server_config_add_new {
-    deprecated "Using lib/neutron is deprecated, and it will be removed in AA release!"
-    _NEUTRON_SERVER_EXTRA_CONF_FILES_ABS+=($1)
-}
-
-# neutron_deploy_rootwrap_filters() - deploy rootwrap filters
-function neutron_deploy_rootwrap_filters_new {
-    deprecated "Using lib/neutron is deprecated, and it will be removed in AA release!"
-    local srcdir=$1
-    sudo install -d -o root -g root -m 755 $NEUTRON_CONF_DIR/rootwrap.d
-    sudo install -o root -g root -m 644 $srcdir/etc/neutron/rootwrap.d/*.filters $NEUTRON_CONF_DIR/rootwrap.d
-}
-
-# Dispatch functions
-# These are needed for compatibility between the old and new implementations
-# where there are function name overlaps.  These will be removed when
-# neutron-legacy is removed.
-# TODO(sc68cal) Remove when neutron-legacy is no more.
-function cleanup_neutron {
-    if [ "$NEUTRON_DEPLOY_MOD_WSGI" == "True" ]; then
-        stop_process neutron-api
-        stop_process neutron-rpc-server
-        remove_uwsgi_config "$NEUTRON_UWSGI_CONF" "$NEUTRON_BIN_DIR/neutron-api"
-        sudo rm -f $(apache_site_config_for neutron-api)
-    fi
-
-    if is_neutron_legacy_enabled; then
-        # Call back to old function
-        cleanup_mutnauq "$@"
-    else
-        cleanup_neutron_new "$@"
-    fi
-}
-
-function configure_neutron {
-    if is_neutron_legacy_enabled; then
-        # Call back to old function
-        configure_mutnauq "$@"
-    else
-        configure_neutron_new "$@"
-    fi
-
-    if [ "$NEUTRON_DEPLOY_MOD_WSGI" == "True" ]; then
-        write_uwsgi_config "$NEUTRON_UWSGI_CONF" "$NEUTRON_BIN_DIR/neutron-api" "/networking"
-    fi
+    configure_rbac_policies
 }
 
 # configure_rbac_policies() - Configure Neutron to enforce new RBAC
 # policies and scopes if NEUTRON_ENFORCE_SCOPE == True
 function configure_rbac_policies {
-    if [[ "$NEUTRON_ENFORCE_SCOPE" == "True" || "$ENFORCE_SCOPE" == "True" ]]; then
+    if [[ "$NEUTRON_ENFORCE_SCOPE" == "True" || "$ENFORCE_SCOPE" == True ]]; then
         iniset $NEUTRON_CONF oslo_policy enforce_new_defaults True
         iniset $NEUTRON_CONF oslo_policy enforce_scope True
     else
@@ -656,120 +563,593 @@ function configure_rbac_policies {
     fi
 }
 
-
-function configure_neutron_nova {
-    if is_neutron_legacy_enabled; then
-        # Call back to old function
-        create_nova_conf_neutron $NOVA_CONF
-        if [[ "${CELLSV2_SETUP}" == "superconductor" ]]; then
-            for i in $(seq 1 $NOVA_NUM_CELLS); do
-                local conf
-                conf=$(conductor_conf $i)
-                create_nova_conf_neutron $conf
-            done
-        fi
-    else
-        configure_neutron_nova_new $NOVA_CONF
-        if [[ "${CELLSV2_SETUP}" == "superconductor" ]]; then
-            for i in $(seq 1 $NOVA_NUM_CELLS); do
-                local conf
-                conf=$(conductor_conf $i)
-                configure_neutron_nova_new $conf
-            done
+# Start running OVN processes
+function start_ovn_services {
+    if [[ $Q_AGENT == "ovn" ]]; then
+        init_ovn
+        start_ovn
+        if [[ "$OVN_L3_CREATE_PUBLIC_NETWORK" == "True" ]]; then
+            if [[ "$NEUTRON_CREATE_INITIAL_NETWORKS" != "True" ]]; then
+                echo "OVN_L3_CREATE_PUBLIC_NETWORK=True is being ignored "
+                echo "because NEUTRON_CREATE_INITIAL_NETWORKS is set to False"
+            else
+                create_public_bridge
+            fi
         fi
     fi
 }
 
-function create_neutron_accounts {
-    if is_neutron_legacy_enabled; then
-        # Call back to old function
-        create_mutnauq_accounts "$@"
-    else
-        create_neutron_accounts_new "$@"
-    fi
-}
+# Start running processes
+function start_neutron_service_and_check {
+    local service_port=$Q_PORT
+    local service_protocol=$Q_PROTOCOL
+    local cfg_file_options
+    local neutron_url
 
-function init_neutron {
-    if is_neutron_legacy_enabled; then
-        # Call back to old function
-        init_mutnauq "$@"
-    else
-        init_neutron_new "$@"
-    fi
-}
+    cfg_file_options="$(determine_config_files neutron-server)"
 
-function install_neutron {
-    if is_neutron_legacy_enabled; then
-        # Call back to old function
-        install_mutnauq "$@"
-    else
-        install_neutron_new "$@"
+    if is_service_enabled tls-proxy; then
+        service_port=$Q_PORT_INT
+        service_protocol="http"
     fi
-}
+    # Start the Neutron service
+    if [ "$NEUTRON_DEPLOY_MOD_WSGI" == "True" ]; then
+        enable_service neutron-api
+        run_process neutron-api "$(which uwsgi) --procname-prefix neutron-api --ini $NEUTRON_UWSGI_CONF"
+        neutron_url=$Q_PROTOCOL://$Q_HOST/
+        enable_service neutron-rpc-server
+        run_process neutron-rpc-server "$NEUTRON_BIN_DIR/neutron-rpc-server $cfg_file_options"
+    else
+        run_process q-svc "$NEUTRON_BIN_DIR/neutron-server $cfg_file_options"
+        neutron_url=$service_protocol://$Q_HOST:$service_port/
+        # Start proxy if enabled
+        if is_service_enabled tls-proxy; then
+            start_tls_proxy neutron '*' $Q_PORT $Q_HOST $Q_PORT_INT
+        fi
+    fi
+    if [ ! -z "$NEUTRON_ENDPOINT_SERVICE_NAME" ]; then
+        neutron_url=$neutron_url$NEUTRON_ENDPOINT_SERVICE_NAME
+    fi
+    echo "Waiting for Neutron to start..."
 
-function neutron_service_plugin_class_add {
-    if is_neutron_legacy_enabled; then
-        # Call back to old function
-        _neutron_service_plugin_class_add "$@"
-    else
-        neutron_service_plugin_class_add_new "$@"
-    fi
-}
-
-function neutron_ml2_extension_driver_add {
-    if is_neutron_legacy_enabled; then
-        # Call back to old function
-        _neutron_ml2_extension_driver_add_old "$@"
-    else
-        _neutron_ml2_extension_driver_add "$@"
-    fi
-}
-
-function install_neutron_agent_packages {
-    if is_neutron_legacy_enabled; then
-        # Call back to old function
-        install_neutron_agent_packages_mutnauq "$@"
-    else
-        :
-    fi
-}
-
-function neutron_server_config_add {
-    if is_neutron_legacy_enabled; then
-        # Call back to old function
-        mutnauq_server_config_add "$@"
-    else
-        neutron_server_config_add_new "$@"
-    fi
+    local testcmd="wget ${ssl_ca} --no-proxy -q -O- $neutron_url"
+    test_with_retry "$testcmd" "Neutron did not start" $SERVICE_TIMEOUT
 }
 
 function start_neutron {
-    if is_neutron_legacy_enabled; then
-        # Call back to old function
-        start_mutnauq_l2_agent "$@"
-        start_mutnauq_other_agents "$@"
-    else
-        start_neutron_new "$@"
+    start_l2_agent "$@"
+    start_other_agents "$@"
+}
+
+# Control of the l2 agent is separated out to make it easier to test partial
+# upgrades (everything upgraded except the L2 agent)
+function start_l2_agent {
+    run_process q-agt "$AGENT_BINARY --config-file $NEUTRON_CONF --config-file /$Q_PLUGIN_CONF_FILE"
+
+    if is_provider_network && [[ $Q_AGENT == "openvswitch" ]]; then
+        sudo ovs-vsctl --no-wait -- --may-exist add-port $OVS_PHYSICAL_BRIDGE $PUBLIC_INTERFACE
+        sudo ip link set $OVS_PHYSICAL_BRIDGE up
+        sudo ip link set br-int up
+        sudo ip link set $PUBLIC_INTERFACE up
+        if is_ironic_hardware; then
+            for IP in $(ip addr show dev $PUBLIC_INTERFACE | grep ' inet ' | awk '{print $2}'); do
+                sudo ip addr del $IP dev $PUBLIC_INTERFACE
+                sudo ip addr add $IP dev $OVS_PHYSICAL_BRIDGE
+            done
+            sudo ip route replace $FIXED_RANGE via $NETWORK_GATEWAY dev $OVS_PHYSICAL_BRIDGE
+        fi
     fi
 }
 
+function start_other_agents {
+    run_process q-dhcp "$AGENT_DHCP_BINARY --config-file $NEUTRON_CONF --config-file $Q_DHCP_CONF_FILE"
+
+    run_process q-l3 "$AGENT_L3_BINARY $(determine_config_files neutron-l3-agent)"
+
+    run_process q-meta "$AGENT_META_BINARY --config-file $NEUTRON_CONF --config-file $Q_META_CONF_FILE"
+    run_process q-metering "$AGENT_METERING_BINARY --config-file $NEUTRON_CONF --config-file $METERING_AGENT_CONF_FILENAME"
+}
+
+# Start running processes, including screen
+function start_neutron_agents {
+    # NOTE(slaweq): it's now just a wrapper for start_neutron function
+    start_neutron "$@"
+}
+
+function stop_l2_agent {
+    stop_process q-agt
+}
+
+# stop_other() - Stop running processes
+function stop_other {
+    if is_service_enabled q-dhcp neutron-dhcp; then
+        stop_process q-dhcp
+        pid=$(ps aux | awk '/[d]nsmasq.+interface=(tap|ns-)/ { print $2 }')
+        [ ! -z "$pid" ] && sudo kill -9 $pid
+    fi
+
+    if [ "$NEUTRON_DEPLOY_MOD_WSGI" == "True" ]; then
+        stop_process neutron-rpc-server
+        stop_process neutron-api
+    else
+        stop_process q-svc
+    fi
+
+    if is_service_enabled q-l3 neutron-l3; then
+        sudo pkill -f "radvd -C $DATA_DIR/neutron/ra"
+        stop_process q-l3
+    fi
+
+    if is_service_enabled q-meta neutron-metadata-agent; then
+        stop_process q-meta
+    fi
+
+    if is_service_enabled q-metering neutron-metering; then
+        neutron_metering_stop
+    fi
+
+    if [[ "$Q_USE_ROOTWRAP_DAEMON" == "True" ]]; then
+        sudo pkill -9 -f $NEUTRON_ROOTWRAP-daemon || :
+    fi
+}
+
+# stop_neutron() - Stop running processes (non-screen)
 function stop_neutron {
-    if is_neutron_legacy_enabled; then
-        # Call back to old function
-        stop_mutnauq "$@"
-    else
-        stop_neutron_new "$@"
+    stop_other
+    stop_l2_agent
+
+    if [[ $Q_AGENT == "ovn" && $SKIP_STOP_OVN != "True" ]]; then
+        stop_ovn
     fi
 }
 
-function neutron_deploy_rootwrap_filters {
-    if is_neutron_legacy_enabled; then
-        # Call back to old function
-        _neutron_deploy_rootwrap_filters "$@"
+# _move_neutron_addresses_route() - Move the primary IP to the OVS bridge
+# on startup, or back to the public interface on cleanup. If no IP is
+# configured on the interface, just add it as a port to the OVS bridge.
+function _move_neutron_addresses_route {
+    local from_intf=$1
+    local to_intf=$2
+    local add_ovs_port=$3
+    local del_ovs_port=$4
+    local af=$5
+
+    if [[ -n "$from_intf" && -n "$to_intf" ]]; then
+        # Remove the primary IP address from $from_intf and add it to $to_intf,
+        # along with the default route, if it exists.  Also, when called
+        # on configure we will also add $from_intf as a port on $to_intf,
+        # assuming it is an OVS bridge.
+
+        local IP_REPLACE=""
+        local IP_DEL=""
+        local IP_UP=""
+        local DEFAULT_ROUTE_GW
+        DEFAULT_ROUTE_GW=$(ip -f $af r | awk "/default.+$from_intf\s/ { print \$3; exit }")
+        local ADD_OVS_PORT=""
+        local DEL_OVS_PORT=""
+        local ARP_CMD=""
+
+        IP_BRD=$(ip -f $af a s dev $from_intf scope global primary | grep inet | awk '{ print $2, $3, $4; exit }')
+
+        if [ "$DEFAULT_ROUTE_GW" != "" ]; then
+            ADD_DEFAULT_ROUTE="sudo ip -f $af r replace default via $DEFAULT_ROUTE_GW dev $to_intf"
+        fi
+
+        if [[ "$add_ovs_port" == "True" ]]; then
+            ADD_OVS_PORT="sudo ovs-vsctl --may-exist add-port $to_intf $from_intf"
+        fi
+
+        if [[ "$del_ovs_port" == "True" ]]; then
+            DEL_OVS_PORT="sudo ovs-vsctl --if-exists del-port $from_intf $to_intf"
+        fi
+
+        if [[ "$IP_BRD" != "" ]]; then
+            IP_DEL="sudo ip addr del $IP_BRD dev $from_intf"
+            IP_REPLACE="sudo ip addr replace $IP_BRD dev $to_intf"
+            IP_UP="sudo ip link set $to_intf up"
+            if [[ "$af" == "inet" ]]; then
+                IP=$(echo $IP_BRD | awk '{ print $1; exit }' | grep -o -E '(.*)/' | cut -d "/" -f1)
+                ARP_CMD="sudo arping -A -c 3 -w 5 -I $to_intf $IP "
+            fi
+        fi
+
+        # The add/del OVS port calls have to happen either before or
+        # after the address is moved in order to not leave it orphaned.
+        $DEL_OVS_PORT; $IP_DEL; $IP_REPLACE; $IP_UP; $ADD_OVS_PORT; $ADD_DEFAULT_ROUTE; $ARP_CMD
+    fi
+}
+
+# _configure_public_network_connectivity() - Configures connectivity to the
+# external network using $PUBLIC_INTERFACE or NAT on the single interface
+# machines
+function _configure_public_network_connectivity {
+    # If we've given a PUBLIC_INTERFACE to take over, then we assume
+    # that we can own the whole thing, and privot it into the OVS
+    # bridge. If we are not, we're probably on a single interface
+    # machine, and we just setup NAT so that fixed guests can get out.
+    if [[ -n "$PUBLIC_INTERFACE" ]]; then
+        _move_neutron_addresses_route "$PUBLIC_INTERFACE" "$OVS_PHYSICAL_BRIDGE" True False "inet"
+
+        if [[ $(ip -f inet6 a s dev "$PUBLIC_INTERFACE" | grep -c 'global') != 0 ]]; then
+            _move_neutron_addresses_route "$PUBLIC_INTERFACE" "$OVS_PHYSICAL_BRIDGE" False False "inet6"
+        fi
     else
-        neutron_deploy_rootwrap_filters_new "$@"
+        for d in $default_v4_route_devs; do
+            sudo iptables -t nat -A POSTROUTING -o $d -s $FLOATING_RANGE -j MASQUERADE
+        done
+    fi
+}
+
+# cleanup_neutron() - Remove residual data files, anything left over from previous
+# runs that a clean run would need to clean up
+function cleanup_neutron {
+    if [ "$NEUTRON_DEPLOY_MOD_WSGI" == "True" ]; then
+        stop_process neutron-api
+        stop_process neutron-rpc-server
+        remove_uwsgi_config "$NEUTRON_UWSGI_CONF" "$NEUTRON_BIN_DIR/neutron-api"
+        sudo rm -f $(apache_site_config_for neutron-api)
+    fi
+
+    if [[ -n "$OVS_PHYSICAL_BRIDGE" ]]; then
+        _move_neutron_addresses_route "$OVS_PHYSICAL_BRIDGE" "$PUBLIC_INTERFACE" False True "inet"
+
+        if [[ $(ip -f inet6 a s dev "$OVS_PHYSICAL_BRIDGE" | grep -c 'global') != 0 ]]; then
+            # ip(8) wants the prefix length when deleting
+            local v6_gateway
+            v6_gateway=$(ip -6 a s dev $OVS_PHYSICAL_BRIDGE | grep $IPV6_PUBLIC_NETWORK_GATEWAY | awk '{ print $2 }')
+            sudo ip -6 addr del $v6_gateway dev $OVS_PHYSICAL_BRIDGE
+            _move_neutron_addresses_route "$OVS_PHYSICAL_BRIDGE" "$PUBLIC_INTERFACE" False False "inet6"
+        fi
+
+        if is_provider_network && is_ironic_hardware; then
+            for IP in $(ip addr show dev $OVS_PHYSICAL_BRIDGE | grep ' inet ' | awk '{print $2}'); do
+                sudo ip addr del $IP dev $OVS_PHYSICAL_BRIDGE
+                sudo ip addr add $IP dev $PUBLIC_INTERFACE
+            done
+            sudo route del -net $FIXED_RANGE gw $NETWORK_GATEWAY dev $OVS_PHYSICAL_BRIDGE
+        fi
+    fi
+
+    if is_neutron_ovs_base_plugin; then
+        neutron_ovs_base_cleanup
+    fi
+
+    if [[ $Q_AGENT == "linuxbridge" ]]; then
+        neutron_lb_cleanup
+    fi
+
+    # delete all namespaces created by neutron
+    for ns in $(sudo ip netns list | grep -o -E '(qdhcp|qrouter|fip|snat)-[0-9a-f-]*'); do
+        sudo ip netns delete ${ns}
+    done
+
+    if [[ $Q_AGENT == "ovn" ]]; then
+        cleanup_ovn
+    fi
+}
+
+
+function _create_neutron_conf_dir {
+    # Put config files in ``NEUTRON_CONF_DIR`` for everyone to find
+    sudo install -d -o $STACK_USER $NEUTRON_CONF_DIR
+}
+
+# _configure_neutron_common()
+# Set common config for all neutron server and agents.
+# This MUST be called before other ``_configure_neutron_*`` functions.
+function _configure_neutron_common {
+    _create_neutron_conf_dir
+
+    # Uses oslo config generator to generate core sample configuration files
+    (cd $NEUTRON_DIR && exec ./tools/generate_config_file_samples.sh)
+
+    cp $NEUTRON_DIR/etc/neutron.conf.sample $NEUTRON_CONF
+
+    Q_POLICY_FILE=$NEUTRON_CONF_DIR/policy.json
+
+    # allow neutron user to administer neutron to match neutron account
+    # NOTE(amotoki): This is required for nova works correctly with neutron.
+    if [ -f $NEUTRON_DIR/etc/policy.json ]; then
+        cp $NEUTRON_DIR/etc/policy.json $Q_POLICY_FILE
+        sed -i 's/"context_is_admin":  "role:admin"/"context_is_admin":  "role:admin or user_name:neutron"/g' $Q_POLICY_FILE
+    else
+        echo '{"context_is_admin":  "role:admin or user_name:neutron"}' > $Q_POLICY_FILE
+    fi
+
+    # Set plugin-specific variables ``Q_DB_NAME``, ``Q_PLUGIN_CLASS``.
+    # For main plugin config file, set ``Q_PLUGIN_CONF_PATH``, ``Q_PLUGIN_CONF_FILENAME``.
+    neutron_plugin_configure_common
+
+    if [[ "$Q_PLUGIN_CONF_PATH" == '' || "$Q_PLUGIN_CONF_FILENAME" == '' || "$Q_PLUGIN_CLASS" == '' ]]; then
+        die $LINENO "Neutron plugin not set.. exiting"
+    fi
+
+    # If needed, move config file from ``$NEUTRON_DIR/etc/neutron`` to ``NEUTRON_CONF_DIR``
+    mkdir -p /$Q_PLUGIN_CONF_PATH
+    Q_PLUGIN_CONF_FILE=$Q_PLUGIN_CONF_PATH/$Q_PLUGIN_CONF_FILENAME
+    # NOTE(slaweq): NEUTRON_CORE_PLUGIN_CONF is used e.g. in neutron repository,
+    # it was previously defined in the lib/neutron module which is now deleted.
+    NEUTRON_CORE_PLUGIN_CONF=$Q_PLUGIN_CONF_FILE
+    # NOTE(hichihara): Some neutron vendor plugins were already decomposed and
+    # there is no config file in Neutron tree. They should prepare the file in each plugin.
+    if [ -f "$NEUTRON_DIR/$Q_PLUGIN_CONF_FILE.sample" ]; then
+        cp "$NEUTRON_DIR/$Q_PLUGIN_CONF_FILE.sample" /$Q_PLUGIN_CONF_FILE
+    elif [ -f $NEUTRON_DIR/$Q_PLUGIN_CONF_FILE ]; then
+        cp $NEUTRON_DIR/$Q_PLUGIN_CONF_FILE /$Q_PLUGIN_CONF_FILE
+    fi
+
+    iniset $NEUTRON_CONF database connection `database_connection_url $Q_DB_NAME`
+    iniset $NEUTRON_CONF DEFAULT state_path $DATA_DIR/neutron
+    iniset $NEUTRON_CONF DEFAULT use_syslog $SYSLOG
+    iniset $NEUTRON_CONF DEFAULT bind_host $Q_LISTEN_ADDRESS
+    iniset $NEUTRON_CONF oslo_concurrency lock_path $DATA_DIR/neutron/lock
+
+    # NOTE(freerunner): Need to adjust Region Name for nova in multiregion installation
+    iniset $NEUTRON_CONF nova region_name $REGION_NAME
+
+    if [ "$VIRT_DRIVER" = 'fake' ]; then
+        # Disable arbitrary limits
+        iniset $NEUTRON_CONF quotas quota_network -1
+        iniset $NEUTRON_CONF quotas quota_subnet -1
+        iniset $NEUTRON_CONF quotas quota_port -1
+        iniset $NEUTRON_CONF quotas quota_security_group -1
+        iniset $NEUTRON_CONF quotas quota_security_group_rule -1
+    fi
+
+    # Format logging
+    setup_logging $NEUTRON_CONF
+
+    if is_service_enabled tls-proxy && [ "$NEUTRON_DEPLOY_MOD_WSGI" == "False" ]; then
+        # Set the service port for a proxy to take the original
+        iniset $NEUTRON_CONF DEFAULT bind_port "$Q_PORT_INT"
+        iniset $NEUTRON_CONF oslo_middleware enable_proxy_headers_parsing True
+    fi
+
+    _neutron_setup_rootwrap
+}
+
+function _configure_neutron_dhcp_agent {
+
+    cp $NEUTRON_DIR/etc/dhcp_agent.ini.sample $Q_DHCP_CONF_FILE
+
+    iniset $Q_DHCP_CONF_FILE DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
+    # make it so we have working DNS from guests
+    iniset $Q_DHCP_CONF_FILE DEFAULT dnsmasq_local_resolv True
+    configure_root_helper_options $Q_DHCP_CONF_FILE
+
+    if ! is_service_enabled q-l3 neutron-l3; then
+        if [[ "$ENABLE_ISOLATED_METADATA" = "True" ]]; then
+            iniset $Q_DHCP_CONF_FILE DEFAULT enable_isolated_metadata $ENABLE_ISOLATED_METADATA
+            iniset $Q_DHCP_CONF_FILE DEFAULT enable_metadata_network $ENABLE_METADATA_NETWORK
+        else
+            if [[ "$ENABLE_METADATA_NETWORK" = "True" ]]; then
+                die "$LINENO" "Enable isolated metadata is a must for metadata network"
+            fi
+        fi
+    fi
+
+    _neutron_setup_interface_driver $Q_DHCP_CONF_FILE
+
+    neutron_plugin_configure_dhcp_agent $Q_DHCP_CONF_FILE
+}
+
+
+function _configure_neutron_metadata_agent {
+    cp $NEUTRON_DIR/etc/metadata_agent.ini.sample $Q_META_CONF_FILE
+
+    iniset $Q_META_CONF_FILE DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
+    iniset $Q_META_CONF_FILE DEFAULT nova_metadata_host $Q_META_DATA_IP
+    iniset $Q_META_CONF_FILE DEFAULT metadata_workers $API_WORKERS
+    configure_root_helper_options $Q_META_CONF_FILE
+}
+
+function _configure_neutron_ceilometer_notifications {
+    iniset $NEUTRON_CONF oslo_messaging_notifications driver messagingv2
+}
+
+function _configure_neutron_metering {
+    neutron_agent_metering_configure_common
+    neutron_agent_metering_configure_agent
+}
+
+function _configure_dvr {
+    iniset $NEUTRON_CONF DEFAULT router_distributed True
+    iniset $Q_L3_CONF_FILE DEFAULT agent_mode $Q_DVR_MODE
+}
+
+
+# _configure_neutron_plugin_agent() - Set config files for neutron plugin agent
+# It is called when q-agt is enabled.
+function _configure_neutron_plugin_agent {
+    # Specify the default root helper prior to agent configuration to
+    # ensure that an agent's configuration can override the default
+    configure_root_helper_options /$Q_PLUGIN_CONF_FILE
+    iniset $NEUTRON_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
+
+    # Configure agent for plugin
+    neutron_plugin_configure_plugin_agent
+}
+
+function _replace_api_paste_composite {
+    local sep
+    sep=$(echo -ne "\x01")
+    # Replace it
+    $sudo sed -i -e "s/\/\: neutronversions_composite/\/"${NEUTRON_ENDPOINT_SERVICE_NAME}"\/\: neutronversions_composite/" "$Q_API_PASTE_FILE"
+    $sudo sed -i -e "s/\/healthcheck\: healthcheck/\/"${NEUTRON_ENDPOINT_SERVICE_NAME}"\/healthcheck\: healthcheck/" "$Q_API_PASTE_FILE"
+    $sudo sed -i -e "s/\/v2.0\: neutronapi_v2_0/\/"${NEUTRON_ENDPOINT_SERVICE_NAME}"\/v2.0\: neutronapi_v2_0/" "$Q_API_PASTE_FILE"
+}
+
+# _configure_neutron_service() - Set config files for neutron service
+# It is called when q-svc is enabled.
+function _configure_neutron_service {
+    Q_API_PASTE_FILE=$NEUTRON_CONF_DIR/api-paste.ini
+    cp $NEUTRON_DIR/etc/api-paste.ini $Q_API_PASTE_FILE
+
+    if [[ -n "$NEUTRON_ENDPOINT_SERVICE_NAME" ]]; then
+        _replace_api_paste_composite
+    fi
+
+    # Update either configuration file with plugin
+    iniset $NEUTRON_CONF DEFAULT core_plugin $Q_PLUGIN_CLASS
+
+    iniset $NEUTRON_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
+    iniset $NEUTRON_CONF oslo_policy policy_file $Q_POLICY_FILE
+
+    iniset $NEUTRON_CONF DEFAULT auth_strategy $Q_AUTH_STRATEGY
+    configure_keystone_authtoken_middleware $NEUTRON_CONF $Q_ADMIN_USERNAME
+
+    # Configuration for neutron notifications to nova.
+    iniset $NEUTRON_CONF DEFAULT notify_nova_on_port_status_changes $Q_NOTIFY_NOVA_PORT_STATUS_CHANGES
+    iniset $NEUTRON_CONF DEFAULT notify_nova_on_port_data_changes $Q_NOTIFY_NOVA_PORT_DATA_CHANGES
+
+    configure_keystone_authtoken_middleware $NEUTRON_CONF nova nova
+
+    # Configuration for placement client
+    configure_keystone_authtoken_middleware $NEUTRON_CONF placement placement
+
+    # Configure plugin
+    neutron_plugin_configure_service
+}
+
+# Utility Functions
+#------------------
+
+# neutron_service_plugin_class_add() - add service plugin class
+function neutron_service_plugin_class_add {
+    local service_plugin_class=$1
+    if [[ $Q_SERVICE_PLUGIN_CLASSES == '' ]]; then
+        Q_SERVICE_PLUGIN_CLASSES=$service_plugin_class
+    elif [[ ! ,${Q_SERVICE_PLUGIN_CLASSES}, =~ ,${service_plugin_class}, ]]; then
+        Q_SERVICE_PLUGIN_CLASSES="$Q_SERVICE_PLUGIN_CLASSES,$service_plugin_class"
+    fi
+}
+
+# neutron_ml2_extension_driver_add() - add ML2 extension driver
+function neutron_ml2_extension_driver_add {
+    local extension=$1
+    if [[ $Q_ML2_PLUGIN_EXT_DRIVERS == '' ]]; then
+        Q_ML2_PLUGIN_EXT_DRIVERS=$extension
+    elif [[ ! ,${Q_ML2_PLUGIN_EXT_DRIVERS}, =~ ,${extension}, ]]; then
+        Q_ML2_PLUGIN_EXT_DRIVERS="$Q_ML2_PLUGIN_EXT_DRIVERS,$extension"
+    fi
+}
+
+# neutron_server_config_add() - add server config file
+function neutron_server_config_add {
+    _Q_PLUGIN_EXTRA_CONF_FILES_ABS+=($1)
+}
+
+# neutron_deploy_rootwrap_filters() - deploy rootwrap filters to $Q_CONF_ROOTWRAP_D (owned by root).
+function neutron_deploy_rootwrap_filters {
+    if [[ "$Q_USE_ROOTWRAP" == "False" ]]; then
+        return
+    fi
+    local srcdir=$1
+    sudo install -d -o root -m 755 $Q_CONF_ROOTWRAP_D
+    sudo install -o root -m 644 $srcdir/etc/neutron/rootwrap.d/* $Q_CONF_ROOTWRAP_D/
+}
+
+# _neutron_setup_rootwrap() - configure Neutron's rootwrap
+function _neutron_setup_rootwrap {
+    if [[ "$Q_USE_ROOTWRAP" == "False" ]]; then
+        return
+    fi
+    # Wipe any existing ``rootwrap.d`` files first
+    Q_CONF_ROOTWRAP_D=$NEUTRON_CONF_DIR/rootwrap.d
+    if [[ -d $Q_CONF_ROOTWRAP_D ]]; then
+        sudo rm -rf $Q_CONF_ROOTWRAP_D
+    fi
+
+    neutron_deploy_rootwrap_filters $NEUTRON_DIR
+
+    # Set up ``rootwrap.conf``, pointing to ``$NEUTRON_CONF_DIR/rootwrap.d``
+    # location moved in newer versions, prefer new location
+    if test -r $NEUTRON_DIR/etc/neutron/rootwrap.conf; then
+        sudo install -o root -g root -m 644 $NEUTRON_DIR/etc/neutron/rootwrap.conf $Q_RR_CONF_FILE
+    else
+        sudo install -o root -g root -m 644 $NEUTRON_DIR/etc/rootwrap.conf $Q_RR_CONF_FILE
+    fi
+    sudo sed -e "s:^filters_path=.*$:filters_path=$Q_CONF_ROOTWRAP_D:" -i $Q_RR_CONF_FILE
+    sudo sed -e 's:^exec_dirs=\(.*\)$:exec_dirs=\1,/usr/local/bin:' -i $Q_RR_CONF_FILE
+
+    # Specify ``rootwrap.conf`` as first parameter to neutron-rootwrap
+    ROOTWRAP_SUDOER_CMD="$NEUTRON_ROOTWRAP $Q_RR_CONF_FILE *"
+    ROOTWRAP_DAEMON_SUDOER_CMD="$NEUTRON_ROOTWRAP-daemon $Q_RR_CONF_FILE"
+
+    # Set up the rootwrap sudoers for neutron
+    TEMPFILE=`mktemp`
+    echo "$STACK_USER ALL=(root) NOPASSWD: $ROOTWRAP_SUDOER_CMD" >$TEMPFILE
+    echo "$STACK_USER ALL=(root) NOPASSWD: $ROOTWRAP_DAEMON_SUDOER_CMD" >>$TEMPFILE
+    chmod 0440 $TEMPFILE
+    sudo chown root:root $TEMPFILE
+    sudo mv $TEMPFILE /etc/sudoers.d/neutron-rootwrap
+
+    # Update the root_helper
+    configure_root_helper_options $NEUTRON_CONF
+}
+
+function configure_root_helper_options {
+    local conffile=$1
+    iniset $conffile agent root_helper "$Q_RR_COMMAND"
+    if [[ "$Q_USE_ROOTWRAP_DAEMON" == "True" ]]; then
+        iniset $conffile agent root_helper_daemon "$Q_RR_DAEMON_COMMAND"
+    fi
+}
+
+function _neutron_setup_interface_driver {
+
+    # ovs_use_veth needs to be set before the plugin configuration
+    # occurs to allow plugins to override the setting.
+    iniset $1 DEFAULT ovs_use_veth $Q_OVS_USE_VETH
+
+    neutron_plugin_setup_interface_driver $1
+}
+# Functions for Neutron Exercises
+#--------------------------------
+
+function delete_probe {
+    local from_net="$1"
+    net_id=`_get_net_id $from_net`
+    probe_id=`neutron-debug --os-tenant-name admin --os-username admin --os-password $ADMIN_PASSWORD probe-list -c id -c network_id | grep $net_id | awk '{print $2}'`
+    neutron-debug --os-tenant-name admin --os-username admin probe-delete $probe_id
+}
+
+function _get_net_id {
+    openstack --os-cloud devstack-admin --os-region-name="$REGION_NAME" --os-project-name admin --os-username admin --os-password $ADMIN_PASSWORD network list | grep $1 | awk '{print $2}'
+}
+
+function _get_probe_cmd_prefix {
+    local from_net="$1"
+    net_id=`_get_net_id $from_net`
+    probe_id=`neutron-debug --os-tenant-name admin --os-username admin --os-password $ADMIN_PASSWORD probe-list -c id -c network_id | grep $net_id | awk '{print $2}' | head -n 1`
+    echo "$Q_RR_COMMAND ip netns exec qprobe-$probe_id"
+}
+
+# ssh check
+function _ssh_check_neutron {
+    local from_net=$1
+    local key_file=$2
+    local ip=$3
+    local user=$4
+    local timeout_sec=$5
+    local probe_cmd = ""
+    probe_cmd=`_get_probe_cmd_prefix $from_net`
+    local testcmd="$probe_cmd ssh -o StrictHostKeyChecking=no -i $key_file ${user}@$ip echo success"
+    test_with_retry "$testcmd" "server $ip didn't become ssh-able" $timeout_sec
+}
+
+function plugin_agent_add_l2_agent_extension {
+    local l2_agent_extension=$1
+    if [[ -z "$L2_AGENT_EXTENSIONS" ]]; then
+        L2_AGENT_EXTENSIONS=$l2_agent_extension
+    elif [[ ! ,${L2_AGENT_EXTENSIONS}, =~ ,${l2_agent_extension}, ]]; then
+        L2_AGENT_EXTENSIONS+=",$l2_agent_extension"
     fi
 }
 
 # Restore xtrace
-$XTRACE
+$_XTRACE_NEUTRON
+
+# Tell emacs to use shell-script-mode
+## Local variables:
+## mode: shell-script
+## End:

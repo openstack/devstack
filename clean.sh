@@ -50,7 +50,6 @@ source $TOP_DIR/lib/placement
 source $TOP_DIR/lib/cinder
 source $TOP_DIR/lib/swift
 source $TOP_DIR/lib/neutron
-source $TOP_DIR/lib/neutron-legacy
 
 set -o xtrace
 

@@ -97,7 +97,7 @@ function neutron_plugin_setup_interface_driver {
 }
 
 function neutron_plugin_check_adv_test_requirements {
-    is_service_enabled q-agt && is_service_enabled q-dhcp && return 0
+    is_service_enabled q-agt neutron-agent && is_service_enabled q-dhcp neutron-dhcp && return 0
 }
 
 # Restore xtrace

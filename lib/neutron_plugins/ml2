@@ -67,7 +67,7 @@ function neutron_plugin_configure_common {
     Q_PLUGIN_CLASS="ml2"
     # The ML2 plugin delegates L3 routing/NAT functionality to
     # the L3 service plugin which must therefore be specified.
-    _neutron_service_plugin_class_add $ML2_L3_PLUGIN
+    neutron_service_plugin_class_add $ML2_L3_PLUGIN
 }
 
 function neutron_plugin_configure_service {

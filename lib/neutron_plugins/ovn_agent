@@ -348,7 +348,7 @@ function compile_ovn {
 
 # OVN service sanity check
 function ovn_sanity_check {
-    if is_service_enabled q-agt neutron-agt; then
+    if is_service_enabled q-agt neutron-agent; then
         die $LINENO "The q-agt/neutron-agt service must be disabled with OVN."
     elif is_service_enabled q-l3 neutron-l3; then
         die $LINENO "The q-l3/neutron-l3 service must be disabled with OVN."
@@ -461,7 +461,7 @@ function filter_network_api_extensions {
 function configure_ovn_plugin {
     echo "Configuring Neutron for OVN"
 
-    if is_service_enabled q-svc ; then
+    if is_service_enabled q-svc neutron-api; then
         filter_network_api_extensions
         populate_ml2_config /$Q_PLUGIN_CONF_FILE ml2_type_geneve max_header_size=$OVN_GENEVE_OVERHEAD
         populate_ml2_config /$Q_PLUGIN_CONF_FILE ovn ovn_nb_connection="$OVN_NB_REMOTE"
@@ -485,7 +485,7 @@ function configure_ovn_plugin {
             inicomment /$Q_PLUGIN_CONF_FILE network_log local_output_log_base="$Q_LOG_DRIVER_LOG_BASE"
         fi
 
-        if is_service_enabled q-ovn-metadata-agent; then
+        if is_service_enabled q-ovn-metadata-agent neutron-ovn-metadata-agent; then
             populate_ml2_config /$Q_PLUGIN_CONF_FILE ovn ovn_metadata_enabled=True
         else
             populate_ml2_config /$Q_PLUGIN_CONF_FILE ovn ovn_metadata_enabled=False
@@ -506,7 +506,7 @@ function configure_ovn_plugin {
     fi
 
     if is_service_enabled n-api-meta ; then
-        if is_service_enabled q-ovn-metadata-agent ; then
+        if is_service_enabled q-ovn-metadata-agent neutron-ovn-metadata-agent; then
             iniset $NOVA_CONF neutron service_metadata_proxy True
         fi
     fi
@@ -539,7 +539,7 @@ function configure_ovn {
     fi
 
     # Metadata
-    if is_service_enabled q-ovn-metadata-agent && is_service_enabled ovn-controller; then
+    if is_service_enabled q-ovn-metadata-agent neutron-ovn-metadata-agent && is_service_enabled ovn-controller; then
         sudo install -d -o $STACK_USER $NEUTRON_CONF_DIR
 
         mkdir -p $NEUTRON_DIR/etc/neutron/plugins/ml2
@@ -551,7 +551,7 @@ function configure_ovn {
         iniset $OVN_META_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
         iniset $OVN_META_CONF DEFAULT nova_metadata_host $OVN_META_DATA_HOST
         iniset $OVN_META_CONF DEFAULT metadata_workers $API_WORKERS
-        iniset $OVN_META_CONF DEFAULT state_path $NEUTRON_STATE_PATH
+        iniset $OVN_META_CONF DEFAULT state_path $DATA_DIR/neutron
         iniset $OVN_META_CONF ovs ovsdb_connection tcp:$OVSDB_SERVER_LOCAL_HOST:6640
         iniset $OVN_META_CONF ovn ovn_sb_connection $OVN_SB_REMOTE
         if is_service_enabled tls-proxy; then
@@ -680,7 +680,7 @@ function _start_ovn_services {
     if is_service_enabled ovs-vtep ; then
         _start_process "devstack@ovs-vtep.service"
     fi
-    if is_service_enabled q-ovn-metadata-agent; then
+    if is_service_enabled q-ovn-metadata-agent neutron-ovn-metadata-agent ; then
         _start_process "devstack@q-ovn-metadata-agent.service"
     fi
 }
@@ -743,7 +743,7 @@ function start_ovn {
         fi
     fi
 
-    if is_service_enabled q-ovn-metadata-agent; then
+    if is_service_enabled q-ovn-metadata-agent neutron-ovn-metadata-agent; then
         run_process q-ovn-metadata-agent "$NEUTRON_OVN_BIN_DIR/$NEUTRON_OVN_METADATA_BINARY --config-file $OVN_META_CONF"
         # Format logging
         setup_logging $OVN_META_CONF
@@ -767,7 +767,7 @@ function _stop_process {
 }
 
 function stop_ovn {
-    if is_service_enabled q-ovn-metadata-agent; then
+    if is_service_enabled q-ovn-metadata-agent neutron-ovn-metadata-agent; then
         sudo pkill -9 -f haproxy || :
         _stop_process "devstack@q-ovn-metadata-agent.service"
     fi

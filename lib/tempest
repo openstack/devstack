@@ -737,12 +737,12 @@ function configure_tempest {
     # Neutron API Extensions
 
     # disable metering if we didn't enable the service
-    if ! is_service_enabled q-metering; then
+    if ! is_service_enabled q-metering neutron-metering; then
         DISABLE_NETWORK_API_EXTENSIONS+=", metering"
     fi
 
     # disable l3_agent_scheduler if we didn't enable L3 agent
-    if ! is_service_enabled q-l3; then
+    if ! is_service_enabled q-l3 neutron-l3; then
         DISABLE_NETWORK_API_EXTENSIONS+=", l3_agent_scheduler"
     fi
 
