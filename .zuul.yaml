@@ -596,26 +596,6 @@
 # and these platforms don't have the round-the-clock support to avoid
 # becoming blockers in that situation.
 - job:
-    name: devstack-platform-centos-8-stream
-    parent: tempest-full-py3
-    description: CentOS 8 Stream platform test
-    nodeset: devstack-single-node-centos-8-stream
-    voting: false
-    timeout: 9000
-    vars:
-      configure_swap_size: 4096
-
-- job:
-    name: devstack-platform-centos-9-stream
-    parent: tempest-full-py3
-    description: CentOS 9 Stream platform test
-    nodeset: devstack-single-node-centos-9-stream
-    voting: false
-    timeout: 9000
-    vars:
-      configure_swap_size: 4096
-
-- job:
     name: devstack-async
     parent: tempest-full-py3
     description: Async mode enabled
@@ -710,9 +690,7 @@
         - devstack
         - devstack-ipv6
         - devstack-enforce-scope
-        - devstack-platform-centos-8-stream
         - devstack-async
-        - devstack-platform-centos-9-stream
         - devstack-multinode
         - devstack-unit-tests
         - openstack-tox-bashate
