@@ -111,18 +111,7 @@ function neutron_plugin_configure_service {
             fi
         fi
     fi
-    # REVISIT(rkukura): Setting firewall_driver here for
-    # neutron.agent.securitygroups_rpc.is_firewall_enabled() which is
-    # used in the server, in case no L2 agent is configured on the
-    # server's node. If an L2 agent is configured, this will get
-    # overridden with the correct driver. The ml2 plugin should
-    # instead use its own config variable to indicate whether security
-    # groups is enabled, and that will need to be set here instead.
-    if [[ "$Q_USE_SECGROUP" == "True" ]]; then
-        iniset /$Q_PLUGIN_CONF_FILE securitygroup firewall_driver neutron.agent.not.a.real.FirewallDriver
-    else
-        iniset /$Q_PLUGIN_CONF_FILE securitygroup firewall_driver neutron.agent.firewall.NoopFirewallDriver
-    fi
+    populate_ml2_config /$Q_PLUGIN_CONF_FILE securitygroup enable_security_group=$Q_USE_SECGROUP
 
     populate_ml2_config /$Q_PLUGIN_CONF_FILE ml2 mechanism_drivers=$Q_ML2_PLUGIN_MECHANISM_DRIVERS
     if [[ "$Q_ML2_PLUGIN_MECHANISM_DRIVERS" == *"linuxbridge"* ]]; then
