@@ -139,7 +139,7 @@ if is_fedora && [[ ${DISTRO} == f* || ${DISTRO} == rhel9 ]]; then
     # recent enough anyway.  This is included via rpms/general
     : # Simply fall through
 elif is_ubuntu; then
-    # pip on Ubuntu 20.04 is new enough, too
+    # pip on Ubuntu 20.04 and higher is new enough, too
     # drop setuptools from u-c
     sed -i -e '/setuptools/d' $REQUIREMENTS_DIR/upper-constraints.txt
 else
