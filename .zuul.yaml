@@ -902,6 +902,3 @@
               - ^.*\.rst$
               - ^doc/.*$
         - devstack-no-tls-proxy
-    periodic:
-      jobs:
-        - devstack-no-tls-proxy
