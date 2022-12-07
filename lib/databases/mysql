@@ -100,8 +100,13 @@ function configure_database_mysql {
 
     # Set the root password - only works the first time. For Ubuntu, we already
     # did that with debconf before installing the package, but we still try,
-    # because the package might have been installed already.
-    sudo mysqladmin -u root password $DATABASE_PASSWORD || true
+    # because the package might have been installed already. We don't do this
+    # for Ubuntu 22.04 (jammy) because the authorization model change in
+    # version 10.4 of mariadb. See
+    # https://mariadb.org/authentication-in-mariadb-10-4/
+    if ! (is_ubuntu && [[ "$DISTRO" == "jammy" ]] && [ "$MYSQL_SERVICE_NAME" == "mariadb" ]); then
+        sudo mysqladmin -u root password $DATABASE_PASSWORD || true
+    fi
 
     # In case of Mariadb, giving hostname in arguments causes permission
     # problems as it expects connection through socket
@@ -115,13 +120,21 @@ function configure_database_mysql {
     # as root so it works only as sudo. To restore old "mysql like" behaviour,
     # we need to change auth plugin for root user
     if is_ubuntu && [[ "$DISTRO" != "bullseye" ]] && [ "$MYSQL_SERVICE_NAME" == "mariadb" ]; then
-        sudo mysql $cmd_args -e "UPDATE mysql.user SET plugin='' WHERE user='$DATABASE_USER' AND host='localhost';"
-        sudo mysql $cmd_args -e "FLUSH PRIVILEGES;"
+        if [[ "$DISTRO" == "jammy" ]]; then
+            # For Ubuntu 22.04 (jammy) we follow the model outlined in
+            # https://mariadb.org/authentication-in-mariadb-10-4/
+            sudo mysql -e "ALTER USER $DATABASE_USER@localhost IDENTIFIED VIA mysql_native_password USING PASSWORD('$DATABASE_PASSWORD');"
+        else
+            sudo mysql $cmd_args -e "UPDATE mysql.user SET plugin='' WHERE user='$DATABASE_USER' AND host='localhost';"
+            sudo mysql $cmd_args -e "FLUSH PRIVILEGES;"
+        fi
     fi
-    # Create DB user if it does not already exist
-    sudo mysql $cmd_args -e "CREATE USER IF NOT EXISTS '$DATABASE_USER'@'%' identified by '$DATABASE_PASSWORD';"
-    # Update the DB to give user '$DATABASE_USER'@'%' full control of the all databases:
-    sudo mysql $cmd_args -e "GRANT ALL PRIVILEGES ON *.* TO '$DATABASE_USER'@'%';"
+    if ! (is_ubuntu && [[ "$DISTRO" == "jammy" ]] && [ "$MYSQL_SERVICE_NAME" == "mariadb" ]); then
+        # Create DB user if it does not already exist
+        sudo mysql $cmd_args -e "CREATE USER IF NOT EXISTS '$DATABASE_USER'@'%' identified by '$DATABASE_PASSWORD';"
+        # Update the DB to give user '$DATABASE_USER'@'%' full control of the all databases:
+        sudo mysql $cmd_args -e "GRANT ALL PRIVILEGES ON *.* TO '$DATABASE_USER'@'%';"
+    fi
 
     # Now update ``my.cnf`` for some local needs and restart the mysql service
 
