@@ -612,6 +612,8 @@ function configure_tempest {
         fi
     done
 
+    iniset $TEMPEST_CONFIG enforce_scope glance "$GLANCE_ENFORCE_SCOPE"
+
     if [ "$VIRT_DRIVER" = "libvirt" ] && [ "$LIBVIRT_TYPE" = "lxc" ]; then
         # libvirt-lxc does not support boot from volume or attaching volumes
         # so basically anything with cinder is out of the question.

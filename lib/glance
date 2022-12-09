@@ -85,6 +85,12 @@ GLANCE_TASKS_DIR=${GLANCE_MULTISTORE_FILE_IMAGE_DIR:=$DATA_DIR/os_glance_tasks_s
 
 GLANCE_USE_IMPORT_WORKFLOW=$(trueorfalse False GLANCE_USE_IMPORT_WORKFLOW)
 
+# Flag to set the oslo_policy.enforce_scope. This is used to switch
+# the Image API policies to start checking the scope of token. By Default,
+# this flag is False.
+# For more detail: https://docs.openstack.org/oslo.policy/latest/configuration/index.html#oslo_policy.enforce_scope
+GLANCE_ENFORCE_SCOPE=$(trueorfalse False GLANCE_ENFORCE_SCOPE)
+
 GLANCE_CONF_DIR=${GLANCE_CONF_DIR:-/etc/glance}
 GLANCE_METADEF_DIR=$GLANCE_CONF_DIR/metadefs
 GLANCE_API_CONF=$GLANCE_CONF_DIR/glance-api.conf
@@ -372,6 +378,12 @@ function configure_glance {
         iniset $GLANCE_API_CONF DEFAULT bind_host $GLANCE_SERVICE_LISTEN_ADDRESS
         iniset $GLANCE_API_CONF DEFAULT bind_port $GLANCE_SERVICE_PORT_INT
         iniset $GLANCE_API_CONF DEFAULT workers "$API_WORKERS"
+    fi
+
+    if [[ "$GLANCE_ENFORCE_SCOPE" == True ]] ; then
+        iniset $GLANCE_API_CONF oslo_policy enforce_scope true
+        iniset $GLANCE_API_CONF oslo_policy enforce_new_defaults true
+        iniset $GLANCE_API_CONF DEFAULT enforce_secure_rbac true
     fi
 }
 
