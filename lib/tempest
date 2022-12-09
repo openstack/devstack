@@ -805,7 +805,12 @@ function configure_tempest {
 # install_tempest() - Collect source and prepare
 function install_tempest {
     git_clone $TEMPEST_REPO $TEMPEST_DIR $TEMPEST_BRANCH
-    pip_install 'tox!=2.8.0'
+    # NOTE(gmann): Pinning tox<4.0.0 for stable/zed and lower. Tox 4.0.0
+    # released after zed was released and has some incompatible changes
+    # and it is ok not to fix the issues caused by tox 4.0.0 in stable
+    # beanches jobs. We can continue testing the stable/zed and lower
+    # branches with tox<4.0.0
+    pip_install 'tox!=2.8.0,<4.0.0'
     pushd $TEMPEST_DIR
     # NOTE(gmann): checkout the TEMPEST_BRANCH in case TEMPEST_BRANCH
     # is tag name not master. git_clone would not checkout tag because
