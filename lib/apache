@@ -95,7 +95,7 @@ function install_apache_uwsgi {
     # didn't fix Python 3.10 compatibility before release.  Should be
     # fixed in uwsgi 4.9.0; can remove this when packages available
     # or we drop this release
-    elif is_fedora && ! [[ $DISTRO =~ f36 ]]; then
+    elif is_fedora && ! is_openeuler && ! [[ $DISTRO =~ f36 ]]; then
         # Note httpd comes with mod_proxy_uwsgi and it is loaded by
         # default; the mod_proxy_uwsgi package actually conflicts now.
         # See:

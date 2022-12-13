@@ -26,9 +26,9 @@ pkgconfig
 postgresql-devel  # psycopg2
 psmisc
 python3-devel
-python3-pip
+python3-pip # not:openEuler-22.03
 python3-systemd
-redhat-rpm-config # missing dep for gcc hardening flags, see rhbz#1217376
+redhat-rpm-config # not:openEuler-22.03  missing dep for gcc hardening flags, see rhbz#1217376
 tar
 tcpdump
 unzip
