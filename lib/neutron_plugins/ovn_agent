@@ -769,7 +769,9 @@ function _stop_process {
 
 function stop_ovn {
     if is_service_enabled q-ovn-metadata-agent neutron-ovn-metadata-agent; then
-        sudo pkill -9 -f haproxy || :
+        # pkill takes care not to kill itself, but it may kill its parent
+        # sudo unless we use the "ps | grep [f]oo" trick
+        sudo pkill -9 -f "[h]aproxy" || :
         _stop_process "devstack@q-ovn-metadata-agent.service"
     fi
     if is_service_enabled ovn-controller-vtep ; then

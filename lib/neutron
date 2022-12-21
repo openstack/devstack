@@ -689,7 +689,9 @@ function stop_other {
     fi
 
     if [[ "$Q_USE_ROOTWRAP_DAEMON" == "True" ]]; then
-        sudo pkill -9 -f $NEUTRON_ROOTWRAP-daemon || :
+        # pkill takes care not to kill itself, but it may kill its parent
+        # sudo unless we use the "ps | grep [f]oo" trick
+        sudo pkill -9 -f "$NEUTRON_ROOTWRAP-[d]aemon" || :
     fi
 }
 
