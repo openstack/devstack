@@ -32,6 +32,15 @@ function configure_cinder_backend_nfs {
     iniset $CINDER_CONF $be_name volume_backend_name $be_name
     iniset $CINDER_CONF $be_name volume_driver "cinder.volume.drivers.nfs.NfsDriver"
     iniset $CINDER_CONF $be_name nfs_shares_config "$CINDER_CONF_DIR/nfs-shares-$be_name.conf"
+    iniset $CINDER_CONF $be_name nas_host localhost
+    iniset $CINDER_CONF $be_name nas_share_path ${NFS_EXPORT_DIR}
+    iniset $CINDER_CONF $be_name nas_secure_file_operations \
+        ${NFS_SECURE_FILE_OPERATIONS}
+    iniset $CINDER_CONF $be_name nas_secure_file_permissions \
+        ${NFS_SECURE_FILE_PERMISSIONS}
+
+    # NFS snapshot support is currently opt-in only.
+    iniset $CINDER_CONF $be_name nfs_snapshot_support True
 
     echo "$CINDER_NFS_SERVERPATH" | tee "$CINDER_CONF_DIR/nfs-shares-$be_name.conf"
 }
