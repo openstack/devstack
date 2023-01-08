@@ -421,6 +421,9 @@ function GetOSVersion {
     elif [[ "${ID}${VERSION}" =~ "rocky9" ]]; then
         os_VENDOR="Rocky"
         os_RELEASE=${VERSION_ID}
+    elif [[ "${ID}${VERSION}" =~ "almalinux" ]]; then
+        os_VENDOR="AlmaLinux"
+        os_RELEASE=${VERSION_ID}
     else
         _ensure_lsb_release
 
