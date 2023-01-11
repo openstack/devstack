@@ -265,10 +265,15 @@ function configure_keystone {
         iniset $KEYSTONE_CONF security_compliance lockout_duration $KEYSTONE_LOCKOUT_DURATION
         iniset $KEYSTONE_CONF security_compliance unique_last_password_count $KEYSTONE_UNIQUE_LAST_PASSWORD_COUNT
     fi
+
+    iniset $KEYSTONE_CONF oslo_policy policy_file policy.yaml
+
     if [[ "$KEYSTONE_ENFORCE_SCOPE" == True || "$ENFORCE_SCOPE" == True ]] ; then
         iniset $KEYSTONE_CONF oslo_policy enforce_scope true
         iniset $KEYSTONE_CONF oslo_policy enforce_new_defaults true
-        iniset $KEYSTONE_CONF oslo_policy policy_file policy.yaml
+    else
+        iniset $KEYSTONE_CONF oslo_policy enforce_scope false
+        iniset $KEYSTONE_CONF oslo_policy enforce_new_defaults false
     fi
 }
 
