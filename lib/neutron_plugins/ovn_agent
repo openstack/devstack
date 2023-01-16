@@ -587,6 +587,7 @@ function init_ovn {
     rm -f $OVS_DATADIR/.*.db.~lock~
     sudo rm -f $OVN_DATADIR/*.db
     sudo rm -f $OVN_DATADIR/.*.db.~lock~
+    sudo rm -f $OVN_RUNDIR/*.sock
 }
 
 function _start_ovs {
