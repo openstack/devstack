@@ -370,7 +370,7 @@
 
 - job:
     name: devstack-base
-    parent: multinode
+    parent: openstack-multinode-fips
     abstract: true
     description: |
       Base abstract Devstack job.

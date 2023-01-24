@@ -2545,6 +2545,11 @@ function clean_pyc_files {
     fi
 }
 
+function is_fips_enabled {
+    fips=`cat /proc/sys/crypto/fips_enabled`
+    [ "$fips" == "1" ]
+}
+
 # Restore xtrace
 $_XTRACE_FUNCTIONS_COMMON
 

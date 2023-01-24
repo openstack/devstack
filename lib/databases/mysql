@@ -69,7 +69,7 @@ function recreate_database_mysql {
 }
 
 function configure_database_mysql {
-    local my_conf mysql slow_log
+    local my_conf mysql slow_log my_client_conf
     echo_summary "Configuring and starting MySQL"
 
     if is_ubuntu; then
@@ -84,6 +84,15 @@ function configure_database_mysql {
         fi
     else
         exit_distro_not_supported "mysql configuration"
+    fi
+
+    # Set fips mode on
+    if is_ubuntu; then
+        if is_fips_enabled; then
+            my_client_conf=/etc/mysql/mysql.conf.d/mysql.cnf
+            iniset -sudo $my_client_conf mysql ssl-fips-mode "on"
+            iniset -sudo $my_conf mysqld ssl-fips-mode "on"
+        fi
     fi
 
     # Change bind-address from localhost (127.0.0.1) to any (::)
