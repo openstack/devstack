@@ -20,12 +20,6 @@ if [[ -z "$MYSQL_SERVICE_NAME" ]]; then
     MYSQL_SERVICE_NAME=mysql
     if is_fedora && ! is_oraclelinux; then
         MYSQL_SERVICE_NAME=mariadb
-    elif is_suse && systemctl list-unit-files | grep -q 'mariadb\.service'; then
-        # Older mariadb packages on SLES 12 provided mysql.service.  The
-        # newer ones on SLES 12 and 15 use mariadb.service; they also
-        # provide a mysql.service symlink for backwards-compatibility, but
-        # let's not rely on that.
-        MYSQL_SERVICE_NAME=mariadb
     elif [[ "$DISTRO" == "bullseye" ]]; then
         MYSQL_SERVICE_NAME=mariadb
     fi
@@ -54,7 +48,7 @@ function cleanup_database_mysql {
     elif is_oraclelinux; then
         uninstall_package mysql-community-server
         sudo rm -rf /var/lib/mysql
-    elif is_suse || is_fedora; then
+    elif is_fedora; then
         uninstall_package mariadb-server
         sudo rm -rf /var/lib/mysql
     else
@@ -74,7 +68,7 @@ function configure_database_mysql {
 
     if is_ubuntu; then
         my_conf=/etc/mysql/my.cnf
-    elif is_suse || is_oraclelinux; then
+    elif is_oraclelinux; then
         my_conf=/etc/my.cnf
     elif is_fedora; then
         my_conf=/etc/my.cnf
@@ -90,7 +84,7 @@ function configure_database_mysql {
     iniset -sudo $my_conf mysqld bind-address "$(ipv6_unquote $SERVICE_LISTEN_ADDRESS)"
 
     # (Re)Start mysql-server
-    if is_fedora || is_suse; then
+    if is_fedora; then
         # service is not started by default
         start_service $MYSQL_SERVICE_NAME
     elif is_ubuntu; then
@@ -211,9 +205,6 @@ EOF
             install_package mysql-community-server
         elif is_fedora; then
             install_package mariadb-server mariadb-devel mariadb
-            sudo systemctl enable $MYSQL_SERVICE_NAME
-        elif is_suse; then
-            install_package mariadb-server
             sudo systemctl enable $MYSQL_SERVICE_NAME
         elif is_ubuntu; then
             install_package $MYSQL_SERVICE_NAME-server

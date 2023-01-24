@@ -117,8 +117,8 @@ else
 fi
 
 
-# EL and SUSE should only use lioadm
-if is_fedora || is_suse; then
+# EL should only use lioadm
+if is_fedora; then
     if [[ ${CINDER_TARGET_HELPER} != "lioadm" && ${CINDER_TARGET_HELPER} != 'nvmet' ]]; then
         die "lioadm and nvmet are the only valid Cinder target_helper config on this platform"
     fi
@@ -595,11 +595,6 @@ function start_cinder {
             _configure_tgt_for_config_d
             if is_ubuntu; then
                 sudo service tgt restart
-            elif is_suse; then
-                # NOTE(dmllr): workaround restart bug
-                # https://bugzilla.suse.com/show_bug.cgi?id=934642
-                stop_service tgtd
-                start_service tgtd
             else
                 restart_service tgtd
             fi

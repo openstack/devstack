@@ -44,10 +44,6 @@ elif is_fedora; then
     APACHE_NAME=httpd
     APACHE_CONF_DIR=${APACHE_CONF_DIR:-/etc/$APACHE_NAME/conf.d}
     APACHE_SETTINGS_DIR=${APACHE_SETTINGS_DIR:-/etc/$APACHE_NAME/conf.d}
-elif is_suse; then
-    APACHE_NAME=apache2
-    APACHE_CONF_DIR=${APACHE_CONF_DIR:-/etc/$APACHE_NAME/vhosts.d}
-    APACHE_SETTINGS_DIR=${APACHE_SETTINGS_DIR:-/etc/$APACHE_NAME/conf.d}
 fi
 APACHE_LOG_DIR="/var/log/${APACHE_NAME}"
 
@@ -62,11 +58,6 @@ function enable_apache_mod {
         # Skip mod_version as it is not a valid mod to enable
         # on debuntu, instead it is built in.
         if [[ "$mod" != "version" ]] && ! a2query -m $mod ; then
-            sudo a2enmod $mod
-            restart_apache_server
-        fi
-    elif is_suse; then
-        if ! a2enmod -q $mod ; then
             sudo a2enmod $mod
             restart_apache_server
         fi
@@ -104,10 +95,6 @@ function install_apache_uwsgi {
         # Thus there is nothing else to do after this install
         install_package uwsgi \
                         uwsgi-plugin-python3
-    elif [[ $os_VENDOR =~ openSUSE ]]; then
-        install_package uwsgi \
-                        uwsgi-python3 \
-                        apache2-mod_uwsgi
     else
         # Compile uwsgi from source.
         local dir
@@ -125,7 +112,7 @@ function install_apache_uwsgi {
         sudo rm -rf $dir
     fi
 
-    if is_ubuntu || is_suse ; then
+    if is_ubuntu; then
         # we've got to enable proxy and proxy_uwsgi for this to work
         sudo a2enmod proxy
         sudo a2enmod proxy_uwsgi
@@ -155,8 +142,6 @@ function install_apache_wsgi {
         sudo sed -i '/mod_mpm_prefork.so/s/^/#/g' /etc/httpd/conf.modules.d/00-mpm.conf
         sudo sed -i '/mod_mpm_event.so/s/^/#/g' /etc/httpd/conf.modules.d/00-mpm.conf
         sudo sed -i '/mod_mpm_worker.so/s/^#//g' /etc/httpd/conf.modules.d/00-mpm.conf
-    elif is_suse; then
-        install_package apache2 apache2-mod_wsgi
     else
         exit_distro_not_supported "apache wsgi installation"
     fi
@@ -171,7 +156,7 @@ function install_apache_wsgi {
 # recognise it. a2ensite and a2dissite ignore the .conf suffix used as parameter. The default sites'
 # files are 000-default.conf and default-ssl.conf.
 #
-# On Fedora and openSUSE, any file in /etc/httpd/conf.d/ whose name ends with .conf is enabled.
+# On Fedora, any file in /etc/httpd/conf.d/ whose name ends with .conf is enabled.
 #
 # On RHEL and CentOS, things should hopefully work as in Fedora.
 #
@@ -187,7 +172,7 @@ function apache_site_config_for {
     if is_ubuntu; then
         # Ubuntu 14.04 - Apache 2.4
         echo $APACHE_CONF_DIR/${site}.conf
-    elif is_fedora || is_suse; then
+    elif is_fedora; then
         # fedora conf.d is only imported if it ends with .conf so this is approx the same
         local enabled_site_file="$APACHE_CONF_DIR/${site}.conf"
         if [ -f $enabled_site_file ]; then
@@ -205,7 +190,7 @@ function enable_apache_site {
     enable_apache_mod version
     if is_ubuntu; then
         sudo a2ensite ${site}
-    elif is_fedora || is_suse; then
+    elif is_fedora; then
         local enabled_site_file="$APACHE_CONF_DIR/${site}.conf"
         # Do nothing if site already enabled or no site config exists
         if [[ -f ${enabled_site_file}.disabled ]] && [[ ! -f ${enabled_site_file} ]]; then
@@ -219,7 +204,7 @@ function disable_apache_site {
     local site=$@
     if is_ubuntu; then
         sudo a2dissite ${site} || true
-    elif is_fedora || is_suse; then
+    elif is_fedora; then
         local enabled_site_file="$APACHE_CONF_DIR/${site}.conf"
         # Do nothing if no site config exists
         if [[ -f ${enabled_site_file} ]]; then

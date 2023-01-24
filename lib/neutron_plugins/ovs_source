@@ -182,12 +182,6 @@ function action_openvswitch {
         ${action}_service openvswitch-switch
     elif is_fedora; then
         ${action}_service openvswitch
-    elif is_suse; then
-        if [[ $DISTRO == "sle12" ]] && [[ $os_RELEASE -lt 12.2 ]]; then
-            ${action}_service openvswitch-switch
-        else
-            ${action}_service openvswitch
-        fi
     fi
 }
 
