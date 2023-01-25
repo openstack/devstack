@@ -691,7 +691,10 @@
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
+        # TODO(gmann): make it voting once it is fixed, currently it is failing
+        # for <=stable/xena https://zuul.openstack.org/builds?job_name=openstacksdk-functional-devstack&branch=stable%2Fxena&branch=stable%2Fwallaby&skip=0
         - openstacksdk-functional-devstack:
+            voting: false
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
@@ -722,10 +725,11 @@
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
-        - openstacksdk-functional-devstack:
-            irrelevant-files:
-              - ^.*\.rst$
-              - ^doc/.*$
+        # - openstacksdk-functional-devstack:
+        #    voting: false
+        #    irrelevant-files:
+        #      - ^.*\.rst$
+        #      - ^doc/.*$
         - tempest-ipv6-only:
             irrelevant-files:
               - ^.*\.rst$
