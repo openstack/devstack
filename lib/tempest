@@ -129,6 +129,13 @@ function set_tempest_venv_constraints {
         (cd $REQUIREMENTS_DIR &&
             git show master:upper-constraints.txt 2>/dev/null ||
             git show origin/master:upper-constraints.txt) > $tmp_c
+        # NOTE(gmann): we need to set the below env var pointing to master
+        # constraints even that is what default in tox.ini. Otherwise it can
+        # create the issue for grenade run where old and new devstack can have
+        # different tempest (old and master) to install. For detail problem,
+        # refer to the https://bugs.launchpad.net/devstack/+bug/2003993
+        export UPPER_CONSTRAINTS_FILE=https://releases.openstack.org/constraints/upper/master
+        export TOX_CONSTRAINTS_FILE=https://releases.openstack.org/constraints/upper/master
     else
         echo "Using $TEMPEST_VENV_UPPER_CONSTRAINTS constraints in Tempest virtual env."
         cat $TEMPEST_VENV_UPPER_CONSTRAINTS > $tmp_c
