@@ -602,8 +602,6 @@
 
 - project:
     templates:
-      - integrated-gate
-      - integrated-gate-py3
       - publish-openstack-docs-pti
     check:
       jobs:
@@ -617,6 +615,8 @@
         - devstack-multinode-xenial
         - devstack-unit-tests
         - openstack-tox-bashate
+        - tempest-full
+        - tempest-full-py3
         - ironic-tempest-ipa-wholedisk-bios-agent_ipmitool-tinyipa:
             voting: false
         - swift-dsvm-functional:
@@ -666,6 +666,8 @@
         - devstack-multinode-xenial
         - devstack-unit-tests
         - openstack-tox-bashate
+        - tempest-full
+        - tempest-full-py3
         # - neutron-grenade-multinode:
         #     irrelevant-files:
         #       - ^.*\.rst$

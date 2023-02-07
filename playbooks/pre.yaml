@@ -19,6 +19,7 @@
       set_fact:
         external_bridge_mtu: "{{ local_mtu | int - 50 }}"
   roles:
+    - ensure-rust
     - ensure-virtualenv
     - test-matrix
     - configure-swap
