@@ -412,9 +412,9 @@ function _ensure_lsb_release {
 #  - os_VENDOR
 #  - os_PACKAGE
 function GetOSVersion {
-    # CentOS Stream 9 does not provide lsb_release
+    # CentOS Stream 9 and RHEL 9 do not provide lsb_release
     source /etc/os-release
-    if [[ "${ID}${VERSION}" == "centos9" ]]; then
+    if [[ "${ID}${VERSION}" == "centos9" ]] || [[ "${ID}${VERSION}" =~ "rhel9" ]]; then
         os_RELEASE=${VERSION_ID}
         os_CODENAME="n/a"
         os_VENDOR=$(echo $NAME | tr -d '[:space:]')
@@ -530,6 +530,7 @@ function is_fedora {
         [ "$os_VENDOR" = "openEuler" ] || \
         [ "$os_VENDOR" = "RedHatEnterpriseServer" ] || \
         [ "$os_VENDOR" = "RedHatEnterprise" ] || \
+        [ "$os_VENDOR" = "RedHatEnterpriseLinux" ] || \
         [ "$os_VENDOR" = "Rocky" ] || \
         [ "$os_VENDOR" = "CentOS" ] || [ "$os_VENDOR" = "CentOSStream" ] || \
         [ "$os_VENDOR" = "AlmaLinux" ] || \

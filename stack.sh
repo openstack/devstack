@@ -391,7 +391,10 @@ if [[ $DISTRO == "rhel8" ]]; then
     # Patch: https://github.com/rpm-software-management/dnf/pull/1448
     echo "[]" | sudo tee /var/cache/dnf/expired_repos.json
 elif [[ $DISTRO == "rhel9" ]]; then
+    # for CentOS Stream 9 repository
     sudo dnf config-manager --set-enabled crb
+    # for RHEL 9 repository
+    sudo dnf config-manager --set-enabled codeready-builder-for-rhel-9-x86_64-rpms
     # rabbitmq and other packages are provided by RDO repositories.
     _install_rdo
 
