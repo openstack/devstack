@@ -203,6 +203,11 @@ ADDITIONAL_VENV_PACKAGES=${ADITIONAL_VENV_PACKAGES:-""}
 # (currently only implemented for MySQL backend)
 DATABASE_QUERY_LOGGING=$(trueorfalse False DATABASE_QUERY_LOGGING)
 
+# This can be used to reduce the amount of memory mysqld uses while running.
+# These are unscientifically determined, and could reduce performance or
+# cause other issues.
+MYSQL_REDUCE_MEMORY=$(trueorfalse False MYSQL_REDUCE_MEMORY)
+
 # Set a timeout for git operations.  If git is still running when the
 # timeout expires, the command will be retried up to 3 times.  This is
 # in the format for timeout(1);

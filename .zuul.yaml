@@ -560,6 +560,9 @@
     description: |
       Simple multinode test to verify multinode functionality on devstack side.
       This is not meant to be used as a parent job.
+    vars:
+      devstack_localrc:
+        MYSQL_REDUCE_MEMORY: true
 
 - job:
     name: devstack-async

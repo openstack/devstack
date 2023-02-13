@@ -143,6 +143,16 @@ function configure_database_mysql {
         iniset -sudo $my_conf mysqld log-queries-not-using-indexes 1
     fi
 
+    if [[ "$MYSQL_REDUCE_MEMORY" == "True" ]]; then
+        iniset -sudo $my_conf mysqld read_buffer_size 64K
+        iniset -sudo $my_conf mysqld innodb_buffer_pool_size 16M
+        iniset -sudo $my_conf mysqld thread_stack 192K
+        iniset -sudo $my_conf mysqld thread_cache_size 8
+        iniset -sudo $my_conf mysqld tmp_table_size 8M
+        iniset -sudo $my_conf mysqld sort_buffer_size 8M
+        iniset -sudo $my_conf mysqld max_allowed_packet 8M
+    fi
+
     restart_service $MYSQL_SERVICE_NAME
 }
 
