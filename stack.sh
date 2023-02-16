@@ -394,6 +394,13 @@ elif [[ $DISTRO == "rhel9" ]]; then
     sudo dnf config-manager --set-enabled crb
     # rabbitmq and other packages are provided by RDO repositories.
     _install_rdo
+
+    # Some distributions (Rocky Linux 9) provide curl-minimal instead of curl,
+    # it triggers a conflict when devstack wants to install "curl".
+    # Swap curl-minimal with curl.
+    if is_package_installed curl-minimal; then
+        sudo dnf swap -y curl-minimal curl
+    fi
 elif [[ $DISTRO == "openEuler-22.03" ]]; then
     # There are some problem in openEuler. We should fix it first. Some required
     # package/action runs before fixup script. So we can't fix there.
