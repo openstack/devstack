@@ -816,5 +816,5 @@ function cleanup_ovn {
         _cleanup $ovs_path
     fi
 
-    sudo rm -f $OVN_RUNDIR
+    sudo rm -rf $OVN_RUNDIR
 }
