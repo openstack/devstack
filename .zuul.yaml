@@ -726,7 +726,6 @@
     description: Rocky Linux 9 Blue Onyx platform test
     nodeset: devstack-single-node-rockylinux-9
     timeout: 9000
-    voting: false
     vars:
       configure_swap_size: 4096
 
