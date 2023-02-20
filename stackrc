@@ -662,20 +662,19 @@ esac
 #     If the file ends in .tar.gz, uncompress the tarball and and select the first
 #     .img file inside it as the image.  If present, use "*-vmlinuz*" as the kernel
 #     and "*-initrd*" as the ramdisk
-#     example: http://cloud-images.ubuntu.com/releases/precise/release/ubuntu-12.04-server-cloudimg-amd64.tar.gz
+#     example: https://cloud-images.ubuntu.com/releases/jammy/release/ubuntu-22.04-server-cloudimg-amd64.tar.gz
 #  * disk image (*.img,*.img.gz)
 #    if file ends in .img, then it will be uploaded and registered as a to
 #    glance as a disk image.  If it ends in .gz, it is uncompressed first.
 #    example:
-#      http://cloud-images.ubuntu.com/releases/precise/release/ubuntu-12.04-server-cloudimg-armel-disk1.img
-#      http://download.cirros-cloud.net/${CIRROS_VERSION}/cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-rootfs.img.gz
+#      https://cloud-images.ubuntu.com/releases/jammy/release/ubuntu-22.04-server-cloudimg-amd64.img
+#      https://download.cirros-cloud.net/${CIRROS_VERSION}/cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-rootfs.img.gz
 #  * OpenVZ image:
 #    OpenVZ uses its own format of image, and does not support UEC style images
 
-#IMAGE_URLS="http://smoser.brickies.net/ubuntu/ttylinux-uec/ttylinux-uec-amd64-11.2_2.6.35-15_1.tar.gz" # old ttylinux-uec image
-#IMAGE_URLS="http://download.cirros-cloud.net/${CIRROS_VERSION}/cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-disk.img" # cirros full disk image
+#IMAGE_URLS="https://download.cirros-cloud.net/${CIRROS_VERSION}/cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-disk.img" # cirros full disk image
 
-CIRROS_VERSION=${CIRROS_VERSION:-"0.5.2"}
+CIRROS_VERSION=${CIRROS_VERSION:-"0.6.1"}
 CIRROS_ARCH=${CIRROS_ARCH:-$(uname -m)}
 
 # Set default image based on ``VIRT_DRIVER`` and ``LIBVIRT_TYPE``, either of
@@ -692,11 +691,11 @@ if [[ "$DOWNLOAD_DEFAULT_IMAGES" == "True" ]]; then
                 lxc) # the cirros root disk in the uec tarball is empty, so it will not work for lxc
                     DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-rootfs}
                     DEFAULT_IMAGE_FILE_NAME=${DEFAULT_IMAGE_FILE_NAME:-cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-rootfs.img.gz}
-                    IMAGE_URLS+="http://download.cirros-cloud.net/${CIRROS_VERSION}/${DEFAULT_IMAGE_FILE_NAME}";;
+                    IMAGE_URLS+="https://download.cirros-cloud.net/${CIRROS_VERSION}/${DEFAULT_IMAGE_FILE_NAME}";;
                 *) # otherwise, use the qcow image
                     DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-disk}
                     DEFAULT_IMAGE_FILE_NAME=${DEFAULT_IMAGE_FILE_NAME:-cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-disk.img}
-                    IMAGE_URLS+="http://download.cirros-cloud.net/${CIRROS_VERSION}/${DEFAULT_IMAGE_FILE_NAME}";;
+                    IMAGE_URLS+="https://download.cirros-cloud.net/${CIRROS_VERSION}/${DEFAULT_IMAGE_FILE_NAME}";;
                 esac
             ;;
         vsphere)
