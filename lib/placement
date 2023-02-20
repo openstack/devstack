@@ -120,6 +120,9 @@ function configure_placement {
     if [[ "$PLACEMENT_ENFORCE_SCOPE" == "True" || "$ENFORCE_SCOPE" == "True" ]]; then
         iniset $PLACEMENT_CONF oslo_policy enforce_new_defaults True
         iniset $PLACEMENT_CONF oslo_policy enforce_scope True
+    else
+        iniset $PLACEMENT_CONF oslo_policy enforce_new_defaults False
+        iniset $PLACEMENT_CONF oslo_policy enforce_scope False
     fi
 }
 

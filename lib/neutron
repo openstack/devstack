@@ -527,7 +527,6 @@ function install_neutronclient {
     if use_library_from_git "python-neutronclient"; then
         git_clone_by_name "python-neutronclient"
         setup_dev_lib "python-neutronclient"
-        sudo install -D -m 0644 -o $STACK_USER {${GITDIR["python-neutronclient"]}/tools/,/etc/bash_completion.d/}neutron.bash_completion
     fi
 }
 
@@ -689,7 +688,9 @@ function stop_other {
     fi
 
     if [[ "$Q_USE_ROOTWRAP_DAEMON" == "True" ]]; then
-        sudo pkill -9 -f $NEUTRON_ROOTWRAP-daemon || :
+        # pkill takes care not to kill itself, but it may kill its parent
+        # sudo unless we use the "ps | grep [f]oo" trick
+        sudo pkill -9 -f "$NEUTRON_ROOTWRAP-[d]aemon" || :
     fi
 }
 

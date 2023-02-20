@@ -490,6 +490,9 @@ function create_nova_conf {
         if [[ "$NOVA_ENFORCE_SCOPE" == "True" || "$ENFORCE_SCOPE" == "True" ]]; then
             iniset $NOVA_CONF oslo_policy enforce_new_defaults True
             iniset $NOVA_CONF oslo_policy enforce_scope True
+        else
+            iniset $NOVA_CONF oslo_policy enforce_new_defaults False
+            iniset $NOVA_CONF oslo_policy enforce_scope False
         fi
         if is_service_enabled tls-proxy && [ "$NOVA_USE_MOD_WSGI" == "False" ]; then
             # Set the service port for a proxy to take the original

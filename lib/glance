@@ -436,6 +436,10 @@ function configure_glance {
         iniset $GLANCE_API_CONF oslo_policy enforce_scope true
         iniset $GLANCE_API_CONF oslo_policy enforce_new_defaults true
         iniset $GLANCE_API_CONF DEFAULT enforce_secure_rbac true
+    else
+        iniset $GLANCE_API_CONF oslo_policy enforce_scope false
+        iniset $GLANCE_API_CONF oslo_policy enforce_new_defaults false
+        iniset $GLANCE_API_CONF DEFAULT enforce_secure_rbac false
     fi
 }
 

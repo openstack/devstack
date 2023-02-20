@@ -587,6 +587,7 @@ function init_ovn {
     rm -f $OVS_DATADIR/.*.db.~lock~
     sudo rm -f $OVN_DATADIR/*.db
     sudo rm -f $OVN_DATADIR/.*.db.~lock~
+    sudo rm -f $OVN_RUNDIR/*.sock
 }
 
 function _start_ovs {
@@ -768,7 +769,9 @@ function _stop_process {
 
 function stop_ovn {
     if is_service_enabled q-ovn-metadata-agent neutron-ovn-metadata-agent; then
-        sudo pkill -9 -f haproxy || :
+        # pkill takes care not to kill itself, but it may kill its parent
+        # sudo unless we use the "ps | grep [f]oo" trick
+        sudo pkill -9 -f "[h]aproxy" || :
         _stop_process "devstack@q-ovn-metadata-agent.service"
     fi
     if is_service_enabled ovn-controller-vtep ; then
@@ -813,5 +816,5 @@ function cleanup_ovn {
         _cleanup $ovs_path
     fi
 
-    sudo rm -f $OVN_RUNDIR
+    sudo rm -rf $OVN_RUNDIR
 }

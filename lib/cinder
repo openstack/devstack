@@ -411,6 +411,9 @@ function configure_cinder {
     if [[ "$CINDER_ENFORCE_SCOPE" == True || "$ENFORCE_SCOPE" == True ]] ; then
         iniset $CINDER_CONF oslo_policy enforce_scope true
         iniset $CINDER_CONF oslo_policy enforce_new_defaults true
+    else
+        iniset $CINDER_CONF oslo_policy enforce_scope false
+        iniset $CINDER_CONF oslo_policy enforce_new_defaults false
     fi
 }
 
