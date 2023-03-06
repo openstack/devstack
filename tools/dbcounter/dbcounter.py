@@ -40,6 +40,9 @@ class LogCursorEventsPlugin(CreateEnginePlugin):
         self.queue = queue.Queue()
         self.thread = None
 
+    def update_url(self, url):
+        return url.difference_update_query(["dbcounter"])
+
     def engine_created(self, engine):
         """Hook the engine creation process.
 
@@ -77,12 +80,12 @@ class LogCursorEventsPlugin(CreateEnginePlugin):
     def do_incr(self, db, op, count):
         """Increment the counter for (db,op) by count."""
 
-        query = ('INSERT INTO queries (db, op, count) '
-                 '  VALUES (%s, %s, %s) '
-                 '  ON DUPLICATE KEY UPDATE count=count+%s')
+        query = sqlalchemy.text('INSERT INTO queries (db, op, count) '
+                                '  VALUES (:db, :op, :count) '
+                                '  ON DUPLICATE KEY UPDATE count=count+:count')
         try:
             with self.engine.begin() as conn:
-                r = conn.execute(query, (db, op, count, count))
+                r = conn.execute(query, {'db': db, 'op': op, 'count': count})
         except Exception as e:
             LOG.error('Failed to account for access to database %r: %s',
                       db, e)
