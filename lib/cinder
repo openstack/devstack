@@ -95,6 +95,7 @@ CINDER_ENABLED_BACKENDS=${CINDER_ENABLED_BACKENDS:-lvm:lvmdriver-1}
 CINDER_VOLUME_CLEAR=${CINDER_VOLUME_CLEAR:-${CINDER_VOLUME_CLEAR_DEFAULT:-zero}}
 CINDER_VOLUME_CLEAR=$(echo ${CINDER_VOLUME_CLEAR} | tr '[:upper:]' '[:lower:]')
 
+VOLUME_TYPE_MULTIATTACH=${VOLUME_TYPE_MULTIATTACH:-multiattach}
 
 if [[ -n "$CINDER_ISCSI_HELPER" ]]; then
     if [[ -z "$CINDER_TARGET_HELPER" ]]; then
@@ -649,6 +650,23 @@ function stop_cinder {
     stop_process c-vol
 }
 
+function create_one_type {
+    type_name=$1
+    property_key=$2
+    property_value=$3
+    # NOTE (e0ne): openstack client doesn't work with cinder in noauth mode
+    if is_service_enabled keystone; then
+        openstack --os-region-name="$REGION_NAME" volume type create --property $property_key="$property_value" $type_name
+    else
+        # TODO (e0ne): use openstack client once it will support cinder in noauth mode:
+        # https://bugs.launchpad.net/python-cinderclient/+bug/1755279
+        local cinder_url
+        cinder_url=$CINDER_SERVICE_PROTOCOL://$SERVICE_HOST:$CINDER_SERVICE_PORT/v3
+        OS_USER_ID=$OS_USERNAME OS_PROJECT_ID=$OS_PROJECT_NAME cinder --os-auth-type noauth --os-endpoint=$cinder_url type-create $type_name
+        OS_USER_ID=$OS_USERNAME OS_PROJECT_ID=$OS_PROJECT_NAME cinder --os-auth-type noauth --os-endpoint=$cinder_url type-key $type_name set $property_key="$property_value"
+    fi
+}
+
 # create_volume_types() - Create Cinder's configured volume types
 function create_volume_types {
     # Create volume types
@@ -656,18 +674,12 @@ function create_volume_types {
         local be be_name
         for be in ${CINDER_ENABLED_BACKENDS//,/ }; do
             be_name=${be##*:}
-            # NOTE (e0ne): openstack client doesn't work with cinder in noauth mode
-            if is_service_enabled keystone; then
-                openstack --os-region-name="$REGION_NAME" volume type create --property volume_backend_name="${be_name}" ${be_name}
-            else
-                # TODO (e0ne): use openstack client once it will support cinder in noauth mode:
-                # https://bugs.launchpad.net/python-cinderclient/+bug/1755279
-                local cinder_url
-                cinder_url=$CINDER_SERVICE_PROTOCOL://$SERVICE_HOST:$CINDER_SERVICE_PORT/v3
-                OS_USER_ID=$OS_USERNAME OS_PROJECT_ID=$OS_PROJECT_NAME cinder --os-auth-type noauth --os-endpoint=$cinder_url type-create ${be_name}
-                OS_USER_ID=$OS_USERNAME OS_PROJECT_ID=$OS_PROJECT_NAME cinder --os-auth-type noauth --os-endpoint=$cinder_url type-key ${be_name} set volume_backend_name=${be_name}
-            fi
+            create_one_type $be_name "volume_backend_name" $be_name
         done
+
+        if [[ $ENABLE_VOLUME_MULTIATTACH == "True" ]]; then
+            create_one_type $VOLUME_TYPE_MULTIATTACH $VOLUME_TYPE_MULTIATTACH "<is> True"
+        fi
 
         # Increase quota for the service project if glance is using cinder,
         # since it's likely to occasionally go above the default 10 in parallel

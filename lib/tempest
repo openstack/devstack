@@ -604,6 +604,10 @@ function configure_tempest {
         iniset $TEMPEST_CONFIG volume storage_protocol "$TEMPEST_STORAGE_PROTOCOL"
     fi
 
+    if [[ $ENABLE_VOLUME_MULTIATTACH == "True" ]]; then
+        iniset $TEMPEST_CONFIG volume volume_type_multiattach $VOLUME_TYPE_MULTIATTACH
+    fi
+
     # Placement Features
     # Set the microversion range for placement.
     # Setting [None, latest] range of microversion which allow Tempest to run all microversions tests.
