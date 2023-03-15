@@ -753,7 +753,32 @@ function configure_tempest {
         DISABLE_NETWORK_API_EXTENSIONS+=", l3_agent_scheduler"
     fi
 
-    local network_api_extensions=${NETWORK_API_EXTENSIONS:-"all"}
+    DEFAULT_NET_EXT="address-scope,agent,allowed-address-pairs,auto-allocated-topology"
+    DEFAULT_NET_EXT+=",availability_zone,binding,default-subnetpools,dhcp_agent_scheduler"
+    DEFAULT_NET_EXT+=",dvr,ext-gw-mode,external-net,extra_dhcp_opt,extraroute,flavors"
+    DEFAULT_NET_EXT+=",l3-flavors,l3-ha,l3_agent_scheduler,multi-provider,net-mtu"
+    DEFAULT_NET_EXT+=",network-ip-availability,network_availability_zone,pagination"
+    DEFAULT_NET_EXT+=",port-security,project-id,provider,quotas,quota_details,rbac-policies"
+    DEFAULT_NET_EXT+=",revision-if-match,router,router_availability_zone,security-group,service-type,sorting"
+    DEFAULT_NET_EXT+=",standard-attr-description,standard-attr-revisions,standard-attr-tag,standard-attr-timestamp"
+    DEFAULT_NET_EXT+=",subnet-service-types,subnet_allocation,net-mtu-writable,ip-substring-filtering"
+    DEFAULT_NET_EXT+=",availability_zone_filter,filter-validation,empty-string-filtering,port-mac-address-regenerate"
+    DEFAULT_NET_EXT+=",port-security-groups-filtering,fip-port-details,binding-extended"
+    DEFAULT_NET_EXT+=",subnet_onboard,l3-port-ip-change-not-allowed,agent-resources-synced"
+    DEFAULT_NET_EXT+=",floatingip-pools,rbac-security-groups,subnetpool-prefix-ops,router-admin-state-down-before-update"
+    DEFAULT_NET_EXT+=",rbac-subnetpool,tag-ports-during-bulk-creation,stateful-security-group,address-group,extraroute-atomic"
+    DEFAULT_NET_EXT+=",port-numa-affinity-policy,rbac-address-scope,security-groups-remote-address-group,trunk,trunk-details"
+    DEFAULT_NET_EXT+=",rbac-address-group,port-device-profile"
+    DEFAULT_NET_EXT+=",multiple-external-gateways,qos-pps-minimum,l3-ext-ndp-proxy,rbac-bgpvpn"
+    DEFAULT_NET_EXT+=",qos-pps,ecmp_routes,bgp,floating-ip-port-forwarding-port-ranges"
+    # New in Yoga
+    DEFAULT_NET_EXT+=",security-groups-shared-filtering,security-groups-normalized-cidr,quota-check-limit"
+    DEFAULT_NET_EXT+=",port-resource-request-groups"
+    # New in Zed
+    DEFAULT_NET_EXT+=",port-mac-override,floating-ip-port-forwarding-detail,network-cascade-delete"
+    # New in 2023.1
+    DEFAULT_NET_EXT+=",port-hints,floating-ip-distributed"
+    local network_api_extensions=${NETWORK_API_EXTENSIONS:-$DEFAULT_NET_EXT}
     if [[ ! -z "$DISABLE_NETWORK_API_EXTENSIONS" ]]; then
         # Enabled extensions are either the ones explicitly specified or those available on the API endpoint
         network_api_extensions=${NETWORK_API_EXTENSIONS:-$(iniget $tmp_cfg_file network-feature-enabled api_extensions | tr -d " ")}
@@ -765,7 +790,10 @@ function configure_tempest {
     fi
     iniset $TEMPEST_CONFIG network-feature-enabled api_extensions $network_api_extensions
     # Swift API Extensions
-    local object_storage_api_extensions=${OBJECT_STORAGE_API_EXTENSIONS:-"all"}
+    DEFAULT_SWIFT_OPT="account_quotas,bulk_delete,bulk_upload,container_quotas"
+    DEFAULT_SWIFT_OPT+=",container_sync,crossdomain,formpost,ratelimit,slo"
+    DEFAULT_SWIFT_OPT+=",staticweb,tempauth,tempurl,versioned_writes"
+    local object_storage_api_extensions=${OBJECT_STORAGE_API_EXTENSIONS:-$DEFAULT_SWIFT_OPT}
     if [[ ! -z "$DISABLE_OBJECT_STORAGE_API_EXTENSIONS" ]]; then
         # Enabled extensions are either the ones explicitly specified or those available on the API endpoint
         object_storage_api_extensions=${OBJECT_STORAGE_API_EXTENSIONS:-$(iniget $tmp_cfg_file object-storage-feature-enabled discoverable_apis | tr -d " ")}
@@ -774,7 +802,18 @@ function configure_tempest {
     fi
     iniset $TEMPEST_CONFIG object-storage-feature-enabled discoverable_apis $object_storage_api_extensions
     # Cinder API Extensions
-    local volume_api_extensions=${VOLUME_API_EXTENSIONS:-"all"}
+    DEFAULT_VOL_EXT="OS-SCH-HNT,backups,capabilities,cgsnapshots,consistencygroups"
+    DEFAULT_VOL_EXT+=",encryption,os-admin-actions,os-availability-zone"
+    DEFAULT_VOL_EXT+=",os-extended-services,os-extended-snapshot-attributes"
+    DEFAULT_VOL_EXT+=",os-hosts,os-quota-class-sets,os-quota-sets"
+    DEFAULT_VOL_EXT+=",os-services,os-snapshot-actions,os-snapshot-manage"
+    DEFAULT_VOL_EXT+=",os-snapshot-unmanage,os-types-extra-specs,os-types-manage"
+    DEFAULT_VOL_EXT+=",os-used-limits,os-vol-host-attr,os-vol-image-meta"
+    DEFAULT_VOL_EXT+=",os-vol-mig-status-attr,os-vol-tenant-attr,os-volume-actions"
+    DEFAULT_VOL_EXT+=",os-volume-encryption-metadata,os-volume-manage"
+    DEFAULT_VOL_EXT+=",os-volume-transfer,os-volume-type-access"
+    DEFAULT_VOL_EXT+=",os-volume-unmanage,qos-specs,scheduler-stats"
+    local volume_api_extensions=${VOLUME_API_EXTENSIONS:-$DEFAULT_VOL_EXT}
     if [[ ! -z "$DISABLE_VOLUME_API_EXTENSIONS" ]]; then
         # Enabled extensions are either the ones explicitly specified or those available on the API endpoint
         volume_api_extensions=${VOLUME_API_EXTENSIONS:-$(iniget $tmp_cfg_file volume-feature-enabled api_extensions | tr -d " ")}
