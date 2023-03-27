@@ -36,6 +36,12 @@ function fixup_fedora {
     # Disable selinux to avoid configuring to allow Apache access
     # to Horizon files (LP#1175444)
     if selinuxenabled; then
+        #persit selinux config across reboots
+        cat << EOF | sudo tee /etc/selinux/config
+SELINUX=permissive
+SELINUXTYPE=targeted
+EOF
+        # then disable at runtime
         sudo setenforce 0
     fi
 
