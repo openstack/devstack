@@ -32,7 +32,7 @@ function cleanup_database_postgresql {
         # Get ruthless with mysql
         apt_get purge -y postgresql*
         return
-    elif is_fedora || is_suse; then
+    elif is_fedora; then
         uninstall_package postgresql-server
     else
         return
@@ -66,11 +66,6 @@ function configure_database_postgresql {
         pg_dir=`find /etc/postgresql -name pg_hba.conf|xargs dirname`
         pg_hba=$pg_dir/pg_hba.conf
         pg_conf=$pg_dir/postgresql.conf
-    elif is_suse; then
-        pg_hba=/var/lib/pgsql/data/pg_hba.conf
-        pg_conf=/var/lib/pgsql/data/postgresql.conf
-        # initdb is called when postgresql is first started
-        sudo [ -e $pg_hba ] || start_service postgresql
     else
         exit_distro_not_supported "postgresql configuration"
     fi
@@ -107,7 +102,7 @@ EOF
     if [[ "$INSTALL_DATABASE_SERVER_PACKAGES" == "True" ]]; then
         if is_ubuntu; then
             install_package postgresql
-        elif is_fedora || is_suse; then
+        elif is_fedora; then
             install_package postgresql-server
             if is_fedora; then
                 sudo systemctl enable postgresql

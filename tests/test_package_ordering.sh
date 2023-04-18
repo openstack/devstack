@@ -8,7 +8,7 @@ TOP=$(cd $(dirname "$0")/.. && pwd)
 source $TOP/tests/unittest.sh
 
 export LC_ALL=en_US.UTF-8
-PKG_FILES=$(find $TOP/files/debs $TOP/files/rpms $TOP/files/rpms-suse -type f)
+PKG_FILES=$(find $TOP/files/debs $TOP/files/rpms -type f)
 
 TMPDIR=$(mktemp -d)
 

@@ -129,7 +129,7 @@ function configure_horizon {
     if is_ubuntu; then
         disable_apache_site 000-default
         sudo touch $horizon_conf
-    elif is_fedora || is_suse; then
+    elif is_fedora; then
         : # nothing to do
     else
         exit_distro_not_supported "horizon apache configuration"

@@ -90,45 +90,6 @@ function fixup_fedora {
     fi
 }
 
-function fixup_suse {
-    if ! is_suse; then
-        return
-    fi
-
-    # Deactivate and disable apparmor profiles in openSUSE and SLE
-    # distros to avoid issues with haproxy and dnsmasq.  In newer
-    # releases, systemctl stop apparmor is actually a no-op, so we
-    # have to use aa-teardown to make sure we've deactivated the
-    # profiles:
-    #
-    # https://www.suse.com/releasenotes/x86_64/SUSE-SLES/15/#fate-325343
-    # https://gitlab.com/apparmor/apparmor/merge_requests/81
-    # https://build.opensuse.org/package/view_file/openSUSE:Leap:15.2/apparmor/apparmor.service?expand=1
-    if sudo systemctl is-active -q apparmor; then
-        sudo systemctl stop apparmor
-    fi
-    if [ -x /usr/sbin/aa-teardown ]; then
-        sudo /usr/sbin/aa-teardown
-    fi
-    if sudo systemctl is-enabled -q apparmor; then
-        sudo systemctl disable apparmor
-    fi
-
-    # Since pip10, pip will refuse to uninstall files from packages
-    # that were created with distutils (rather than more modern
-    # setuptools).  This is because it technically doesn't have a
-    # manifest of what to remove.  However, in most cases, simply
-    # overwriting works.  So this hacks around those packages that
-    # have been dragged in by some other system dependency
-    sudo rm -rf /usr/lib/python3.6/site-packages/ply-*.egg-info
-    sudo rm -rf /usr/lib/python3.6/site-packages/six-*.egg-info
-
-    # Ensure trusted CA certificates are up to date
-    # See https://bugzilla.suse.com/show_bug.cgi?id=1154871
-    # May be removed once a new opensuse-15 image is available in nodepool
-    sudo zypper up -y p11-kit ca-certificates-mozilla
-}
-
 function fixup_ovn_centos {
     if [[ $os_VENDOR != "CentOS" ]]; then
         return
@@ -156,5 +117,4 @@ function fixup_ubuntu {
 function fixup_all {
     fixup_ubuntu
     fixup_fedora
-    fixup_suse
 }

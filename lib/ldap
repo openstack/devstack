@@ -39,13 +39,6 @@ elif is_fedora; then
     LDAP_OLCDB_NUMBER=2
     LDAP_OLCDB_TYPE=hdb
     LDAP_ROOTPW_COMMAND=add
-elif is_suse; then
-    # SUSE has slappasswd in /usr/sbin/
-    PATH=$PATH:/usr/sbin/
-    LDAP_OLCDB_NUMBER=1
-    LDAP_OLCDB_TYPE=hdb
-    LDAP_ROOTPW_COMMAND=add
-    LDAP_SERVICE_NAME=ldap
 fi
 
 
@@ -76,8 +69,6 @@ function cleanup_ldap {
         sudo rm -rf /etc/ldap/ldap.conf /var/lib/ldap
     elif is_fedora; then
         sudo rm -rf /etc/openldap /var/lib/ldap
-    elif is_suse; then
-        sudo rm -rf /var/lib/ldap
     fi
 }
 
@@ -125,11 +116,6 @@ function install_ldap {
     if is_ubuntu; then
         configure_ldap
     elif is_fedora; then
-        start_ldap
-    elif is_suse; then
-        _ldap_varsubst $FILES/ldap/suse-base-config.ldif.in >$tmp_ldap_dir/suse-base-config.ldif
-        sudo slapadd -F /etc/openldap/slapd.d/ -bcn=config -l $tmp_ldap_dir/suse-base-config.ldif
-        sudo sed -i '/^OPENLDAP_START_LDAPI=/s/"no"/"yes"/g' /etc/sysconfig/openldap
         start_ldap
     fi
 

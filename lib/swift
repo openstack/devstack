@@ -547,9 +547,6 @@ function configure_swift {
     local swift_log_dir=${SWIFT_DATA_DIR}/logs
     sudo rm -rf ${swift_log_dir}
     local swift_log_group=adm
-    if is_suse; then
-        swift_log_group=root
-    fi
     sudo install -d -o ${STACK_USER} -g ${swift_log_group} ${swift_log_dir}/hourly
 
     if [[ $SYSLOG != "False" ]]; then
