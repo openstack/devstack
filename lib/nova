@@ -173,6 +173,9 @@ NOVA_SHUTDOWN_TIMEOUT=${NOVA_SHUTDOWN_TIMEOUT:-0}
 # Whether to use Keystone unified limits instead of legacy quota limits.
 NOVA_USE_UNIFIED_LIMITS=$(trueorfalse False NOVA_USE_UNIFIED_LIMITS)
 
+# TB Cache Size in MiB for qemu guests
+NOVA_LIBVIRT_TB_CACHE_SIZE=${NOVA_LIBVIRT_TB_CACHE_SIZE:-0}
+
 # Functions
 # ---------
 
@@ -1071,6 +1074,9 @@ function start_nova_compute {
     fi
 
     if [[ "$VIRT_DRIVER" = 'libvirt' ]]; then
+        if [ ${NOVA_LIBVIRT_TB_CACHE_SIZE} -gt 0 ]; then
+            iniset $NOVA_CPU_CONF libvirt tb_cache_size ${NOVA_LIBVIRT_TB_CACHE_SIZE}
+        fi
         # The group **$LIBVIRT_GROUP** is added to the current user in this script.
         # ``sg`` is used in run_process to execute nova-compute as a member of the
         # **$LIBVIRT_GROUP** group.

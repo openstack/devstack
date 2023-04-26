@@ -544,17 +544,15 @@
         # increase in swap performance by reducing the amount of data
         # written to disk. the overall speedup is proportional to the
         # compression ratio and the speed of the swap device.
+        # NOTE: this option is ignored when not using nova with the libvirt
+        # virt driver.
+        NOVA_LIBVIRT_TB_CACHE_SIZE: 128
         ENABLE_ZSWAP: true
       devstack_local_conf:
         post-config:
           $NEUTRON_CONF:
             DEFAULT:
               global_physnet_mtu: '{{ external_bridge_mtu }}'
-          $NOVA_CPU_CONF:
-            libvirt:
-              # Use lower TB cache than default(1GiB), only applicable with
-              # libvirt>=8.0.0
-              tb_cache_size: 128
       devstack_services:
         # Core services enabled for this branch.
         # This list replaces the test-matrix.
@@ -659,13 +657,9 @@
           # written to disk. the overall speedup is porportional to the
           # compression ratio and the speed of the swap device.
           ENABLE_ZSWAP: true
-        devstack_local_conf:
-          post-config:
-            $NOVA_CPU_CONF:
-              libvirt:
-                # Use lower TB cache than default(1GiB), only applicable with
-                # libvirt>=8.0.0
-                tb_cache_size: 128
+          # NOTE: this option is ignored when not using nova with the libvirt
+          # virt driver.
+          NOVA_LIBVIRT_TB_CACHE_SIZE: 128
 
 - job:
     name: devstack-ipv6
