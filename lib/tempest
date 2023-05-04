@@ -675,6 +675,8 @@ function configure_tempest {
     done
 
     iniset $TEMPEST_CONFIG enforce_scope glance "$GLANCE_ENFORCE_SCOPE"
+    # NOTE(gmann): system scope is supported for <=stable/yoga only
+    iniset $TEMPEST_CONFIG glance_api system_scope_supported "True"
 
     iniset $TEMPEST_CONFIG enforce_scope cinder "$CINDER_ENFORCE_SCOPE"
 
