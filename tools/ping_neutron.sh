@@ -30,7 +30,8 @@ ping_neutron.sh <net_name> [ping args]
 
 This provides a wrapper to ping neutron guests that are on isolated
 tenant networks that the caller can't normally reach. It does so by
-creating a network namespace probe.
+using either the DHCP or Metadata network namespace to support both
+ML2/OVS and OVN.
 
 It takes arguments like ping, except the first arg must be the network
 name.
@@ -44,6 +45,12 @@ EOF
     exit 1
 }
 
+# BUG: with duplicate network names, this fails pretty hard since it
+# will just pick the first match.
+function _get_net_id {
+    openstack --os-cloud devstack-admin --os-region-name="$REGION_NAME" --os-project-name admin --os-username admin --os-password $ADMIN_PASSWORD network list | grep $1 | head -n 1 | awk '{print $2}'
+}
+
 NET_NAME=$1
 
 if [[ -z "$NET_NAME" ]]; then
@@ -53,12 +60,11 @@ fi
 
 REMAINING_ARGS="${@:2}"
 
-# BUG: with duplicate network names, this fails pretty hard.
-NET_ID=$(openstack network show -f value -c id "$NET_NAME")
-PROBE_ID=$(neutron-debug probe-list -c id -c network_id | grep "$NET_ID" | awk '{print $2}' | head -n 1)
+NET_ID=`_get_net_id $NET_NAME`
+NET_NS=$(ip netns list | grep "$NET_ID" | head -n 1)
 
 # This runs a command inside the specific netns
-NET_NS_CMD="ip netns exec qprobe-$PROBE_ID"
+NET_NS_CMD="ip netns exec $NET_NS"
 
 PING_CMD="sudo $NET_NS_CMD ping $REMAINING_ARGS"
 echo "Running $PING_CMD"

@@ -1112,24 +1112,6 @@ function _neutron_setup_interface_driver {
 # Functions for Neutron Exercises
 #--------------------------------
 
-function delete_probe {
-    local from_net="$1"
-    net_id=`_get_net_id $from_net`
-    probe_id=`neutron-debug --os-tenant-name admin --os-username admin --os-password $ADMIN_PASSWORD probe-list -c id -c network_id | grep $net_id | awk '{print $2}'`
-    neutron-debug --os-tenant-name admin --os-username admin probe-delete $probe_id
-}
-
-function _get_net_id {
-    openstack --os-cloud devstack-admin --os-region-name="$REGION_NAME" --os-project-name admin --os-username admin --os-password $ADMIN_PASSWORD network list | grep $1 | awk '{print $2}'
-}
-
-function _get_probe_cmd_prefix {
-    local from_net="$1"
-    net_id=`_get_net_id $from_net`
-    probe_id=`neutron-debug --os-tenant-name admin --os-username admin --os-password $ADMIN_PASSWORD probe-list -c id -c network_id | grep $net_id | awk '{print $2}' | head -n 1`
-    echo "$Q_RR_COMMAND ip netns exec qprobe-$probe_id"
-}
-
 # ssh check
 function _ssh_check_neutron {
     local from_net=$1
