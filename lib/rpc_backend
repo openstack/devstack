@@ -52,20 +52,7 @@ function install_rpc_backend {
     if is_service_enabled rabbit; then
         # Install rabbitmq-server
         install_package rabbitmq-server
-        if is_suse; then
-            install_package rabbitmq-server-plugins
-            # the default systemd socket activation only listens on the loopback interface
-            # which causes rabbitmq to try to start its own epmd
-            sudo mkdir -p /etc/systemd/system/epmd.socket.d
-            cat <<EOF | sudo tee /etc/systemd/system/epmd.socket.d/ports.conf >/dev/null
-[Socket]
-ListenStream=
-ListenStream=[::]:4369
-EOF
-            sudo systemctl daemon-reload
-            sudo systemctl restart epmd.socket epmd.service
-        fi
-        if is_fedora || is_suse; then
+        if is_fedora; then
             # NOTE(jangutter): If rabbitmq is not running (as in a fresh
             # install) then rabbit_setuser triggers epmd@0.0.0.0.socket with
             # socket activation. This fails the first time and does not get

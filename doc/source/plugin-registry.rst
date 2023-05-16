@@ -88,7 +88,6 @@ openstack/openstacksdk                   `https://opendev.org/openstack/openstac
 openstack/osprofiler                     `https://opendev.org/openstack/osprofiler <https://opendev.org/openstack/osprofiler>`__
 openstack/oswin-tempest-plugin           `https://opendev.org/openstack/oswin-tempest-plugin <https://opendev.org/openstack/oswin-tempest-plugin>`__
 openstack/ovn-octavia-provider           `https://opendev.org/openstack/ovn-octavia-provider <https://opendev.org/openstack/ovn-octavia-provider>`__
-openstack/patrole                        `https://opendev.org/openstack/patrole <https://opendev.org/openstack/patrole>`__
 openstack/rally-openstack                `https://opendev.org/openstack/rally-openstack <https://opendev.org/openstack/rally-openstack>`__
 openstack/sahara                         `https://opendev.org/openstack/sahara <https://opendev.org/openstack/sahara>`__
 openstack/sahara-dashboard               `https://opendev.org/openstack/sahara-dashboard <https://opendev.org/openstack/sahara-dashboard>`__

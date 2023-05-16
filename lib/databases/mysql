@@ -20,12 +20,6 @@ if [[ -z "$MYSQL_SERVICE_NAME" ]]; then
     MYSQL_SERVICE_NAME=mysql
     if is_fedora && ! is_oraclelinux; then
         MYSQL_SERVICE_NAME=mariadb
-    elif is_suse && systemctl list-unit-files | grep -q 'mariadb\.service'; then
-        # Older mariadb packages on SLES 12 provided mysql.service.  The
-        # newer ones on SLES 12 and 15 use mariadb.service; they also
-        # provide a mysql.service symlink for backwards-compatibility, but
-        # let's not rely on that.
-        MYSQL_SERVICE_NAME=mariadb
     elif [[ "$DISTRO" == "bullseye" ]]; then
         MYSQL_SERVICE_NAME=mariadb
     fi
@@ -54,7 +48,7 @@ function cleanup_database_mysql {
     elif is_oraclelinux; then
         uninstall_package mysql-community-server
         sudo rm -rf /var/lib/mysql
-    elif is_suse || is_fedora; then
+    elif is_fedora; then
         uninstall_package mariadb-server
         sudo rm -rf /var/lib/mysql
     else
@@ -69,12 +63,12 @@ function recreate_database_mysql {
 }
 
 function configure_database_mysql {
-    local my_conf mysql slow_log
+    local my_conf mysql slow_log my_client_conf
     echo_summary "Configuring and starting MySQL"
 
     if is_ubuntu; then
         my_conf=/etc/mysql/my.cnf
-    elif is_suse || is_oraclelinux; then
+    elif is_oraclelinux; then
         my_conf=/etc/my.cnf
     elif is_fedora; then
         my_conf=/etc/my.cnf
@@ -86,11 +80,20 @@ function configure_database_mysql {
         exit_distro_not_supported "mysql configuration"
     fi
 
+    # Set fips mode on
+    if is_ubuntu; then
+        if is_fips_enabled; then
+            my_client_conf=/etc/mysql/mysql.conf.d/mysql.cnf
+            iniset -sudo $my_client_conf mysql ssl-fips-mode "on"
+            iniset -sudo $my_conf mysqld ssl-fips-mode "on"
+        fi
+    fi
+
     # Change bind-address from localhost (127.0.0.1) to any (::)
     iniset -sudo $my_conf mysqld bind-address "$(ipv6_unquote $SERVICE_LISTEN_ADDRESS)"
 
     # (Re)Start mysql-server
-    if is_fedora || is_suse; then
+    if is_fedora; then
         # service is not started by default
         start_service $MYSQL_SERVICE_NAME
     elif is_ubuntu; then
@@ -176,6 +179,16 @@ function configure_database_mysql {
                 count INT, PRIMARY KEY (db, op)) ENGINE MEMORY" stats
     fi
 
+    if [[ "$MYSQL_REDUCE_MEMORY" == "True" ]]; then
+        iniset -sudo $my_conf mysqld read_buffer_size 64K
+        iniset -sudo $my_conf mysqld innodb_buffer_pool_size 16M
+        iniset -sudo $my_conf mysqld thread_stack 192K
+        iniset -sudo $my_conf mysqld thread_cache_size 8
+        iniset -sudo $my_conf mysqld tmp_table_size 8M
+        iniset -sudo $my_conf mysqld sort_buffer_size 8M
+        iniset -sudo $my_conf mysqld max_allowed_packet 8M
+    fi
+
     restart_service $MYSQL_SERVICE_NAME
 }
 
@@ -211,9 +224,6 @@ EOF
             install_package mysql-community-server
         elif is_fedora; then
             install_package mariadb-server mariadb-devel mariadb
-            sudo systemctl enable $MYSQL_SERVICE_NAME
-        elif is_suse; then
-            install_package mariadb-server
             sudo systemctl enable $MYSQL_SERVICE_NAME
         elif is_ubuntu; then
             install_package $MYSQL_SERVICE_NAME-server

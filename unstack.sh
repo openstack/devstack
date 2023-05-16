@@ -168,9 +168,7 @@ if is_service_enabled etcd3; then
     cleanup_etcd3
 fi
 
-if is_service_enabled dstat; then
-    stop_dstat
-fi
+stop_dstat
 
 # NOTE: Cinder automatically installs the lvm2 package, independently of the
 # enabled backends. So if Cinder is enabled, and installed successfully we are

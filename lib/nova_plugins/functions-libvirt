@@ -74,7 +74,7 @@ function install_libvirt {
             install_package qemu-efi
         fi
         #pip_install_gr <there-si-no-guestfs-in-pypi>
-    elif is_fedora || is_suse; then
+    elif is_fedora; then
 
         # Optionally enable the virt-preview repo when on Fedora
         if [[ $DISTRO =~ f[0-9][0-9] ]] && [[ ${ENABLE_FEDORA_VIRT_PREVIEW_REPO} == "True" ]]; then
@@ -121,8 +121,8 @@ cgroup_device_acl = [
 EOF
     fi
 
-    if is_fedora || is_suse; then
-        # Starting with fedora 18 and opensuse-12.3 enable stack-user to
+    if is_fedora; then
+        # Starting with fedora 18 enable stack-user to
         # virsh -c qemu:///system by creating a policy-kit rule for
         # stack-user using the new Javascript syntax
         rules_dir=/etc/polkit-1/rules.d

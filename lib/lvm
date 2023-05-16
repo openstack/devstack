@@ -129,8 +129,8 @@ function init_lvm_volume_group {
     local vg=$1
     local size=$2
 
-    # Start the tgtd service on Fedora and SUSE if tgtadm is used
-    if  is_fedora || is_suse  && [[ "$CINDER_TARGET_HELPER" = "tgtadm" ]]; then
+    # Start the tgtd service on Fedora if tgtadm is used
+    if  is_fedora; then
         start_service tgtd
     fi
 

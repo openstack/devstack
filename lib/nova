@@ -448,8 +448,8 @@ function create_nova_conf {
 
     iniset $NOVA_CONF key_manager backend nova.keymgr.conf_key_mgr.ConfKeyManager
 
-    if is_fedora || is_suse; then
-        # nova defaults to /usr/local/bin, but fedora and suse pip like to
+    if is_fedora; then
+        # nova defaults to /usr/local/bin, but fedora pip like to
         # install things in /usr/bin
         iniset $NOVA_CONF DEFAULT bindir "/usr/bin"
     fi
@@ -523,7 +523,7 @@ function create_nova_conf {
 
     # nova defaults to genisoimage but only mkisofs is available for 15.0+
     # rhel provides mkisofs symlink to genisoimage or xorriso appropiately
-    if is_suse || is_fedora; then
+    if is_fedora; then
         iniset $NOVA_CONF DEFAULT mkisofs_cmd /usr/bin/mkisofs
     fi
 

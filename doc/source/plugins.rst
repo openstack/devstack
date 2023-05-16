@@ -243,9 +243,6 @@ locations in the top-level of the plugin repository:
 - ``./devstack/files/rpms/$plugin_name`` - Packages to install when running
   on Red Hat, Fedora, or CentOS.
 
-- ``./devstack/files/rpms-suse/$plugin_name`` - Packages to install when
-  running on SUSE Linux or openSUSE.
-
 Although there a no plans to remove this method of installing
 packages, plugins should consider it deprecated for ``bindep`` support
 described below.

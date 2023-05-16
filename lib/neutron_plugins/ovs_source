@@ -164,10 +164,8 @@ function compile_ovs {
     sudo make install
     if [[ "$build_modules" == "True" ]]; then
         sudo make INSTALL_MOD_DIR=kernel/net/openvswitch modules_install
-        reload_ovs_kernel_modules
-    else
-        load_ovs_kernel_modules
     fi
+    reload_ovs_kernel_modules
 
     cd $_pwd
 }
@@ -182,12 +180,6 @@ function action_openvswitch {
         ${action}_service openvswitch-switch
     elif is_fedora; then
         ${action}_service openvswitch
-    elif is_suse; then
-        if [[ $DISTRO == "sle12" ]] && [[ $os_RELEASE -lt 12.2 ]]; then
-            ${action}_service openvswitch-switch
-        else
-            ${action}_service openvswitch
-        fi
     fi
 }
 

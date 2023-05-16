@@ -457,16 +457,6 @@ function GetDistro {
     elif [[ "$os_VENDOR" =~ (Fedora) ]]; then
         # For Fedora, just use 'f' and the release
         DISTRO="f$os_RELEASE"
-    elif is_opensuse; then
-        DISTRO="opensuse-$os_RELEASE"
-        # Tumbleweed uses "n/a" as a codename, and the release is a datestring
-        # like 20180218, so not very useful. Leap however uses a release
-        # with a "dot", so for example 15.0
-        [ "$os_CODENAME" = "n/a" -a "$os_RELEASE" = "${os_RELEASE/\./}" ] && \
-            DISTRO="opensuse-tumbleweed"
-    elif is_suse_linux_enterprise; then
-        # just use major release
-        DISTRO="sle${os_RELEASE%.*}"
     elif [[ "$os_VENDOR" =~ (Red.*Hat) || \
         "$os_VENDOR" =~ (CentOS) || \
         "$os_VENDOR" =~ (AlmaLinux) || \
@@ -537,37 +527,6 @@ function is_fedora {
         [ "$os_VENDOR" = "CentOS" ] || [ "$os_VENDOR" = "CentOSStream" ] || \
         [ "$os_VENDOR" = "AlmaLinux" ] || \
         [ "$os_VENDOR" = "OracleServer" ] || [ "$os_VENDOR" = "Virtuozzo" ]
-}
-
-
-# Determine if current distribution is a SUSE-based distribution
-# (openSUSE, SLE).
-# is_suse
-function is_suse {
-    is_opensuse || is_suse_linux_enterprise
-}
-
-
-# Determine if current distribution is an openSUSE distribution
-# is_opensuse
-function is_opensuse {
-    if [[ -z "$os_VENDOR" ]]; then
-        GetOSVersion
-    fi
-
-    [[ "$os_VENDOR" =~ (openSUSE) ]]
-}
-
-
-# Determine if current distribution is a SUSE Linux Enterprise (SLE)
-# distribution
-# is_suse_linux_enterprise
-function is_suse_linux_enterprise {
-    if [[ -z "$os_VENDOR" ]]; then
-        GetOSVersion
-    fi
-
-    [[ "$os_VENDOR" =~ (^SUSE) ]]
 }
 
 
@@ -653,8 +612,9 @@ function git_clone {
                 echo "the project to the \$PROJECTS variable in the job definition."
                 die $LINENO "ERROR_ON_CLONE is set to True so cloning not allowed in this configuration"
             fi
-            # '--branch' can also take tags
-            git_timed clone $git_clone_flags $git_remote $git_dest --branch $git_ref
+            git_timed clone $git_clone_flags $git_remote $git_dest
+            cd $git_dest
+            git checkout $git_ref
         elif [[ "$RECLONE" = "True" ]]; then
             # if it does exist then simulate what clone does if asked to RECLONE
             cd $git_dest
@@ -1171,8 +1131,6 @@ function _get_package_dir {
         pkg_dir=$base_dir/debs
     elif is_fedora; then
         pkg_dir=$base_dir/rpms
-    elif is_suse; then
-        pkg_dir=$base_dir/rpms-suse
     else
         exit_distro_not_supported "list of packages"
     fi
@@ -1447,8 +1405,6 @@ function real_install_package {
         apt_get install "$@"
     elif is_fedora; then
         yum_install "$@"
-    elif is_suse; then
-        zypper_install "$@"
     else
         exit_distro_not_supported "installing packages"
     fi
@@ -1490,8 +1446,6 @@ function uninstall_package {
         apt_get purge "$@"
     elif is_fedora; then
         sudo dnf remove -y "$@" ||:
-    elif is_suse; then
-        sudo zypper remove -y "$@" ||:
     else
         exit_distro_not_supported "uninstalling packages"
     fi
@@ -2546,6 +2500,11 @@ function clean_pyc_files {
     if [[ -n "$DEST" ]] && [[ -d "$DEST" ]]; then
         sudo find $DEST -name "*.pyc" -delete
     fi
+}
+
+function is_fips_enabled {
+    fips=`cat /proc/sys/crypto/fips_enabled`
+    [ "$fips" == "1" ]
 }
 
 # Restore xtrace

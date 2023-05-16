@@ -212,9 +212,6 @@ function init_CA {
     if is_fedora; then
         sudo cp $INT_CA_DIR/ca-chain.pem /usr/share/pki/ca-trust-source/anchors/devstack-chain.pem
         sudo update-ca-trust
-    elif is_suse; then
-        sudo cp $INT_CA_DIR/ca-chain.pem /usr/share/pki/trust/anchors/devstack-chain.pem
-        sudo update-ca-certificates
     elif is_ubuntu; then
         sudo cp $INT_CA_DIR/ca-chain.pem /usr/local/share/ca-certificates/devstack-int.crt
         sudo cp $ROOT_CA_DIR/cacert.pem /usr/local/share/ca-certificates/devstack-root.crt
@@ -376,9 +373,6 @@ function fix_system_ca_bundle_path {
             elif is_ubuntu; then
                 sudo rm -f $capath
                 sudo ln -s /etc/ssl/certs/ca-certificates.crt $capath
-            elif is_suse; then
-                sudo rm -f $capath
-                sudo ln -s /etc/ssl/ca-bundle.pem $capath
             else
                 echo "Don't know how to set the CA bundle, expect the install to fail."
             fi
@@ -441,9 +435,6 @@ function enable_mod_ssl {
 
     if is_ubuntu; then
         sudo a2enmod ssl
-    elif is_suse; then
-        sudo a2enmod ssl
-        sudo a2enflag SSL
     elif is_fedora; then
         # Fedora enables mod_ssl by default
         :
@@ -560,9 +551,6 @@ $listen_string
     CustomLog $APACHE_LOG_DIR/tls-proxy_access.log combined
 </VirtualHost>
 EOF
-    if is_suse ; then
-        sudo a2enflag SSL
-    fi
     for mod in headers ssl proxy proxy_http; do
         enable_apache_mod $mod
     done
