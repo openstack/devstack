@@ -98,10 +98,10 @@ METADATA_SERVICE_PORT=${METADATA_SERVICE_PORT:-8775}
 NOVA_ENABLE_CACHE=${NOVA_ENABLE_CACHE:-True}
 
 # Flag to set the oslo_policy.enforce_scope and oslo_policy.enforce_new_defaults.
-# This is used to switch the compute API policies enable the scope and new defaults.
-# By Default, these flag are False.
+# This is used to disable the compute API policies scope and new defaults.
+# By Default, it is True.
 # For more detail: https://docs.openstack.org/oslo.policy/latest/configuration/index.html#oslo_policy.enforce_scope
-NOVA_ENFORCE_SCOPE=$(trueorfalse False NOVA_ENFORCE_SCOPE)
+NOVA_ENFORCE_SCOPE=$(trueorfalse True NOVA_ENFORCE_SCOPE)
 
 if [[ $SERVICE_IP_VERSION == 6 ]]; then
     NOVA_MY_IP="$HOST_IPV6"
