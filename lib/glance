@@ -95,10 +95,10 @@ GLANCE_USE_IMPORT_WORKFLOW=$(trueorfalse False GLANCE_USE_IMPORT_WORKFLOW)
 GLANCE_ENABLE_QUOTAS=$(trueorfalse True GLANCE_ENABLE_QUOTAS)
 
 # Flag to set the oslo_policy.enforce_scope. This is used to switch
-# the Image API policies to start checking the scope of token. By Default,
-# this flag is False.
+# This is used to disable the Image API policies scope and new defaults.
+# By Default, it is True.
 # For more detail: https://docs.openstack.org/oslo.policy/latest/configuration/index.html#oslo_policy.enforce_scope
-GLANCE_ENFORCE_SCOPE=$(trueorfalse False GLANCE_ENFORCE_SCOPE)
+GLANCE_ENFORCE_SCOPE=$(trueorfalse True GLANCE_ENFORCE_SCOPE)
 
 GLANCE_CONF_DIR=${GLANCE_CONF_DIR:-/etc/glance}
 GLANCE_METADEF_DIR=$GLANCE_CONF_DIR/metadefs
