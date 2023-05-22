@@ -696,9 +696,6 @@
     description: |
       Simple multinode test to verify multinode functionality on devstack side.
       This is not meant to be used as a parent job.
-    vars:
-      devstack_localrc:
-        MYSQL_REDUCE_MEMORY: true
 
 # NOTE(ianw) Platform tests have traditionally been non-voting because
 # we often have to rush things through devstack to stabilise the gate,

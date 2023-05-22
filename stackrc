@@ -204,7 +204,7 @@ MYSQL_GATHER_PERFORMANCE=$(trueorfalse True MYSQL_GATHER_PERFORMANCE)
 # This can be used to reduce the amount of memory mysqld uses while running.
 # These are unscientifically determined, and could reduce performance or
 # cause other issues.
-MYSQL_REDUCE_MEMORY=$(trueorfalse False MYSQL_REDUCE_MEMORY)
+MYSQL_REDUCE_MEMORY=$(trueorfalse True MYSQL_REDUCE_MEMORY)
 
 # Set a timeout for git operations.  If git is still running when the
 # timeout expires, the command will be retried up to 3 times.  This is
