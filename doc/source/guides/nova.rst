@@ -122,7 +122,7 @@ when creating the server, for example:
 .. code-block:: shell
 
   $ openstack --os-compute-api-version 2.37 server create --flavor cirros256 \
-      --image cirros-0.3.5-x86_64-disk --nic none --wait test-server
+      --image cirros-0.6.1-x86_64-disk --nic none --wait test-server
 
 .. note:: ``--os-compute-api-version`` greater than or equal to 2.37 is
           required to use ``--nic=none``.
