@@ -310,7 +310,16 @@ function _install_rdo {
             sudo dnf -y install https://rdoproject.org/repos/openstack-${rdo_release}/rdo-release-${rdo_release}.el8.rpm
         fi
     elif [[ $DISTRO == "rhel9" ]]; then
-        sudo curl -L -o /etc/yum.repos.d/delorean-deps.repo http://trunk.rdoproject.org/centos9-master/delorean-deps.repo
+        if [[ "$TARGET_BRANCH" == "master" ]]; then
+            # rdo-release.el9.rpm points to latest RDO release, use that for master
+            sudo dnf -y install https://rdoproject.org/repos/rdo-release.el9.rpm
+        else
+            # RDO didn't publish official releases for Xena and Wallaby, only RDO Trunk repos. 
+            # Since the RDO Trunk server does not support EMS, FIPS jobs will fail to use it.
+            # Use "rdo-release-yoga" release rpm for both xena and wallaby jobs.
+            rdo_release="yoga"
+            sudo dnf -y install https://rdoproject.org/repos/openstack-${rdo_release}/rdo-release-${rdo_release}.el9.rpm
+        fi
     fi
     sudo dnf -y update
 }
