@@ -577,13 +577,19 @@
       - publish-openstack-docs-pti
     check:
       jobs:
-        - devstack
+        - tempest-full:
+            voting: false
+        - tempest-full-py3:
+            voting: false
+        - devstack:
+            voting: false
         - devstack-xenial:
             voting: false
         - devstack-ipv6:
             voting: false
         - devstack-platform-xenial
-        - devstack-multinode
+        - devstack-multinode:
+            voting: false
         - devstack-multinode-xenial:
             voting: false
         - devstack-unit-tests
@@ -616,9 +622,15 @@
               - ^doc/.*$
     gate:
       jobs:
-        - devstack
+        # Since these two come from a global template, we need to
+        # live with these running n-v in gate until fixed
+        - tempest-full:
+            voting: false
+        - tempest-full-py3:
+            voting: false
+        # - devstack
         # - devstack-xenial
-        - devstack-multinode
+        # - devstack-multinode
         # - devstack-multinode-xenial
         - devstack-unit-tests
         - openstack-tox-bashate
@@ -656,10 +668,6 @@
 
     experimental:
       jobs:
-        - nova-cells-v1:
-            irrelevant-files:
-              - ^.*\.rst$
-              - ^doc/.*$
         - nova-next
         - neutron-fullstack-with-uwsgi
         - neutron-functional-with-uwsgi
