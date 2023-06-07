@@ -697,8 +697,6 @@
     description: CentOS 9 Stream platform test
     nodeset: devstack-single-node-centos-9-stream
     timeout: 9000
-    # TODO(kopecmartin) n-v until the following is resolved:
-    # https://bugs.launchpad.net/neutron/+bug/1979047
     voting: false
 
 - job:
@@ -968,11 +966,9 @@
       jobs:
         - devstack
         - devstack-ipv6
-        # TODO(kopecmartin) n-v until the following is resolved:
-        # https://bugs.launchpad.net/neutron/+bug/1979047
-        # - devstack-platform-centos-9-stream
         - devstack-platform-debian-bullseye
         - devstack-platform-ubuntu-focal
+        - devstack-platform-rocky-blue-onyx
         - devstack-enforce-scope
         - devstack-multinode
         - devstack-unit-tests
