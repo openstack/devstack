@@ -745,13 +745,6 @@
       configure_swap_size: 4096
 
 - job:
-    name: devstack-platform-ubuntu-focal
-    parent: tempest-full-py3
-    description: Ubuntu 20.04 LTS (focal) platform test
-    nodeset: openstack-single-node-focal
-    timeout: 9000
-
-- job:
     name: devstack-platform-ubuntu-jammy-ovn-source
     parent: devstack-platform-ubuntu-jammy
     description: Ubuntu 22.04 LTS (jammy) platform test (OVN from source)
@@ -946,7 +939,6 @@
         - devstack-platform-debian-bookworm
         - devstack-platform-debian-bullseye
         - devstack-platform-rocky-blue-onyx
-        - devstack-platform-ubuntu-focal
         - devstack-platform-ubuntu-jammy-ovn-source
         - devstack-platform-ubuntu-jammy-ovs
         - devstack-platform-openEuler-22.03-ovn-source
@@ -995,7 +987,6 @@
         - devstack
         - devstack-ipv6
         - devstack-platform-debian-bullseye
-        - devstack-platform-ubuntu-focal
         - devstack-platform-rocky-blue-onyx
         - devstack-enforce-scope
         - devstack-multinode
