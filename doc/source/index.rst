@@ -37,8 +37,8 @@ Install Linux
 -------------
 
 Start with a clean and minimal install of a Linux system. DevStack
-attempts to support the two latest LTS releases of Ubuntu, the
-latest/current Fedora version, CentOS/RHEL/Rocky Linux 9 and openEuler.
+attempts to support the two latest LTS releases of Ubuntu,
+Rocky Linux 9 and openEuler.
 
 If you do not have a preference, Ubuntu 22.04 (Jammy) is the
 most tested, and will probably go the smoothest.
@@ -113,7 +113,7 @@ Start the install
 
    $ ./stack.sh
 
-This will take a 15 - 20 minutes, largely depending on the speed of
+This will take 15 - 30 minutes, largely depending on the speed of
 your internet connection. Many git trees and packages will be
 installed during this process.
 

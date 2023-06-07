@@ -23,13 +23,12 @@ strategy to include the latest Ubuntu release and the latest RHEL
 release.*
 
 -  Ubuntu: current LTS release plus current development release
--  Fedora: current release plus previous release
--  RHEL/CentOS: current major release
+-  RHEL/CentOS/RockyLinux: current major release
 -  Other OS platforms may continue to be included but the maintenance of
    those platforms shall not be assumed simply due to their presence.
    Having a listed point-of-contact for each additional OS will greatly
    increase its chance of being well-maintained.
--  Patches for Ubuntu and/or Fedora will not be held up due to
+-  Patches for Ubuntu and/or RockyLinux will not be held up due to
    side-effects on other OS platforms.
 
 Databases
