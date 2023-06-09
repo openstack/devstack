@@ -31,7 +31,7 @@ if is_service_enabled nova; then
     # ``demo``)
 
     # Get OpenStack user auth
-    source $TOP_DIR/openrc
+    export OS_CLOUD=devstack
 
     # Add first keypair found in localhost:$HOME/.ssh
     for i in $HOME/.ssh/id_rsa.pub $HOME/.ssh/id_dsa.pub; do
