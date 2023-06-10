@@ -69,10 +69,6 @@ openstack/networking-bagpipe             `https://opendev.org/openstack/networki
 openstack/networking-baremetal           `https://opendev.org/openstack/networking-baremetal <https://opendev.org/openstack/networking-baremetal>`__
 openstack/networking-bgpvpn              `https://opendev.org/openstack/networking-bgpvpn <https://opendev.org/openstack/networking-bgpvpn>`__
 openstack/networking-generic-switch      `https://opendev.org/openstack/networking-generic-switch <https://opendev.org/openstack/networking-generic-switch>`__
-openstack/networking-hyperv              `https://opendev.org/openstack/networking-hyperv <https://opendev.org/openstack/networking-hyperv>`__
-openstack/networking-odl                 `https://opendev.org/openstack/networking-odl <https://opendev.org/openstack/networking-odl>`__
-openstack/networking-powervm             `https://opendev.org/openstack/networking-powervm <https://opendev.org/openstack/networking-powervm>`__
-openstack/networking-sfc                 `https://opendev.org/openstack/networking-sfc <https://opendev.org/openstack/networking-sfc>`__
 openstack/neutron                        `https://opendev.org/openstack/neutron <https://opendev.org/openstack/neutron>`__
 openstack/neutron-dynamic-routing        `https://opendev.org/openstack/neutron-dynamic-routing <https://opendev.org/openstack/neutron-dynamic-routing>`__
 openstack/neutron-fwaas                  `https://opendev.org/openstack/neutron-fwaas <https://opendev.org/openstack/neutron-fwaas>`__
