@@ -138,6 +138,10 @@ function install_libs {
     # doesn't pull in etcd3.
     pip_install etcd3
     pip_install etcd3gw
+
+    # Add libraries required for token caching by OpenStackSDK/CLI
+    pip_install keyring
+    pip_install keyrings.alt
 }
 
 # Restore xtrace
