@@ -149,11 +149,10 @@ function set_tempest_venv_constraints {
 # ramdisk and kernel images.  Takes 3 arguments, an array and two
 # variables.  The array will contain the list of active image UUIDs;
 # if an image with ``DEFAULT_IMAGE_NAME`` is found, its UUID will be
-# set as the value of *both* other parameters.
+# set as the value img_id ($2) parameters.
 function get_active_images {
     declare -n img_array=$1
     declare -n img_id=$2
-    declare -n img_id_alt=$3
 
     # start with a fresh array in case we are called multiple times
     img_array=()
@@ -161,7 +160,6 @@ function get_active_images {
     while read -r IMAGE_NAME IMAGE_UUID; do
         if [ "$IMAGE_NAME" = "$DEFAULT_IMAGE_NAME" ]; then
             img_id="$IMAGE_UUID"
-            img_id_alt="$IMAGE_UUID"
         fi
         img_array+=($IMAGE_UUID)
     done < <(openstack --os-cloud devstack-admin image list --property status=active | awk -F'|' '!/^(+--)|ID|aki|ari/ { print $3,$2 }')
@@ -170,13 +168,12 @@ function get_active_images {
 function poll_glance_images {
     declare -n image_array=$1
     declare -n image_id=$2
-    declare -n image_id_alt=$3
     local -i poll_count
 
     poll_count=$TEMPEST_GLANCE_IMPORT_POLL_LIMIT
     while (( poll_count-- > 0 )) ; do
         sleep $TEMPEST_GLANCE_IMPORT_POLL_INTERVAL
-        get_active_images image_array image_id image_id_alt
+        get_active_images image_array image_id
         if (( ${#image_array[*]} >= $TEMPEST_GLANCE_IMAGE_COUNT )) ; then
             return
         fi
@@ -228,7 +225,7 @@ function configure_tempest {
     declare -a images
 
     if is_service_enabled glance; then
-        get_active_images images image_uuid image_uuid_alt
+        get_active_images images image_uuid
 
         if (( ${#images[*]} < $TEMPEST_GLANCE_IMAGE_COUNT )); then
             # Glance image import is asynchronous and may be configured
@@ -236,7 +233,7 @@ function configure_tempest {
             # it's possible that this code is being executed before the
             # import has completed and there may be no active images yet.
             if [[ "$GLANCE_USE_IMPORT_WORKFLOW" == "True" ]]; then
-                poll_glance_images images image_uuid image_uuid_alt
+                poll_glance_images images image_uuid
                 if (( ${#images[*]} < $TEMPEST_GLANCE_IMAGE_COUNT )); then
                     echo "Only found ${#images[*]} image(s), was looking for $TEMPEST_GLANCE_IMAGE_COUNT"
                     exit 1
@@ -258,7 +255,15 @@ function configure_tempest {
             *)
                 if [ -z "$image_uuid" ]; then
                     image_uuid=${images[0]}
-                    image_uuid_alt=${images[1]}
+                    if [ -z "$image_uuid_alt" ]; then
+                        image_uuid_alt=${images[1]}
+                    fi
+                elif [ -z "$image_uuid_alt" ]; then
+                    for image in $images; do
+                        if [[ "$image" != "$image_uuid" ]]; then
+                            image_uuid_alt=$image
+                        fi
+                    done
                 fi
                 ;;
         esac
