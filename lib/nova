@@ -115,7 +115,7 @@ FORCE_CONFIG_DRIVE=${FORCE_CONFIG_DRIVE:-"False"}
 
 # The following NOVA_FILTERS contains SameHostFilter and DifferentHostFilter with
 # the default filters.
-NOVA_FILTERS="AvailabilityZoneFilter,ComputeFilter,ComputeCapabilitiesFilter,ImagePropertiesFilter,ServerGroupAntiAffinityFilter,ServerGroupAffinityFilter,SameHostFilter,DifferentHostFilter"
+NOVA_FILTERS="ComputeFilter,ComputeCapabilitiesFilter,ImagePropertiesFilter,ServerGroupAntiAffinityFilter,ServerGroupAffinityFilter,SameHostFilter,DifferentHostFilter"
 
 QEMU_CONF=/etc/libvirt/qemu.conf
 
