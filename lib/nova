@@ -982,6 +982,10 @@ function start_nova_compute {
     # by the compute process.
     configure_console_compute
 
+    # Set rebuild timeout longer for BFV instances because we likely have
+    # slower disk than expected. Default is 20s/GB
+    iniset $NOVA_CPU_CONF DEFAULT reimage_timeout_per_gb 60
+
     # Configure the OVSDB connection for os-vif
     if [ -n "$OVSDB_SERVER_LOCAL_HOST" ]; then
         iniset $NOVA_CPU_CONF os_vif_ovs ovsdb_connection "tcp:$OVSDB_SERVER_LOCAL_HOST:6640"
