@@ -568,9 +568,10 @@ function git_clone {
                 echo "the project to the \$PROJECTS variable in the job definition."
                 die $LINENO "Cloning not allowed in this configuration"
             fi
-            git_timed clone $git_clone_flags $git_remote $git_dest
+            git_timed clone --no-checkout $git_clone_flags $git_remote $git_dest
             cd $git_dest
-            git checkout $git_ref
+            git_timed fetch $git_clone_flags origin $git_ref
+            git_timed checkout FETCH_HEAD
         elif [[ "$RECLONE" = "True" ]]; then
             # if it does exist then simulate what clone does if asked to RECLONE
             cd $git_dest
