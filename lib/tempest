@@ -249,8 +249,8 @@ function configure_tempest {
             1)
                 if [ -z "$image_uuid" ]; then
                     image_uuid=${images[0]}
-                    image_uuid_alt=${images[0]}
                 fi
+                image_uuid_alt=$image_uuid
                 ;;
             *)
                 if [ -z "$image_uuid" ]; then
