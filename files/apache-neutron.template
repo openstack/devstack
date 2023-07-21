@@ -24,6 +24,7 @@ LogFormat "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-agent}i\" %D(us)" 
 %SSLLISTEN%    %SSLENGINE%
 %SSLLISTEN%    %SSLCERTFILE%
 %SSLLISTEN%    %SSLKEYFILE%
+%SSLLISTEN%    SSLProtocol -all +TLSv1.3 +TLSv1.2
 %SSLLISTEN%</VirtualHost>
 
 Alias /networking %NEUTRON_BIN%/neutron-api
