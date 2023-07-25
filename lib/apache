@@ -137,6 +137,8 @@ function install_apache_wsgi {
     elif is_fedora; then
         sudo rm -f /etc/httpd/conf.d/000-*
         install_package httpd python3-mod_wsgi
+        # rpm distros dont enable httpd by default so enable it to support reboots.
+        sudo systemctl enable httpd
         # For consistency with Ubuntu, switch to the worker mpm, as
         # the default is event
         sudo sed -i '/mod_mpm_prefork.so/s/^/#/g' /etc/httpd/conf.modules.d/00-mpm.conf
