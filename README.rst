@@ -4,7 +4,7 @@ from git source trees.
 Goals
 =====
 
-* To quickly build dev OpenStack environments in a clean Ubuntu or Fedora
+* To quickly build dev OpenStack environments in a clean Ubuntu or RockyLinux
   environment
 * To describe working configurations of OpenStack (which code branches
   work together?  what do config files look like for those branches?)
@@ -28,9 +28,9 @@ Versions
 The DevStack master branch generally points to trunk versions of OpenStack
 components.  For older, stable versions, look for branches named
 stable/[release] in the DevStack repo.  For example, you can do the
-following to create a Pike OpenStack cloud::
+following to create a Zed OpenStack cloud::
 
-    git checkout stable/pike
+    git checkout stable/zed
     ./stack.sh
 
 You can also pick specific OpenStack project releases by setting the appropriate
@@ -55,7 +55,7 @@ When the script finishes executing, you should be able to access OpenStack
 endpoints, like so:
 
 * Horizon: http://myhost/
-* Keystone: http://myhost/identity/v2.0/
+* Keystone: http://myhost/identity/v3/
 
 We also provide an environment file that you can use to interact with your
 cloud via CLI::
