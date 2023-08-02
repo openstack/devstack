@@ -94,6 +94,11 @@ EOF
     if [[ $os_VENDOR == "CentOSStream" && $os_RELEASE -eq 8 ]]; then
         sudo sysctl -w net.ipv4.ping_group_range='0 2147483647'
     fi
+    # TODO(ykarel): Workaround for systemd issue, remove once fix is
+    # included in systemd rpm https://bugs.launchpad.net/devstack/+bug/2029335
+    if [[ $os_VENDOR == "CentOSStream" && $os_RELEASE -eq 9 ]]; then
+        echo 'LIBVIRTD_ARGS=""' | sudo tee /etc/sysconfig/libvirtd
+    fi
 }
 
 function fixup_ovn_centos {
