@@ -76,6 +76,11 @@ CINDER_SERVICE_PORT_INT=${CINDER_SERVICE_PORT_INT:-18776}
 CINDER_SERVICE_PROTOCOL=${CINDER_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
 CINDER_SERVICE_LISTEN_ADDRESS=${CINDER_SERVICE_LISTEN_ADDRESS:-$(ipv6_unquote $SERVICE_LISTEN_ADDRESS)}
 
+# We do not need to report service status every 10s for devstack-like
+# deployments. In the gate this generates extra work for the services and the
+# database which are already taxed.
+CINDER_SERVICE_REPORT_INTERVAL=120
+
 # What type of LVM device should Cinder use for LVM backend
 # Defaults to auto, which will do thin provisioning if it's a fresh
 # volume group, otherwise it will do thick. The other valid choices are
@@ -324,6 +329,9 @@ function configure_cinder {
     # default response timeout set by RPC clients. See bug #1873234 for more
     # details and example failures.
     iniset $CINDER_CONF DEFAULT rpc_response_timeout 120
+
+    iniset $CINDER_CONF DEFAULT report_interval $CINDER_SERVICE_REPORT_INTERVAL
+    iniset $CINDER_CONF DEFAULT service_down_time $(($CINDER_SERVICE_REPORT_INTERVAL * 6))
 
     if is_service_enabled c-vol && [[ -n "$CINDER_ENABLED_BACKENDS" ]]; then
         local enabled_backends=""

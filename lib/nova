@@ -75,6 +75,11 @@ NOVA_API_PASTE_INI=${NOVA_API_PASTE_INI:-$NOVA_CONF_DIR/api-paste.ini}
 # mean "use uwsgi" because we'll be always using uwsgi.
 NOVA_USE_MOD_WSGI=${NOVA_USE_MOD_WSGI:-True}
 
+# We do not need to report service status every 10s for devstack-like
+# deployments. In the gate this generates extra work for the services and the
+# database which are already taxed.
+NOVA_SERVICE_REPORT_INTERVAL=120
+
 if is_service_enabled tls-proxy; then
     NOVA_SERVICE_PROTOCOL="https"
 fi
@@ -447,6 +452,9 @@ function create_nova_conf {
     iniset $NOVA_CONF DEFAULT shutdown_timeout $NOVA_SHUTDOWN_TIMEOUT
 
     iniset $NOVA_CONF key_manager backend nova.keymgr.conf_key_mgr.ConfKeyManager
+
+    iniset $NOVA_CONF DEFAULT report_interval $NOVA_SERVICE_REPORT_INTERVAL
+    iniset $NOVA_CONF DEFAULT service_down_time $(($NOVA_SERVICE_REPORT_INTERVAL * 6))
 
     if is_fedora; then
         # nova defaults to /usr/local/bin, but fedora pip like to
