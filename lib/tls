@@ -541,9 +541,11 @@ $listen_string
 
     # Avoid races (at the cost of performance) to re-use a pooled connection
     # where the connection is closed (bug 1807518).
+    # Set acquire=1 to disable waiting for connection pool members so that
+    # we can determine when apache is overloaded (returns 503).
     SetEnv proxy-initial-not-pooled
     <Location />
-        ProxyPass http://$b_host:$b_port/ retry=0 nocanon
+        ProxyPass http://$b_host:$b_port/ retry=0 nocanon acquire=1
         ProxyPassReverse http://$b_host:$b_port/
     </Location>
     ErrorLog $APACHE_LOG_DIR/tls-proxy_error.log
