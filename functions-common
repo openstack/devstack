@@ -236,6 +236,27 @@ function trueorfalse {
     $xtrace
 }
 
+# bool_to_int <True|False>
+#
+# Convert True|False to int 1 or 0
+# This function can be used to convert the output of trueorfalse
+# to an int follow c conventions where false is 0 and 1 it true.
+function bool_to_int {
+    local xtrace
+    xtrace=$(set +o | grep xtrace)
+    set +o xtrace
+    if [ -z $1 ]; then
+        die $LINENO "Bool value required"
+    fi
+    if [[ $1 == "True" ]] ; then
+        echo '1'
+    else
+        echo '0'
+    fi
+    $xtrace
+}
+
+
 function isset {
     [[ -v "$1" ]]
 }

@@ -1,0 +1,98 @@
+#!/bin/bash
+
+# Kernel Samepage Merging (KSM)
+# -----------------------------
+
+# Processes that mark their memory as mergeable can share identical memory
+# pages if KSM is enabled. This is particularly useful for nova + libvirt
+# backends but any other setup that marks its memory as mergeable can take
+# advantage. The drawback is there is higher cpu load; however, we tend to
+# be memory bound not cpu bound so enable KSM by default but allow people
+# to opt out if the CPU time is more important to them.
+ENABLE_KSM=$(trueorfalse True ENABLE_KSM)
+ENABLE_KSMTUNED=$(trueorfalse True ENABLE_KSMTUNED)
+function configure_ksm {
+    if [[ $ENABLE_KSMTUNED == "True" ]] ; then
+        install_package "ksmtuned"
+    fi
+    if [[ -f /sys/kernel/mm/ksm/run ]] ; then
+        echo $(bool_to_int ENABLE_KSM) | sudo tee /sys/kernel/mm/ksm/run
+    fi
+}
+
+# Compressed swap (ZSWAP)
+#------------------------
+
+# as noted in the kernel docs https://docs.kernel.org/admin-guide/mm/zswap.html
+# Zswap is a lightweight compressed cache for swap pages.
+# It takes pages that are in the process of being swapped out and attempts
+# to compress them into a dynamically allocated RAM-based memory pool.
+# zswap basically trades CPU cycles for potentially reduced swap I/O.
+# This trade-off can also result in a significant performance improvement
+# if reads from the compressed cache are faster than reads from a swap device.
+
+ENABLE_ZSWAP=$(trueorfalse False ENABLE_ZSWAP)
+# lz4 is very fast although it does not have the best compression
+# zstd has much better compression but more latency
+ZSWAP_COMPRESSOR=${ZSWAP_COMPRESSOR:="lz4"}
+ZSWAP_ZPOOL=${ZSWAP_ZPOOL:="z3fold"}
+function configure_zswap {
+    if [[ $ENABLE_KSMTUNED == "True" ]] ; then
+        # Centos 9 stream seems to only support enabling but not run time
+        # tuning so dont try to choose better default on centos
+        if is_ubuntu; then
+            echo ${ZSWAP_COMPRESSOR} | sudo tee /sys/module/zswap/parameters/compressor
+            echo ${ZSWAP_ZPOOL} | sudo tee /sys/module/zswap/parameters/zpool
+        fi
+        echo 1 | sudo tee /sys/module/zswap/parameters/enabled
+        # print curent zswap kernel config
+        sudo grep -R . /sys/module/zswap/parameters || /bin/true
+    fi
+}
+
+ENABLE_SYSCTL_MEM_TUNING=$(trueorfalse False ENABLE_SYSCTL_MEM_TUNING)
+function configure_sysctl_mem_parmaters {
+    if [[ $ENABLE_SYSCTL_MEM_TUNING == "True" ]] ; then
+        # defer write when memory is available
+        sudo sysctl -w vm.dirty_ratio=60
+        sudo sysctl -w vm.dirty_background_ratio=10
+        sudo sysctl -w vm.vfs_cache_pressure=50
+        # assume swap is compressed so on new kernels
+        # give it equal priority as page cache which is
+        # uncompressed. on kernels < 5.8 the max is 100
+        # not 200 so it will strongly prefer swapping.
+        sudo sysctl -w vm.swappiness=100
+        sudo grep -R . /proc/sys/vm/  || /bin/true
+    fi
+}
+
+function configure_host_mem {
+    configure_zswap
+    configure_ksm
+    configure_sysctl_mem_parmaters
+}
+
+ENABLE_SYSCTL_NET_TUNING=$(trueorfalse False ENABLE_SYSCTL_NET_TUNING)
+function configure_sysctl_net_parmaters {
+    if [[ $ENABLE_SYSCTL_NET_TUNING == "True" ]] ; then
+        # detect dead TCP connections after 120 seconds
+        sudo sysctl -w net.ipv4.tcp_keepalive_time=60
+        sudo sysctl -w net.ipv4.tcp_keepalive_intvl=10
+        sudo sysctl -w net.ipv4.tcp_keepalive_probes=6
+        # reudce network latency for new connections
+        sudo sysctl -w net.ipv4.tcp_fastopen=3
+        # print tcp options
+        sudo grep -R . /proc/sys/net/ipv4/tcp* || /bin/true
+        # disable qos by default
+        sudo sysctl -w net.core.default_qdisc=pfifo_fast
+    fi
+}
+
+function configure_host_net {
+    configure_sysctl_net_parmaters
+}
+
+function tune_host {
+    configure_host_mem
+    configure_host_net
+}
