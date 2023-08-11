@@ -20,7 +20,7 @@ if [[ -z "$MYSQL_SERVICE_NAME" ]]; then
     MYSQL_SERVICE_NAME=mysql
     if is_fedora && ! is_oraclelinux; then
         MYSQL_SERVICE_NAME=mariadb
-    elif [[ "$DISTRO" == "bullseye" ]]; then
+    elif [[ "$DISTRO" =~ bookworm|bullseye ]]; then
         MYSQL_SERVICE_NAME=mariadb
     fi
 fi
@@ -122,7 +122,8 @@ function configure_database_mysql {
     # In mariadb e.g. on Ubuntu socket plugin is used for authentication
     # as root so it works only as sudo. To restore old "mysql like" behaviour,
     # we need to change auth plugin for root user
-    if is_ubuntu && [[ "$DISTRO" != "bullseye" ]] && [ "$MYSQL_SERVICE_NAME" == "mariadb" ]; then
+    # TODO(frickler): simplify this logic
+    if is_ubuntu && [[ ! "$DISTRO" =~ bookworm|bullseye ]] && [ "$MYSQL_SERVICE_NAME" == "mariadb" ]; then
         if [[ "$DISTRO" == "jammy" ]]; then
             # For Ubuntu 22.04 (jammy) we follow the model outlined in
             # https://mariadb.org/authentication-in-mariadb-10-4/
