@@ -14,7 +14,12 @@
 
 set -o errexit
 
-PYTHON=${PYTHON:-python3}
+# TODO(frickler): make this use stackrc variables
+if [ -x /opt/stack/data/venv/bin/python ]; then
+    PYTHON=/opt/stack/data/venv/bin/python
+else
+    PYTHON=${PYTHON:-python3}
+fi
 
 # time to sleep between checks
 SLEEP_TIME=20

@@ -364,8 +364,11 @@ function deploy_int_CA {
 function fix_system_ca_bundle_path {
     if is_service_enabled tls-proxy; then
         local capath
-        capath=$(python3 -c $'try:\n from requests import certs\n print (certs.where())\nexcept ImportError: pass')
-
+        if [[ "$GLOBAL_VENV" == "True" ]] ; then
+            capath=$($DEVSTACK_VENV/bin/python3 -c $'try:\n from requests import certs\n print (certs.where())\nexcept ImportError: pass')
+        else
+            capath=$(python3 -c $'try:\n from requests import certs\n print (certs.where())\nexcept ImportError: pass')
+        fi
         if [[ ! $capath == "" && ! $capath =~ ^/etc/.* && ! -L $capath ]]; then
             if is_fedora; then
                 sudo rm -f $capath

@@ -60,6 +60,11 @@ function configure_rootwrap {
     sudo install -o root -g root -m 644 $rootwrap_conf_src_dir/rootwrap.conf /etc/${project}/rootwrap.conf
     sudo sed -e "s:^filters_path=.*$:filters_path=/etc/${project}/rootwrap.d:" -i /etc/${project}/rootwrap.conf
 
+    # Rely on $PATH set by devstack to determine what is safe to execute
+    # by rootwrap rather than use explicit whitelist of paths in
+    # rootwrap.conf
+    sudo sed -e 's/^exec_dirs=.*/#&/' -i /etc/${project}/rootwrap.conf
+
     # Set up the rootwrap sudoers
     local tempfile
     tempfile=$(mktemp)

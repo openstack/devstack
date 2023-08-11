@@ -39,4 +39,5 @@
     CustomLog /var/log/%APACHE_NAME%/horizon_access.log combined
 </VirtualHost>
 
+%WSGIPYTHONHOME%
 WSGISocketPrefix /var/run/%APACHE_NAME%

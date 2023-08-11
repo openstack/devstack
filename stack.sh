@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+
 # ``stack.sh`` is an opinionated OpenStack developer installation.  It
 # installs and configures various combinations of **Cinder**, **Glance**,
 # **Horizon**, **Keystone**, **Nova**, **Neutron**, and **Swift**
@@ -823,6 +824,17 @@ fi
 # Do the ugly hacks for broken packages and distros
 source $TOP_DIR/tools/fixup_stuff.sh
 fixup_all
+
+if [[ "$GLOBAL_VENV" == "True" ]] ; then
+    # TODO(frickler): find a better solution for this
+    sudo ln -sf /opt/stack/data/venv/bin/privsep-helper /usr/local/bin
+    sudo ln -sf /opt/stack/data/venv/bin/cinder-rtstool /usr/local/bin
+    sudo ln -sf /opt/stack/data/venv/bin/openstack /usr/local/bin
+    sudo ln -sf /opt/stack/data/venv/bin/tox /usr/local/bin
+    sudo ln -sf /opt/stack/data/venv/bin/nova-manage /usr/local/bin
+
+    setup_devstack_virtualenv
+fi
 
 # Install subunit for the subunit output stream
 pip_install -U os-testr
