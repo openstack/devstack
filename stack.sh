@@ -827,11 +827,12 @@ fixup_all
 
 if [[ "$GLOBAL_VENV" == "True" ]] ; then
     # TODO(frickler): find a better solution for this
-    sudo ln -sf /opt/stack/data/venv/bin/privsep-helper /usr/local/bin
     sudo ln -sf /opt/stack/data/venv/bin/cinder-rtstool /usr/local/bin
-    sudo ln -sf /opt/stack/data/venv/bin/openstack /usr/local/bin
-    sudo ln -sf /opt/stack/data/venv/bin/tox /usr/local/bin
+    sudo ln -sf /opt/stack/data/venv/bin/nova /usr/local/bin
     sudo ln -sf /opt/stack/data/venv/bin/nova-manage /usr/local/bin
+    sudo ln -sf /opt/stack/data/venv/bin/openstack /usr/local/bin
+    sudo ln -sf /opt/stack/data/venv/bin/privsep-helper /usr/local/bin
+    sudo ln -sf /opt/stack/data/venv/bin/tox /usr/local/bin
 
     setup_devstack_virtualenv
 fi
