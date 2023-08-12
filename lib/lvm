@@ -137,15 +137,17 @@ function init_lvm_volume_group {
     # Start with a clean volume group
     _create_lvm_volume_group $vg $size
 
-    # Remove iscsi targets
-    if [ "$CINDER_TARGET_HELPER" = "lioadm" ]; then
-        sudo cinder-rtstool get-targets | sudo xargs -rn 1 cinder-rtstool delete
-    elif [ "$CINDER_TARGET_HELPER" = "tgtadm" ]; then
-        sudo tgtadm --op show --mode target | awk '/Target/ {print $3}' | sudo xargs -r -n1 tgt-admin --delete
-    elif [ "$CINDER_TARGET_HELPER" = "nvmet" ]; then
-        # If we don't disconnect everything vgremove will block
-        sudo nvme disconnect-all
-        sudo nvmetcli clear
+    if is_service_enabled cinder; then
+        # Remove iscsi targets
+        if [ "$CINDER_TARGET_HELPER" = "lioadm" ]; then
+            sudo cinder-rtstool get-targets | sudo xargs -rn 1 cinder-rtstool delete
+        elif [ "$CINDER_TARGET_HELPER" = "tgtadm" ]; then
+            sudo tgtadm --op show --mode target | awk '/Target/ {print $3}' | sudo xargs -r -n1 tgt-admin --delete
+        elif [ "$CINDER_TARGET_HELPER" = "nvmet" ]; then
+            # If we don't disconnect everything vgremove will block
+            sudo nvme disconnect-all
+            sudo nvmetcli clear
+        fi
     fi
     _clean_lvm_volume_group $vg
 }
