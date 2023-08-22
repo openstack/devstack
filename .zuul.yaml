@@ -708,9 +708,6 @@
     nodeset: devstack-single-node-centos-9-stream
     timeout: 9000
     voting: false
-    vars:
-      devstack_localrc:
-        GLOBAL_VENV: false
 
 - job:
     name: devstack-platform-debian-bookworm
@@ -745,8 +742,6 @@
     timeout: 9000
     vars:
       configure_swap_size: 4096
-      devstack_localrc:
-        GLOBAL_VENV: false
 
 - job:
     name: devstack-platform-ubuntu-focal
