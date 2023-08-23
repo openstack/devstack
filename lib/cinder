@@ -414,7 +414,9 @@ function configure_cinder {
     if [[ ! -z "$CINDER_COORDINATION_URL" ]]; then
         iniset $CINDER_CONF coordination backend_url "$CINDER_COORDINATION_URL"
     elif is_service_enabled etcd3; then
-        iniset $CINDER_CONF coordination backend_url "etcd3+http://${SERVICE_HOST}:$ETCD_PORT"
+        # NOTE(jan.gutter): api_version can revert to default once tooz is
+        # updated with the etcd v3.4 defaults
+        iniset $CINDER_CONF coordination backend_url "etcd3+http://${SERVICE_HOST}:$ETCD_PORT?api_version=v3"
     fi
 
     if [[ "$CINDER_ENFORCE_SCOPE" == True || "$ENFORCE_SCOPE" == True ]] ; then
