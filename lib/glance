@@ -584,9 +584,10 @@ function start_glance_remote_clone {
     write_uwsgi_user_unit_file devstack@g-api-r.service "$(which uwsgi) \
                                --procname-prefix \
                                glance-api-remote \
-                               --ini $glance_remote_uwsgi" \
+                               --ini $glance_remote_uwsgi \
+                               --venv $DEVSTACK_VENV" \
                                "" "$STACK_USER"
-    iniset -sudo ${SYSTEMD_DIR}/devstack@g-api-r.service \
+    iniadd -sudo ${SYSTEMD_DIR}/devstack@g-api-r.service \
            "Service" "Environment" \
            "OS_GLANCE_CONFIG_DIR=$glance_remote_conf_dir"
 
