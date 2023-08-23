@@ -188,8 +188,17 @@ ENFORCE_SCOPE=$(trueorfalse False ENFORCE_SCOPE)
 # Note that the DATA_DIR is selected because grenade testing uses a shared
 # DATA_DIR but different DEST dirs and we don't want two sets of venvs,
 # instead we want one global set.
-GLOBAL_VENV=$(trueorfalse True GLOBAL_VENV)
 DEVSTACK_VENV=${DEVSTACK_VENV:-$DATA_DIR/venv}
+
+# NOTE(kopecmartin): remove this once this is fixed
+# https://bugs.launchpad.net/devstack/+bug/2031639
+# This couldn't go to fixup_stuff as that's called after projects
+# (e.g. certain paths) are set taking GLOBAL_VENV into account
+if [[ "$os_VENDOR" =~ (CentOSStream|Rocky) ]]; then
+    GLOBAL_VENV=$(trueorfalse False GLOBAL_VENV)
+else
+    GLOBAL_VENV=$(trueorfalse True GLOBAL_VENV)
+fi
 
 # Enable use of Python virtual environments.  Individual project use of
 # venvs are controlled by the PROJECT_VENV array; every project with
