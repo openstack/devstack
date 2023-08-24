@@ -200,7 +200,7 @@ function set_lvm_filter {
     filter_string=$filter_string$filter_suffix
 
     clean_lvm_filter
-    sudo sed -i "/# global_filter = \[*\]/a\    $global_filter$filter_string" /etc/lvm/lvm.conf
+    sudo sed -i "/# global_filter = \[.*\]/a\        $filter_string" /etc/lvm/lvm.conf
     echo_summary "set lvm.conf device global_filter to: $filter_string"
 }
 
