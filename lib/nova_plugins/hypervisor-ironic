@@ -53,6 +53,10 @@ function configure_nova_hypervisor {
         iniset $NOVA_CONF ironic project_domain_id default
         iniset $NOVA_CONF ironic project_name demo
     fi
+    if is_ironic_sharded; then
+        iniset $NOVA_CONF ironic shard $IRONIC_SHARD_1_NAME
+    fi
+
     iniset $NOVA_CONF ironic user_domain_id default
     iniset $NOVA_CONF ironic region_name $REGION_NAME
 
