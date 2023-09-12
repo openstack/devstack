@@ -303,6 +303,11 @@ else
     Q_USE_SECGROUP=False
 fi
 
+# OVN_BRIDGE_MAPPINGS - ovn-bridge-mappings
+# NOTE(hjensas): Initialize after sourcing neutron_plugins/services/l3
+# which initialize PUBLIC_BRIDGE.
+OVN_BRIDGE_MAPPINGS=${OVN_BRIDGE_MAPPINGS:-$PHYSICAL_NETWORK:$PUBLIC_BRIDGE}
+
 # Save trace setting
 _XTRACE_NEUTRON=$(set +o | grep xtrace)
 set +o xtrace

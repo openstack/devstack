@@ -47,7 +47,8 @@ Q_L3_ROUTER_PER_TENANT=${Q_L3_ROUTER_PER_TENANT:-True}
 # used for the network.  In case of ofagent, you should add the
 # corresponding entry to your OFAGENT_PHYSICAL_INTERFACE_MAPPINGS.
 # For openvswitch agent, you should add the corresponding entry to
-# your OVS_BRIDGE_MAPPINGS.
+# your OVS_BRIDGE_MAPPINGS and for OVN add the corresponding entry
+# to your OVN_BRIDGE_MAPPINGS.
 #
 # eg.  (ofagent)
 #    Q_USE_PROVIDERNET_FOR_PUBLIC=True
@@ -59,6 +60,11 @@ Q_L3_ROUTER_PER_TENANT=${Q_L3_ROUTER_PER_TENANT:-True}
 #    Q_USE_PROVIDERNET_FOR_PUBLIC=True
 #    PUBLIC_PHYSICAL_NETWORK=public
 #    OVS_BRIDGE_MAPPINGS=public:br-ex
+#
+# eg.  (ovn agent)
+#    Q_USER_PROVIDERNET_FOR_PUBLIC=True
+#    PUBLIC_PHYSICAL_NETWORK=public
+#    OVN_BRIDGE_MAPPINGS=public:br-ex
 #
 # The provider-network-type defaults to flat, however, the values
 # PUBLIC_PROVIDERNET_TYPE and PUBLIC_PROVIDERNET_SEGMENTATION_ID could
