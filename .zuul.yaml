@@ -941,8 +941,6 @@
         - devstack-platform-rocky-blue-onyx
         - devstack-platform-ubuntu-jammy-ovn-source
         - devstack-platform-ubuntu-jammy-ovs
-        - devstack-platform-openEuler-22.03-ovn-source
-        - devstack-platform-openEuler-22.03-ovs
         - devstack-multinode
         - devstack-unit-tests
         - openstack-tox-bashate
@@ -1067,7 +1065,3 @@
     periodic:
       jobs:
         - devstack-no-tls-proxy
-    periodic-weekly:
-      jobs:
-        - devstack-platform-openEuler-22.03-ovn-source
-        - devstack-platform-openEuler-22.03-ovs
