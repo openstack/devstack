@@ -1114,6 +1114,12 @@ function is_ironic_enforce_scope {
     return 1
 }
 
+function is_ironic_sharded {
+    # todo(JayF): Support >1 shard with multiple n-cpu instances for each
+    is_service_enabled ironic && [[ "$IRONIC_SHARDS" == "1" ]] && return 0
+    return 1
+}
+
 
 # Package Functions
 # =================
