@@ -79,7 +79,7 @@ CINDER_SERVICE_LISTEN_ADDRESS=${CINDER_SERVICE_LISTEN_ADDRESS:-$(ipv6_unquote $S
 # We do not need to report service status every 10s for devstack-like
 # deployments. In the gate this generates extra work for the services and the
 # database which are already taxed.
-CINDER_SERVICE_REPORT_INTERVAL=120
+CINDER_SERVICE_REPORT_INTERVAL=${CINDER_SERVICE_REPORT_INTERVAL:-120}
 
 # What type of LVM device should Cinder use for LVM backend
 # Defaults to auto, which will do thin provisioning if it's a fresh

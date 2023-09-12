@@ -78,7 +78,7 @@ NOVA_USE_MOD_WSGI=${NOVA_USE_MOD_WSGI:-True}
 # We do not need to report service status every 10s for devstack-like
 # deployments. In the gate this generates extra work for the services and the
 # database which are already taxed.
-NOVA_SERVICE_REPORT_INTERVAL=120
+NOVA_SERVICE_REPORT_INTERVAL=${NOVA_SERVICE_REPORT_INTERVAL:-120}
 
 if is_service_enabled tls-proxy; then
     NOVA_SERVICE_PROTOCOL="https"
