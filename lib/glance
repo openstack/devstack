@@ -543,7 +543,7 @@ function glance_remote_conf {
 # start_glance_remote_clone() - Clone the regular glance api worker
 function start_glance_remote_clone {
     local glance_remote_conf_dir glance_remote_port remote_data
-    local glance_remote_uwsgi
+    local glance_remote_uwsgi venv
 
     glance_remote_conf_dir="$(glance_remote_conf "")"
     glance_remote_port=$(get_random_port)
@@ -581,11 +581,14 @@ function start_glance_remote_clone {
     # We need to create the systemd service for the clone, but then
     # change it to include an Environment line to point the WSGI app
     # at the alternate config directory.
+    if [[ "$GLOBAL_VENV" == True ]]; then
+        venv="--venv $DEVSTACK_VENV"
+    fi
     write_uwsgi_user_unit_file devstack@g-api-r.service "$(which uwsgi) \
                                --procname-prefix \
                                glance-api-remote \
                                --ini $glance_remote_uwsgi \
-                               --venv $DEVSTACK_VENV" \
+                               $venv" \
                                "" "$STACK_USER"
     iniadd -sudo ${SYSTEMD_DIR}/devstack@g-api-r.service \
            "Service" "Environment" \
