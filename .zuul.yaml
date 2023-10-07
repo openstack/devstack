@@ -938,7 +938,10 @@
         - devstack-platform-centos-9-stream
         - devstack-platform-debian-bookworm
         - devstack-platform-debian-bullseye
-        - devstack-platform-rocky-blue-onyx
+        # TODO(gmann): make it voting again once bug#2038733
+        # is fixed.
+        - devstack-platform-rocky-blue-onyx:
+            voting: false
         - devstack-platform-ubuntu-jammy-ovn-source
         - devstack-platform-ubuntu-jammy-ovs
         - devstack-multinode
@@ -981,7 +984,7 @@
         - devstack
         - devstack-ipv6
         - devstack-platform-debian-bullseye
-        - devstack-platform-rocky-blue-onyx
+        # - devstack-platform-rocky-blue-onyx
         - devstack-enforce-scope
         - devstack-multinode
         - devstack-unit-tests
