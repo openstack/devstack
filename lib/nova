@@ -58,6 +58,14 @@ NOVA_METADATA_UWSGI=$NOVA_BIN_DIR/nova-metadata-wsgi
 NOVA_UWSGI_CONF=$NOVA_CONF_DIR/nova-api-uwsgi.ini
 NOVA_METADATA_UWSGI_CONF=$NOVA_CONF_DIR/nova-metadata-uwsgi.ini
 
+# Allow forcing the stable compute uuid to something specific. This would be
+# done by deployment tools that pre-allocate the UUIDs, but it is also handy
+# for developers that need to re-stack a compute-only deployment multiple
+# times. Since the DB is non-local and not erased on an unstack, making it
+# stay the same each time is what developers want. Set to a uuid here or
+# leave it blank for default allocate-on-start behavior.
+NOVA_CPU_UUID=""
+
 # The total number of cells we expect. Must be greater than one and doesn't
 # count cell0.
 NOVA_NUM_CELLS=${NOVA_NUM_CELLS:-1}
@@ -1056,6 +1064,10 @@ function start_nova_compute {
     # Workaround bug #1939108
     if [[ "$VIRT_DRIVER" == "libvirt" && "$LIBVIRT_TYPE" == "qemu" ]]; then
         iniset $NOVA_CPU_CONF workarounds libvirt_disable_apic True
+    fi
+
+    if [[ "$NOVA_CPU_UUID" ]]; then
+        echo -n $NOVA_CPU_UUID > $NOVA_CONF_DIR/compute_id
     fi
 
     if [[ "$VIRT_DRIVER" = 'libvirt' ]]; then
