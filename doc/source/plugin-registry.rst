@@ -78,6 +78,7 @@ openstack/neutron-fwaas-dashboard        `https://opendev.org/openstack/neutron-
 openstack/neutron-tempest-plugin         `https://opendev.org/openstack/neutron-tempest-plugin <https://opendev.org/openstack/neutron-tempest-plugin>`__
 openstack/neutron-vpnaas                 `https://opendev.org/openstack/neutron-vpnaas <https://opendev.org/openstack/neutron-vpnaas>`__
 openstack/neutron-vpnaas-dashboard       `https://opendev.org/openstack/neutron-vpnaas-dashboard <https://opendev.org/openstack/neutron-vpnaas-dashboard>`__
+openstack/nova                           `https://opendev.org/openstack/nova <https://opendev.org/openstack/nova>`__
 openstack/nova-powervm                   `https://opendev.org/openstack/nova-powervm <https://opendev.org/openstack/nova-powervm>`__
 openstack/octavia                        `https://opendev.org/openstack/octavia <https://opendev.org/openstack/octavia>`__
 openstack/octavia-dashboard              `https://opendev.org/openstack/octavia-dashboard <https://opendev.org/openstack/octavia-dashboard>`__
