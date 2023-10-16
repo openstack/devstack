@@ -169,6 +169,10 @@ function install_horizon {
     # Apache installation, because we mark it NOPRIME
     install_apache_wsgi
 
+    # Install the memcache library so that horizon can use memcached as its
+    # cache backend
+    pip_install_gr pymemcache
+
     git_clone $HORIZON_REPO $HORIZON_DIR $HORIZON_BRANCH
 }
 
