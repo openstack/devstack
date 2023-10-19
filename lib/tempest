@@ -29,6 +29,7 @@
 # - ``DEFAULT_INSTANCE_USER``
 # - ``DEFAULT_INSTANCE_ALT_USER``
 # - ``CINDER_ENABLED_BACKENDS``
+# - ``CINDER_BACKUP_DRIVER``
 # - ``NOVA_ALLOW_DUPLICATE_NETWORKS``
 #
 # ``stack.sh`` calls the entry points in this order:
@@ -571,6 +572,9 @@ function configure_tempest {
         TEMPEST_VOLUME_REVERT_TO_SNAPSHOT=${TEMPEST_VOLUME_REVERT_TO_SNAPSHOT:-True}
     fi
     iniset $TEMPEST_CONFIG volume-feature-enabled volume_revert $(trueorfalse False TEMPEST_VOLUME_REVERT_TO_SNAPSHOT)
+    if [[ "$CINDER_BACKUP_DRIVER" == *"swift"* ]]; then
+        iniset $TEMPEST_CONFIG volume backup_driver swift
+    fi
     local tempest_volume_min_microversion=${TEMPEST_VOLUME_MIN_MICROVERSION:-None}
     local tempest_volume_max_microversion=${TEMPEST_VOLUME_MAX_MICROVERSION:-"latest"}
     if [ "$tempest_volume_min_microversion" == "None" ]; then
