@@ -718,9 +718,6 @@
     timeout: 9000
     vars:
       configure_swap_size: 4096
-      devstack_localrc:
-        # TODO(frickler): drop this once wheel build is fixed
-        MYSQL_GATHER_PERFORMANCE: false
 
 - job:
     name: devstack-platform-debian-bullseye
@@ -730,9 +727,6 @@
     timeout: 9000
     vars:
       configure_swap_size: 4096
-      devstack_localrc:
-        # TODO(frickler): drop this once wheel build is fixed
-        MYSQL_GATHER_PERFORMANCE: false
 
 - job:
     name: devstack-platform-rocky-blue-onyx
