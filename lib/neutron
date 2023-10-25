@@ -92,8 +92,9 @@ NEUTRON_UWSGI_CONF=$NEUTRON_CONF_DIR/neutron-api-uwsgi.ini
 
 # If NEUTRON_ENFORCE_SCOPE == True, it will set "enforce_scope"
 # and "enforce_new_defaults" to True in the Neutron's config to enforce usage
-# of the new RBAC policies and scopes.
-NEUTRON_ENFORCE_SCOPE=$(trueorfalse False NEUTRON_ENFORCE_SCOPE)
+# of the new RBAC policies and scopes. Set it to False if you do not
+# want to run Neutron with new RBAC.
+NEUTRON_ENFORCE_SCOPE=$(trueorfalse True NEUTRON_ENFORCE_SCOPE)
 
 # Agent binaries.  Note, binary paths for other agents are set in per-service
 # scripts in lib/neutron_plugins/services/
