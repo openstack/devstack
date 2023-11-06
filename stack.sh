@@ -421,8 +421,12 @@ elif [[ $DISTRO == "openEuler-22.03" ]]; then
     # 1. the hostname package is not installed by default
     # 2. Some necessary packages are in openstack repo, for example liberasurecode-devel
     # 3. python3-pip can be uninstalled by `get_pip.py` automaticly.
-    install_package hostname openstack-release-wallaby
+    # 4. Ensure wget installation before use
+    install_package hostname openstack-release-wallaby wget
     uninstall_package python3-pip
+
+    # Add yum repository for libvirt7.X
+    sudo wget https://eur.openeuler.openatom.cn/coprs/g/sig-openstack/Libvirt-7.X/repo/openeuler-22.03_LTS/group_sig-openstack-Libvirt-7.X-openeuler-22.03_LTS.repo -O /etc/yum.repos.d/libvirt7.2.0.repo
 fi
 
 # Ensure python is installed
