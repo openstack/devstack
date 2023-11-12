@@ -38,3 +38,5 @@ stack-screenrc
 userrc_early
 AUTHORS
 ChangeLog
+tools/dbcounter/build/
+tools/dbcounter/dbcounter.egg-info/
