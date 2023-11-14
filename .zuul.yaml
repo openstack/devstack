@@ -1053,3 +1053,13 @@
     periodic:
       jobs:
         - devstack-no-tls-proxy
+    periodic-weekly:
+      jobs:
+        - devstack-platform-centos-9-stream
+        - devstack-platform-debian-bookworm
+        - devstack-platform-debian-bullseye
+        - devstack-platform-rocky-blue-onyx
+        - devstack-platform-ubuntu-jammy-ovn-source
+        - devstack-platform-ubuntu-jammy-ovs
+        - devstack-platform-openEuler-22.03-ovn-source
+        - devstack-platform-openEuler-22.03-ovs
