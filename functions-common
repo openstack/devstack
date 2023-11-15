@@ -1047,8 +1047,6 @@ function get_or_create_service {
             --description="$3" \
             -f value -c id
     )
-    # Drop cached token to invalidate catalog info in the token
-    remove_token_cache
     echo $service_id
 }
 
@@ -1066,6 +1064,7 @@ function _get_or_create_endpoint_with_interface {
         endpoint_id=$(openstack --os-cloud devstack-system-admin endpoint create \
             $1 $2 $3 --region $4 -f value -c id)
     fi
+
     echo $endpoint_id
 }
 
@@ -1089,8 +1088,6 @@ function get_or_create_endpoint {
     if [[ -n "$5" ]]; then
         _get_or_create_endpoint_with_interface $1 internal $5 $2
     fi
-    # Drop cached token to invalidate catalog info in the token
-    remove_token_cache
     # return the public id to indicate success, and this is the endpoint most likely wanted
     echo $public_id
 }
@@ -2518,11 +2515,6 @@ function clean_pyc_files {
 function is_fips_enabled {
     fips=`cat /proc/sys/crypto/fips_enabled`
     [ "$fips" == "1" ]
-}
-
-function remove_token_cache {
-    # Remove Keyring cache file
-    rm ~/.local/share/python_keyring/keyring_pass.cfg
 }
 
 # Restore xtrace
