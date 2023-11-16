@@ -158,6 +158,14 @@ if [[ "$NEUTRON_DEPLOY_MOD_WSGI" == "True" && -z "$NEUTRON_ENDPOINT_SERVICE_NAME
     NEUTRON_ENDPOINT_SERVICE_NAME="networking"
 fi
 
+# Source install libraries
+ALEMBIC_REPO=${ALEMBIC_REPO:-https://github.com/sqlalchemy/alembic.git}
+ALEMBIC_DIR=${ALEMBIC_DIR:-$DEST/alembic}
+ALEMBIC_BRANCH=${ALEMBIC_BRANCH:-main}
+SQLALCHEMY_REPO=${SQLALCHEMY_REPO:-https://github.com/sqlalchemy/sqlalchemy.git}
+SQLALCHEMY_DIR=${SQLALCHEMY_DIR:-$DEST/sqlalchemy}
+SQLALCHEMY_BRANCH=${SQLALCHEMY_BRANCH:-main}
+
 # List of config file names in addition to the main plugin config file
 # To add additional plugin config files, use ``neutron_server_config_add``
 # utility function.  For example:
@@ -523,6 +531,17 @@ function install_neutron {
     if use_library_from_git "neutron-lib"; then
         git_clone_by_name "neutron-lib"
         setup_dev_lib "neutron-lib"
+    fi
+
+    # Install SQLAlchemy and alembic from git when these are required
+    # see https://bugs.launchpad.net/neutron/+bug/2042941
+    if use_library_from_git "sqlalchemy"; then
+        git_clone $SQLALCHEMY_REPO $SQLALCHEMY_DIR $SQLALCHEMY_BRANCH
+        setup_develop $SQLALCHEMY_DIR
+    fi
+    if use_library_from_git "alembic"; then
+        git_clone $ALEMBIC_REPO $ALEMBIC_DIR $ALEMBIC_BRANCH
+        setup_develop $ALEMBIC_DIR
     fi
 
     git_clone $NEUTRON_REPO $NEUTRON_DIR $NEUTRON_BRANCH
