@@ -75,6 +75,7 @@ GLANCE_MULTIPLE_FILE_STORES=${GLANCE_MULTIPLE_FILE_STORES:-fast}
 GLANCE_DEFAULT_BACKEND=${GLANCE_DEFAULT_BACKEND:-fast}
 
 GLANCE_CACHE_DIR=${GLANCE_CACHE_DIR:=$DATA_DIR/glance/cache}
+GLANCE_CACHE_DRIVER=${GLANCE_CACHE_DRIVER:-sqlite}
 
 # Full Glance functionality requires running in standalone mode. If we are
 # not in uwsgi mode, then we are standalone, otherwise allow separate control.
@@ -329,6 +330,7 @@ function configure_glance {
     iniset $GLANCE_API_CONF database connection $dburl
     iniset $GLANCE_API_CONF DEFAULT use_syslog $SYSLOG
     iniset $GLANCE_API_CONF DEFAULT image_cache_dir $GLANCE_CACHE_DIR/
+    iniset $GLANCE_API_CONF DEFAULT image_cache_driver $GLANCE_CACHE_DRIVER
     iniset $GLANCE_API_CONF oslo_concurrency lock_path $GLANCE_LOCK_DIR
     iniset $GLANCE_API_CONF paste_deploy flavor keystone+cachemanagement
     configure_keystone_authtoken_middleware $GLANCE_API_CONF glance
@@ -392,6 +394,7 @@ function configure_glance {
     iniset $GLANCE_CACHE_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
     iniset $GLANCE_CACHE_CONF DEFAULT use_syslog $SYSLOG
     iniset $GLANCE_CACHE_CONF DEFAULT image_cache_dir $GLANCE_CACHE_DIR/
+    iniset $GLANCE_CACHE_CONF DEFAULT image_cache_driver $GLANCE_CACHE_DRIVER
     iniset $GLANCE_CACHE_CONF DEFAULT auth_url $KEYSTONE_SERVICE_URI
     iniset $GLANCE_CACHE_CONF DEFAULT admin_tenant_name $SERVICE_PROJECT_NAME
     iniset $GLANCE_CACHE_CONF DEFAULT admin_user glance
