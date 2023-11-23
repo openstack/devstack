@@ -133,17 +133,28 @@ function upload_image {
 
     local image image_fname image_name
 
+    local max_attempts=5
+
     # Create a directory for the downloaded image tarballs.
     mkdir -p $FILES/images
     image_fname=`basename "$image_url"`
     if [[ $image_url != file* ]]; then
         # Downloads the image (uec ami+akistyle), then extracts it.
         if [[ ! -f $FILES/$image_fname || "$(stat -c "%s" $FILES/$image_fname)" = "0" ]]; then
-            wget --progress=dot:giga -c $image_url -O $FILES/$image_fname
-            if [[ $? -ne 0 ]]; then
-                echo "Not found: $image_url"
-                return
-            fi
+            for attempt in `seq $max_attempts`; do
+                local rc=0
+                wget --progress=dot:giga -c $image_url -O $FILES/$image_fname || rc=$?
+                if [[ $rc -ne 0 ]]; then
+                    if [[ "$attempt" -eq "$max_attempts" ]]; then
+                        echo "Not found: $image_url"
+                        return
+                    fi
+                    echo "Download failed, retrying in $attempt second, attempt: $attempt"
+                    sleep $attempt
+                else
+                    break
+                fi
+            done
         fi
         image="$FILES/${image_fname}"
     else
