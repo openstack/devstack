@@ -821,6 +821,7 @@ fixup_all
 
 if [[ "$GLOBAL_VENV" == "True" ]] ; then
     # TODO(frickler): find a better solution for this
+    sudo ln -sf /opt/stack/data/venv/bin/cinder-manage /usr/local/bin
     sudo ln -sf /opt/stack/data/venv/bin/cinder-rtstool /usr/local/bin
     sudo ln -sf /opt/stack/data/venv/bin/glance /usr/local/bin
     sudo ln -sf /opt/stack/data/venv/bin/nova-manage /usr/local/bin
