@@ -237,13 +237,17 @@ function restart_apache_server {
     restart_service $APACHE_NAME
 }
 
+# write_uwsgi_config() - Create a new uWSGI config file
 function write_uwsgi_config {
     local conf=$1
     local wsgi=$2
     local url=$3
     local http=$4
-    local name=""
-    name=$(basename $wsgi)
+    local name=$5
+
+    if [ -z "$name" ]; then
+        name=$(basename $wsgi)
+    fi
 
     # create a home for the sockets; note don't use /tmp -- apache has
     # a private view of it on some platforms.
@@ -259,7 +263,15 @@ function write_uwsgi_config {
 
     # always cleanup given that we are using iniset here
     rm -rf $conf
-    iniset "$conf" uwsgi wsgi-file "$wsgi"
+    # Set either the module path or wsgi script path depending on what we've
+    # been given. Note that the regex isn't exhaustive - neither Python modules
+    # nor Python variables can start with a number - but it's "good enough"
+    if [[ "$wsgi" =~ ^[a-zA-Z0-9_.]+:[a-zA-Z0-9_]+$ ]]; then
+        iniset "$conf" uwsgi module "$wsgi"
+    else
+        deprecated 'Configuring uWSGI with a WSGI file is deprecated, use module paths instead'
+        iniset "$conf" uwsgi wsgi-file "$wsgi"
+    fi
     iniset "$conf" uwsgi processes $API_WORKERS
     # This is running standalone
     iniset "$conf" uwsgi master true
@@ -306,14 +318,25 @@ function write_local_uwsgi_http_config {
     local conf=$1
     local wsgi=$2
     local url=$3
-    name=$(basename $wsgi)
+    local name=$4
+
+    if [ -z "$name" ]; then
+        name=$(basename $wsgi)
+    fi
 
     # create a home for the sockets; note don't use /tmp -- apache has
     # a private view of it on some platforms.
 
     # always cleanup given that we are using iniset here
     rm -rf $conf
-    iniset "$conf" uwsgi wsgi-file "$wsgi"
+    # Set either the module path or wsgi script path depending on what we've
+    # been given
+    if [[ "$wsgi" =~ ^[a-zA-Z0-9_.]+:[a-zA-Z0-9_]+$ ]]; then
+        iniset "$conf" uwsgi module "$wsgi"
+    else
+        deprecated 'Configuring uWSGI with a WSGI file is deprecated, use module paths instead'
+        iniset "$conf" uwsgi wsgi-file "$wsgi"
+    fi
     port=$(get_random_port)
     iniset "$conf" uwsgi http-socket "$APACHE_LOCAL_HOST:$port"
     iniset "$conf" uwsgi processes $API_WORKERS

@@ -53,8 +53,8 @@ NOVA_COND_CONF=$NOVA_CONF_DIR/nova.conf
 NOVA_CPU_CONF=$NOVA_CONF_DIR/nova-cpu.conf
 NOVA_FAKE_CONF=$NOVA_CONF_DIR/nova-fake.conf
 NOVA_API_DB=${NOVA_API_DB:-nova_api}
-NOVA_UWSGI=$NOVA_BIN_DIR/nova-api-wsgi
-NOVA_METADATA_UWSGI=$NOVA_BIN_DIR/nova-metadata-wsgi
+NOVA_UWSGI=nova.wsgi.osapi_compute:application
+NOVA_METADATA_UWSGI=nova.wsgi.metadata:application
 NOVA_UWSGI_CONF=$NOVA_CONF_DIR/nova-api-uwsgi.ini
 NOVA_METADATA_UWSGI_CONF=$NOVA_CONF_DIR/nova-metadata-uwsgi.ini
 
@@ -549,11 +549,11 @@ function create_nova_conf {
     iniset $NOVA_CONF upgrade_levels compute "auto"
 
     if is_service_enabled n-api; then
-        write_uwsgi_config "$NOVA_UWSGI_CONF" "$NOVA_UWSGI" "/compute"
+        write_uwsgi_config "$NOVA_UWSGI_CONF" "$NOVA_UWSGI" "/compute" "" "nova-api"
     fi
 
     if is_service_enabled n-api-meta; then
-        write_uwsgi_config "$NOVA_METADATA_UWSGI_CONF" "$NOVA_METADATA_UWSGI" "" "$SERVICE_LISTEN_ADDRESS:${METADATA_SERVICE_PORT}"
+        write_uwsgi_config "$NOVA_METADATA_UWSGI_CONF" "$NOVA_METADATA_UWSGI" "" "$SERVICE_LISTEN_ADDRESS:${METADATA_SERVICE_PORT}" "nova-metadata"
     fi
 
     if is_service_enabled ceilometer; then
