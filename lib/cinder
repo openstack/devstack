@@ -62,7 +62,7 @@ CINDER_STATE_PATH=${CINDER_STATE_PATH:=$DATA_DIR/cinder}
 
 CINDER_CONF_DIR=/etc/cinder
 CINDER_CONF=$CINDER_CONF_DIR/cinder.conf
-CINDER_UWSGI=$CINDER_BIN_DIR/cinder-wsgi
+CINDER_UWSGI=cinder.wsgi.api:application
 CINDER_UWSGI_CONF=$CINDER_CONF_DIR/cinder-api-uwsgi.ini
 CINDER_API_PASTE_INI=$CINDER_CONF_DIR/api-paste.ini
 
@@ -404,7 +404,7 @@ function configure_cinder {
     setup_logging $CINDER_CONF
 
     if is_service_enabled c-api; then
-        write_uwsgi_config "$CINDER_UWSGI_CONF" "$CINDER_UWSGI" "/volume"
+        write_uwsgi_config "$CINDER_UWSGI_CONF" "$CINDER_UWSGI" "/volume" "" "cinder-api"
     fi
 
     if [[ -r $CINDER_PLUGINS/$CINDER_DRIVER ]]; then
