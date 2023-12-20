@@ -91,8 +91,13 @@ OVN_GENEVE_OVERHEAD=${OVN_GENEVE_OVERHEAD:-38}
 # http://www.openvswitch.org/support/dist-docs/ovs-appctl.8.txt
 OVN_DBS_LOG_LEVEL=${OVN_DBS_LOG_LEVEL:-info}
 
+# OVN metadata agent configuration
 OVN_META_CONF=$NEUTRON_CONF_DIR/neutron_ovn_metadata_agent.ini
 OVN_META_DATA_HOST=${OVN_META_DATA_HOST:-$(ipv6_unquote $SERVICE_HOST)}
+
+# OVN agent configuration
+OVN_AGENT_CONF=$NEUTRON_CONF_DIR/plugins/ml2/ovn_agent.ini
+OVN_AGENT_EXTENSIONS=${OVN_AGENT_EXTENSIONS:-}
 
 # If True (default) the node will be considered a gateway node.
 ENABLE_CHASSIS_AS_GW=$(trueorfalse True ENABLE_CHASSIS_AS_GW)
@@ -132,6 +137,7 @@ OVN_RUNDIR=$OVS_PREFIX/var/run/ovn
 
 NEUTRON_OVN_BIN_DIR=$(get_python_exec_prefix)
 NEUTRON_OVN_METADATA_BINARY="neutron-ovn-metadata-agent"
+NEUTRON_OVN_AGENT_BINARY="neutron-ovn-agent"
 
 STACK_GROUP="$( id --group --name "$STACK_USER" )"
 
@@ -487,6 +493,8 @@ function configure_ovn_plugin {
 
         if is_service_enabled q-ovn-metadata-agent neutron-ovn-metadata-agent; then
             populate_ml2_config /$Q_PLUGIN_CONF_FILE ovn ovn_metadata_enabled=True
+        elif is_service_enabled q-ovn-agent neutron-ovn-agent && [[ "$OVN_AGENT_EXTENSIONS" =~ 'metadata' ]]; then
+            populate_ml2_config /$Q_PLUGIN_CONF_FILE ovn ovn_metadata_enabled=True
         else
             populate_ml2_config /$Q_PLUGIN_CONF_FILE ovn ovn_metadata_enabled=False
         fi
@@ -507,6 +515,8 @@ function configure_ovn_plugin {
 
     if is_service_enabled n-api-meta ; then
         if is_service_enabled q-ovn-metadata-agent neutron-ovn-metadata-agent; then
+            iniset $NOVA_CONF neutron service_metadata_proxy True
+        elif is_service_enabled q-ovn-agent neutron-ovn-agent && [[ "$OVN_AGENT_EXTENSIONS" =~ 'metadata' ]]; then
             iniset $NOVA_CONF neutron service_metadata_proxy True
         fi
     fi
@@ -539,28 +549,41 @@ function configure_ovn {
     fi
 
     # Metadata
-    if is_service_enabled q-ovn-metadata-agent neutron-ovn-metadata-agent && is_service_enabled ovn-controller; then
+    local sample_file=""
+    local config_file=""
+    if is_service_enabled q-ovn-agent neutron-ovn-agent && [[ "$OVN_AGENT_EXTENSIONS" =~ 'metadata' ]] && is_service_enabled ovn-controller; then
+        sample_file=$NEUTRON_DIR/etc/neutron/plugins/ml2/ovn_agent.ini.sample
+        config_file=$OVN_AGENT_CONF
+    elif is_service_enabled q-ovn-metadata-agent neutron-ovn-metadata-agent && is_service_enabled ovn-controller; then
+        sample_file=$NEUTRON_DIR/etc/neutron_ovn_metadata_agent.ini.sample
+        config_file=$OVN_META_CONF
+    fi
+    if [ -n ${config_file} ]; then
         sudo install -d -o $STACK_USER $NEUTRON_CONF_DIR
 
         mkdir -p $NEUTRON_DIR/etc/neutron/plugins/ml2
         (cd $NEUTRON_DIR && exec ./tools/generate_config_file_samples.sh)
 
-        cp $NEUTRON_DIR/etc/neutron_ovn_metadata_agent.ini.sample $OVN_META_CONF
-        configure_root_helper_options $OVN_META_CONF
+        cp $sample_file $config_file
+        configure_root_helper_options $config_file
 
-        iniset $OVN_META_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
-        iniset $OVN_META_CONF DEFAULT nova_metadata_host $OVN_META_DATA_HOST
-        iniset $OVN_META_CONF DEFAULT metadata_workers $API_WORKERS
-        iniset $OVN_META_CONF DEFAULT state_path $DATA_DIR/neutron
-        iniset $OVN_META_CONF ovs ovsdb_connection tcp:$OVSDB_SERVER_LOCAL_HOST:6640
-        iniset $OVN_META_CONF ovn ovn_sb_connection $OVN_SB_REMOTE
+        iniset $config_file DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
+        iniset $config_file DEFAULT nova_metadata_host $OVN_META_DATA_HOST
+        iniset $config_file DEFAULT metadata_workers $API_WORKERS
+        iniset $config_file DEFAULT state_path $DATA_DIR/neutron
+        iniset $config_file ovs ovsdb_connection tcp:$OVSDB_SERVER_LOCAL_HOST:6640
+        iniset $config_file ovn ovn_sb_connection $OVN_SB_REMOTE
         if is_service_enabled tls-proxy; then
-            iniset $OVN_META_CONF ovn \
+            iniset $config_file ovn \
                 ovn_sb_ca_cert $INT_CA_DIR/ca-chain.pem
-            iniset $OVN_META_CONF ovn \
+            iniset $config_file ovn \
                 ovn_sb_certificate $INT_CA_DIR/$DEVSTACK_CERT_NAME.crt
-            iniset $OVN_META_CONF ovn \
+            iniset $config_file ovn \
                 ovn_sb_private_key $INT_CA_DIR/private/$DEVSTACK_CERT_NAME.key
+        fi
+        if [[ $config_file == $OVN_AGENT_CONF ]]; then
+            iniset $config_file agent extensions $OVN_AGENT_EXTENSIONS
+            iniset $config_file ovn ovn_nb_connection $OVN_NB_REMOTE
         fi
     fi
 }
@@ -684,6 +707,9 @@ function _start_ovn_services {
     if is_service_enabled q-ovn-metadata-agent neutron-ovn-metadata-agent ; then
         _start_process "devstack@q-ovn-metadata-agent.service"
     fi
+    if is_service_enabled q-ovn-agent neutron-ovn-agent ; then
+        _start_process "devstack@q-ovn-agent.service"
+    fi
 }
 
 # start_ovn() - Start running processes, including screen
@@ -750,6 +776,12 @@ function start_ovn {
         setup_logging $OVN_META_CONF
     fi
 
+    if is_service_enabled q-ovn-agent neutron-ovn-agent; then
+        run_process q-ovn-agent "$NEUTRON_OVN_BIN_DIR/$NEUTRON_OVN_AGENT_BINARY --config-file $OVN_AGENT_CONF"
+        # Format logging
+        setup_logging $OVN_AGENT_CONF
+    fi
+
     _start_ovn_services
 }
 
@@ -773,6 +805,12 @@ function stop_ovn {
         # sudo unless we use the "ps | grep [f]oo" trick
         sudo pkill -9 -f "[h]aproxy" || :
         _stop_process "devstack@q-ovn-metadata-agent.service"
+    fi
+    if is_service_enabled q-ovn-agent neutron-ovn-agent; then
+        # pkill takes care not to kill itself, but it may kill its parent
+        # sudo unless we use the "ps | grep [f]oo" trick
+        sudo pkill -9 -f "[h]aproxy" || :
+        _stop_process "devstack@q-ovn-agent.service"
     fi
     if is_service_enabled ovn-controller-vtep ; then
         _stop_process "$OVN_CONTROLLER_VTEP_SERVICE"
