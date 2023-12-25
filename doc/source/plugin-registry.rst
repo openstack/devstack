@@ -85,6 +85,7 @@ openstack/octavia-dashboard              `https://opendev.org/openstack/octavia-
 openstack/octavia-tempest-plugin         `https://opendev.org/openstack/octavia-tempest-plugin <https://opendev.org/openstack/octavia-tempest-plugin>`__
 openstack/openstacksdk                   `https://opendev.org/openstack/openstacksdk <https://opendev.org/openstack/openstacksdk>`__
 openstack/osprofiler                     `https://opendev.org/openstack/osprofiler <https://opendev.org/openstack/osprofiler>`__
+openstack/ovn-bgp-agent                  `https://opendev.org/openstack/ovn-bgp-agent <https://opendev.org/openstack/ovn-bgp-agent>`__
 openstack/ovn-octavia-provider           `https://opendev.org/openstack/ovn-octavia-provider <https://opendev.org/openstack/ovn-octavia-provider>`__
 openstack/rally-openstack                `https://opendev.org/openstack/rally-openstack <https://opendev.org/openstack/rally-openstack>`__
 openstack/sahara                         `https://opendev.org/openstack/sahara <https://opendev.org/openstack/sahara>`__
@@ -185,6 +186,7 @@ x/trio2o                                 `https://opendev.org/x/trio2o <https://
 x/valet                                  `https://opendev.org/x/valet <https://opendev.org/x/valet>`__
 x/vmware-nsx                             `https://opendev.org/x/vmware-nsx <https://opendev.org/x/vmware-nsx>`__
 x/vmware-vspc                            `https://opendev.org/x/vmware-vspc <https://opendev.org/x/vmware-vspc>`__
+x/whitebox-neutron-tempest-plugin        `https://opendev.org/x/whitebox-neutron-tempest-plugin <https://opendev.org/x/whitebox-neutron-tempest-plugin>`__
 ======================================== ===
 
 
