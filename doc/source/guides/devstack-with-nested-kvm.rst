@@ -119,7 +119,7 @@ Ensure DevStack VM is Using KVM
 Before invoking ``stack.sh`` in the VM, ensure that KVM is enabled. This
 can be verified by checking for the presence of the file ``/dev/kvm`` in
 your VM. If it is present, DevStack will default to using the config
-attribute ``virt_type = kvm`` in ``/etc/nova.conf``; otherwise, it'll fall
+attribute ``virt_type = kvm`` in ``/etc/nova/nova.conf``; otherwise, it'll fall
 back to ``virt_type=qemu``, i.e. plain QEMU emulation.
 
 Optionally, to explicitly set the type of virtualization, to KVM, by the
