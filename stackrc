@@ -209,7 +209,7 @@ USE_VENV=$(trueorfalse False USE_VENV)
 # Add packages that need to be installed into a venv but are not in any
 # requirements files here, in a comma-separated list.
 # Currently only used when USE_VENV is true (individual project venvs)
-ADDITIONAL_VENV_PACKAGES=${ADDITIONAL_VENV_PACKAGES:-""}}
+ADDITIONAL_VENV_PACKAGES=${ADDITIONAL_VENV_PACKAGES:-""}
 
 # This can be used to turn database query logging on and off
 # (currently only implemented for MySQL backend)
