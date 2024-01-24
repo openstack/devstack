@@ -37,7 +37,7 @@ ENABLE_ZSWAP=$(trueorfalse False ENABLE_ZSWAP)
 ZSWAP_COMPRESSOR=${ZSWAP_COMPRESSOR:="lz4"}
 ZSWAP_ZPOOL=${ZSWAP_ZPOOL:="z3fold"}
 function configure_zswap {
-    if [[ $ENABLE_KSMTUNED == "True" ]] ; then
+    if [[ $ENABLE_ZSWAP == "True" ]] ; then
         # Centos 9 stream seems to only support enabling but not run time
         # tuning so dont try to choose better default on centos
         if is_ubuntu; then
