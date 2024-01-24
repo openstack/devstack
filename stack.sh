@@ -611,6 +611,12 @@ rm -f $SSL_BUNDLE_FILE
 source $TOP_DIR/lib/database
 source $TOP_DIR/lib/rpc_backend
 
+# load host tuning functions and defaults
+source $TOP_DIR/lib/host
+# tune host memory early to ensure zswap/ksm are configured before
+# doing memory intensive operation like cloning repos or unpacking packages.
+tune_host
+
 # Configure Projects
 # ==================
 
@@ -1078,22 +1084,6 @@ fi
 
 # Save configuration values
 save_stackenv $LINENO
-
-# Kernel Samepage Merging (KSM)
-# -----------------------------
-
-# Processes that mark their memory as mergeable can share identical memory
-# pages if KSM is enabled. This is particularly useful for nova + libvirt
-# backends but any other setup that marks its memory as mergeable can take
-# advantage. The drawback is there is higher cpu load; however, we tend to
-# be memory bound not cpu bound so enable KSM by default but allow people
-# to opt out if the CPU time is more important to them.
-
-if [[ $ENABLE_KSM == "True" ]] ; then
-    if [[ -f /sys/kernel/mm/ksm/run ]] ; then
-        sudo sh -c "echo 1 > /sys/kernel/mm/ksm/run"
-    fi
-fi
 
 
 # Start Services
