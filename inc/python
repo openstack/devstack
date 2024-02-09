@@ -405,6 +405,9 @@ function _setup_package_with_constraints_edit {
         # source we are about to do.
         local name
         name=$(awk '/^name.*=/ {print $3}' $project_dir/setup.cfg)
+        if [ -z $name ]; then
+            name=$(awk '/^name =/ {gsub(/"/, "", $3); print $3}' $project_dir/pyproject.toml)
+        fi
         $REQUIREMENTS_DIR/.venv/bin/edit-constraints \
             $REQUIREMENTS_DIR/upper-constraints.txt -- $name
     fi
