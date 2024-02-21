@@ -183,6 +183,12 @@ fi
 # Environment variables to configure the image-volume cache
 CINDER_IMG_CACHE_ENABLED=${CINDER_IMG_CACHE_ENABLED:-True}
 
+# Environment variables to configure the optimized volume upload
+CINDER_UPLOAD_OPTIMIZED=${CINDER_UPLOAD_OPTIMIZED:-False}
+
+# Environment variables to configure the internal tenant during optimized volume upload
+CINDER_UPLOAD_INTERNAL_TENANT=${CINDER_UPLOAD_INTERNAL_TENANT:-False}
+
 # For limits, if left unset, it will use cinder defaults of 0 for unlimited
 CINDER_IMG_CACHE_SIZE_GB=${CINDER_IMG_CACHE_SIZE_GB:-}
 CINDER_IMG_CACHE_SIZE_COUNT=${CINDER_IMG_CACHE_SIZE_COUNT:-}
@@ -191,6 +197,11 @@ CINDER_IMG_CACHE_SIZE_COUNT=${CINDER_IMG_CACHE_SIZE_COUNT:-}
 # form as the CINDER_ENABLED_BACKENDS config option. By default it will
 # enable the cache for all cinder backends.
 CINDER_CACHE_ENABLED_FOR_BACKENDS=${CINDER_CACHE_ENABLED_FOR_BACKENDS:-$CINDER_ENABLED_BACKENDS}
+
+# Configure which cinder backends will have optimized volume upload, this takes the same
+# form as the CINDER_ENABLED_BACKENDS config option. By default it will
+# enable the cache for all cinder backends.
+CINDER_UPLOAD_OPTIMIZED_BACKENDS=${CINDER_UPLOAD_OPTIMIZED_BACKENDS:-$CINDER_ENABLED_BACKENDS}
 
 # Flag to set the oslo_policy.enforce_scope. This is used to switch
 # the  Volume API policies to start checking the scope of token. by default,
@@ -353,6 +364,14 @@ function configure_cinder {
             iniset $CINDER_CONF DEFAULT default_volume_type ${default_name}
         fi
         configure_cinder_image_volume_cache
+
+        # The upload optimization uses Cinder's clone volume functionality to
+        # clone the Image-Volume from source volume hence can only be
+        # performed when glance is using cinder as it's backend.
+        if [[ "$USE_CINDER_FOR_GLANCE" == "True" ]]; then
+            # Configure optimized volume upload
+            configure_cinder_volume_upload
+        fi
     fi
 
     if is_service_enabled c-bak && [[ -n "$CINDER_BACKUP_DRIVER" ]]; then
@@ -729,6 +748,18 @@ function configure_cinder_image_volume_cache {
     done
 }
 
+function configure_cinder_volume_upload {
+    # Expect UPLOAD_VOLUME_OPTIMIZED_FOR_BACKENDS to be a list of backends
+    # similar to CINDER_ENABLED_BACKENDS with NAME:TYPE where NAME will
+    # be the backend specific configuration stanza in cinder.conf.
+    local be be_name
+    for be in ${CINDER_UPLOAD_OPTIMIZED_BACKENDS//,/ }; do
+        be_name=${be##*:}
+
+        iniset $CINDER_CONF $be_name image_upload_use_cinder_backend $CINDER_UPLOAD_OPTIMIZED
+        iniset $CINDER_CONF $be_name image_upload_use_internal_tenant $CINDER_UPLOAD_INTERNAL_TENANT
+    done
+}
 
 # Restore xtrace
 $_XTRACE_CINDER
