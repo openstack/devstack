@@ -401,9 +401,9 @@ function warn {
 # such as "install_package" further abstract things in better ways.
 #
 # ``os_VENDOR`` - vendor name: ``Ubuntu``, ``Fedora``, etc
-# ``os_RELEASE`` - major release: ``16.04`` (Ubuntu), ``23`` (Fedora)
+# ``os_RELEASE`` - major release: ``22.04`` (Ubuntu), ``23`` (Fedora)
 # ``os_PACKAGE`` - package type: ``deb`` or ``rpm``
-# ``os_CODENAME`` - vendor's codename for release: ``xenial``
+# ``os_CODENAME`` - vendor's codename for release: ``jammy``
 
 declare -g os_VENDOR os_RELEASE os_PACKAGE os_CODENAME
 
