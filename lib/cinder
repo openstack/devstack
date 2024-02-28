@@ -88,6 +88,10 @@ CINDER_SERVICE_REPORT_INTERVAL=${CINDER_SERVICE_REPORT_INTERVAL:-120}
 # thin provisioning.
 CINDER_LVM_TYPE=${CINDER_LVM_TYPE:-auto}
 
+# ``CINDER_USE_SERVICE_TOKEN`` is a mode where service token is passed along with
+# user token while communicating to external REST APIs like Glance.
+CINDER_USE_SERVICE_TOKEN=$(trueorfalse True CINDER_USE_SERVICE_TOKEN)
+
 # Default backends
 # The backend format is type:name where type is one of the supported backend
 # types (lvm, nfs, etc) and name is the identifier used in the Cinder
@@ -445,6 +449,10 @@ function configure_cinder {
         iniset $CINDER_CONF oslo_policy enforce_scope false
         iniset $CINDER_CONF oslo_policy enforce_new_defaults false
     fi
+
+    if [ "$CINDER_USE_SERVICE_TOKEN" == "True" ]; then
+        init_cinder_service_user_conf
+    fi
 }
 
 # create_cinder_accounts() - Set up common required cinder accounts
@@ -759,6 +767,12 @@ function configure_cinder_volume_upload {
         iniset $CINDER_CONF $be_name image_upload_use_cinder_backend $CINDER_UPLOAD_OPTIMIZED
         iniset $CINDER_CONF $be_name image_upload_use_internal_tenant $CINDER_UPLOAD_INTERNAL_TENANT
     done
+}
+
+function init_cinder_service_user_conf {
+    configure_keystone_authtoken_middleware $CINDER_CONF cinder service_user
+    iniset $CINDER_CONF service_user send_service_user_token True
+    iniset $CINDER_CONF service_user auth_strategy keystone
 }
 
 # Restore xtrace
