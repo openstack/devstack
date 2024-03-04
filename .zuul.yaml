@@ -39,16 +39,6 @@
           - controller
 
 - nodeset:
-    name: devstack-single-node-centos-7
-    nodes:
-      - name: controller
-        label: centos-7
-    groups:
-      - name: tempest
-        nodes:
-          - controller
-
-- nodeset:
     name: devstack-single-node-centos-8-stream
     nodes:
       - name: controller
@@ -666,9 +656,6 @@
             irrelevant-files: &dsvm-irrelevant-files
               - ^.*\.rst$
               - ^doc/.*$
-        - swift-dsvm-functional-py3:
-            voting: false
-            irrelevant-files: *dsvm-irrelevant-files
         - grenade:
             irrelevant-files:
               - ^.*\.rst$
