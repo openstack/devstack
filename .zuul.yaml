@@ -49,16 +49,6 @@
           - controller
 
 - nodeset:
-    name: devstack-single-node-centos-7
-    nodes:
-      - name: controller
-        label: centos-7
-    groups:
-      - name: tempest
-        nodes:
-          - controller
-
-- nodeset:
     name: devstack-single-node-centos-9-stream
     nodes:
       - name: controller
