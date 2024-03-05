@@ -73,8 +73,11 @@ logging.debug("Found %d projects" % len(projects))
 s = requests.Session()
 # sometimes gitea gives us a 500 error; retry sanely
 #  https://stackoverflow.com/a/35636367
+# We need to disable raise_on_status because if any repo endup with 500 then
+# propose-updates job which run this script will fail.
 retries = Retry(total=3, backoff_factor=1,
-                status_forcelist=[ 500 ])
+                status_forcelist=[ 500 ],
+                raise_on_status=False)
 s.mount('https://', HTTPAdapter(max_retries=retries))
 
 found_plugins = filter(functools.partial(has_devstack_plugin, s), projects)
