@@ -75,7 +75,7 @@ GLANCE_MULTIPLE_FILE_STORES=${GLANCE_MULTIPLE_FILE_STORES:-fast}
 GLANCE_DEFAULT_BACKEND=${GLANCE_DEFAULT_BACKEND:-fast}
 
 GLANCE_CACHE_DIR=${GLANCE_CACHE_DIR:=$DATA_DIR/glance/cache}
-GLANCE_CACHE_DRIVER=${GLANCE_CACHE_DRIVER:-sqlite}
+GLANCE_CACHE_DRIVER=${GLANCE_CACHE_DRIVER:-centralized_db}
 
 # Full Glance functionality requires running in standalone mode. If we are
 # not in uwsgi mode, then we are standalone, otherwise allow separate control.
@@ -432,6 +432,7 @@ function configure_glance {
         iniset $GLANCE_API_CONF DEFAULT bind_host $GLANCE_SERVICE_LISTEN_ADDRESS
         iniset $GLANCE_API_CONF DEFAULT bind_port $GLANCE_SERVICE_PORT_INT
         iniset $GLANCE_API_CONF DEFAULT workers "$API_WORKERS"
+        iniset $GLANCE_API_CONF DEFAULT worker_self_reference_url $GLANCE_URL
     fi
 
     if [[ "$GLANCE_ENFORCE_SCOPE" == True || "$ENFORCE_SCOPE" == True ]] ; then
