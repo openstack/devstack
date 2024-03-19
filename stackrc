@@ -580,28 +580,6 @@ GITREPO["os-ken"]=${OS_KEN_REPO:-${GIT_BASE}/openstack/os-ken.git}
 GITBRANCH["os-ken"]=${OS_KEN_BRANCH:-$TARGET_BRANCH}
 GITDIR["os-ken"]=$DEST/os-ken
 
-##################
-#
-#  TripleO / Heat Agent Components
-#
-##################
-
-# run-parts script required by os-refresh-config
-DIB_UTILS_REPO=${DIB_UTILS_REPO:-${GIT_BASE}/openstack/dib-utils.git}
-DIB_UTILS_BRANCH=${DIB_UTILS_BRANCH:-$BRANCHLESS_TARGET_BRANCH}
-
-# os-apply-config configuration template tool
-OAC_REPO=${OAC_REPO:-${GIT_BASE}/openstack/os-apply-config.git}
-OAC_BRANCH=${OAC_BRANCH:-$TRAILING_TARGET_BRANCH}
-
-# os-collect-config configuration agent
-OCC_REPO=${OCC_REPO:-${GIT_BASE}/openstack/os-collect-config.git}
-OCC_BRANCH=${OCC_BRANCH:-$TRAILING_TARGET_BRANCH}
-
-# os-refresh-config configuration run-parts tool
-ORC_REPO=${ORC_REPO:-${GIT_BASE}/openstack/os-refresh-config.git}
-ORC_BRANCH=${ORC_BRANCH:-$TRAILING_TARGET_BRANCH}
-
 
 #################
 #
