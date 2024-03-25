@@ -702,8 +702,6 @@ function configure_tempest {
     # test can be run with scoped token.
     if [[ "$KEYSTONE_ENFORCE_SCOPE" == True || "$ENFORCE_SCOPE" == True ]] ; then
         iniset $TEMPEST_CONFIG enforce_scope keystone true
-        iniset $TEMPEST_CONFIG auth admin_system 'all'
-        iniset $TEMPEST_CONFIG auth admin_project_name ''
     fi
 
     if [[ "$NOVA_ENFORCE_SCOPE" == True || "$ENFORCE_SCOPE" == True ]] ; then
