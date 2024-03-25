@@ -446,10 +446,6 @@ function configure_glance {
     iniset $GLANCE_CACHE_CONF DEFAULT use_syslog $SYSLOG
     iniset $GLANCE_CACHE_CONF DEFAULT image_cache_dir $GLANCE_CACHE_DIR/
     iniset $GLANCE_CACHE_CONF DEFAULT image_cache_driver $GLANCE_CACHE_DRIVER
-    iniset $GLANCE_CACHE_CONF DEFAULT auth_url $KEYSTONE_SERVICE_URI
-    iniset $GLANCE_CACHE_CONF DEFAULT admin_tenant_name $SERVICE_PROJECT_NAME
-    iniset $GLANCE_CACHE_CONF DEFAULT admin_user glance
-    iniset $GLANCE_CACHE_CONF DEFAULT admin_password $SERVICE_PASSWORD
 
     # Store specific confs
     iniset $GLANCE_CACHE_CONF glance_store filesystem_store_datadir $GLANCE_IMAGE_DIR/
