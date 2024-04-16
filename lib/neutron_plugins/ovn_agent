@@ -558,7 +558,7 @@ function configure_ovn {
         sample_file=$NEUTRON_DIR/etc/neutron_ovn_metadata_agent.ini.sample
         config_file=$OVN_META_CONF
     fi
-    if [ -n ${config_file} ]; then
+    if [ -n "$config_file" ]; then
         sudo install -d -o $STACK_USER $NEUTRON_CONF_DIR
 
         mkdir -p $NEUTRON_DIR/etc/neutron/plugins/ml2
