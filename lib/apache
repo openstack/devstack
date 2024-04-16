@@ -238,7 +238,7 @@ function restart_apache_server {
 }
 
 function write_uwsgi_config {
-    local file=$1
+    local conf=$1
     local wsgi=$2
     local url=$3
     local http=$4
@@ -258,38 +258,38 @@ function write_uwsgi_config {
     local socket="$socket_dir/${name}.socket"
 
     # always cleanup given that we are using iniset here
-    rm -rf $file
-    iniset "$file" uwsgi wsgi-file "$wsgi"
-    iniset "$file" uwsgi processes $API_WORKERS
+    rm -rf $conf
+    iniset "$conf" uwsgi wsgi-file "$wsgi"
+    iniset "$conf" uwsgi processes $API_WORKERS
     # This is running standalone
-    iniset "$file" uwsgi master true
+    iniset "$conf" uwsgi master true
     # Set die-on-term & exit-on-reload so that uwsgi shuts down
-    iniset "$file" uwsgi die-on-term true
-    iniset "$file" uwsgi exit-on-reload false
+    iniset "$conf" uwsgi die-on-term true
+    iniset "$conf" uwsgi exit-on-reload false
     # Set worker-reload-mercy so that worker will not exit till the time
     # configured after graceful shutdown
-    iniset "$file" uwsgi worker-reload-mercy $WORKER_TIMEOUT
-    iniset "$file" uwsgi enable-threads true
-    iniset "$file" uwsgi plugins http,python3
+    iniset "$conf" uwsgi worker-reload-mercy $WORKER_TIMEOUT
+    iniset "$conf" uwsgi enable-threads true
+    iniset "$conf" uwsgi plugins http,python3
     # uwsgi recommends this to prevent thundering herd on accept.
-    iniset "$file" uwsgi thunder-lock true
+    iniset "$conf" uwsgi thunder-lock true
     # Set hook to trigger graceful shutdown on SIGTERM
-    iniset "$file" uwsgi hook-master-start "unix_signal:15 gracefully_kill_them_all"
+    iniset "$conf" uwsgi hook-master-start "unix_signal:15 gracefully_kill_them_all"
     # Override the default size for headers from the 4k default.
-    iniset "$file" uwsgi buffer-size 65535
+    iniset "$conf" uwsgi buffer-size 65535
     # Make sure the client doesn't try to re-use the connection.
-    iniset "$file" uwsgi add-header "Connection: close"
+    iniset "$conf" uwsgi add-header "Connection: close"
     # This ensures that file descriptors aren't shared between processes.
-    iniset "$file" uwsgi lazy-apps true
+    iniset "$conf" uwsgi lazy-apps true
 
     # If we said bind directly to http, then do that and don't start the apache proxy
     if [[ -n "$http" ]]; then
-        iniset "$file" uwsgi http $http
+        iniset "$conf" uwsgi http $http
     else
         local apache_conf=""
         apache_conf=$(apache_site_config_for $name)
-        iniset "$file" uwsgi socket "$socket"
-        iniset "$file" uwsgi chmod-socket 666
+        iniset "$conf" uwsgi socket "$socket"
+        iniset "$conf" uwsgi chmod-socket 666
         echo "ProxyPass \"${url}\" \"unix:${socket}|uwsgi://uwsgi-uds-${name}\" retry=0 acquire=1 " | sudo tee -a $apache_conf
         enable_apache_site $name
         restart_apache_server
@@ -303,7 +303,7 @@ function write_uwsgi_config {
 # but that involves having apache buffer the request before sending it to
 # uwsgi.
 function write_local_uwsgi_http_config {
-    local file=$1
+    local conf=$1
     local wsgi=$2
     local url=$3
     name=$(basename $wsgi)
@@ -312,38 +312,38 @@ function write_local_uwsgi_http_config {
     # a private view of it on some platforms.
 
     # always cleanup given that we are using iniset here
-    rm -rf $file
-    iniset "$file" uwsgi wsgi-file "$wsgi"
+    rm -rf $conf
+    iniset "$conf" uwsgi wsgi-file "$wsgi"
     port=$(get_random_port)
-    iniset "$file" uwsgi http-socket "$APACHE_LOCAL_HOST:$port"
-    iniset "$file" uwsgi processes $API_WORKERS
+    iniset "$conf" uwsgi http-socket "$APACHE_LOCAL_HOST:$port"
+    iniset "$conf" uwsgi processes $API_WORKERS
     # This is running standalone
-    iniset "$file" uwsgi master true
+    iniset "$conf" uwsgi master true
     # Set die-on-term & exit-on-reload so that uwsgi shuts down
-    iniset "$file" uwsgi die-on-term true
-    iniset "$file" uwsgi exit-on-reload false
-    iniset "$file" uwsgi enable-threads true
-    iniset "$file" uwsgi plugins http,python3
+    iniset "$conf" uwsgi die-on-term true
+    iniset "$conf" uwsgi exit-on-reload false
+    iniset "$conf" uwsgi enable-threads true
+    iniset "$conf" uwsgi plugins http,python3
     # uwsgi recommends this to prevent thundering herd on accept.
-    iniset "$file" uwsgi thunder-lock true
+    iniset "$conf" uwsgi thunder-lock true
     # Set hook to trigger graceful shutdown on SIGTERM
-    iniset "$file" uwsgi hook-master-start "unix_signal:15 gracefully_kill_them_all"
+    iniset "$conf" uwsgi hook-master-start "unix_signal:15 gracefully_kill_them_all"
     # Set worker-reload-mercy so that worker will not exit till the time
     # configured after graceful shutdown
-    iniset "$file" uwsgi worker-reload-mercy $WORKER_TIMEOUT
+    iniset "$conf" uwsgi worker-reload-mercy $WORKER_TIMEOUT
     # Override the default size for headers from the 4k default.
-    iniset "$file" uwsgi buffer-size 65535
+    iniset "$conf" uwsgi buffer-size 65535
     # Make sure the client doesn't try to re-use the connection.
-    iniset "$file" uwsgi add-header "Connection: close"
+    iniset "$conf" uwsgi add-header "Connection: close"
     # This ensures that file descriptors aren't shared between processes.
-    iniset "$file" uwsgi lazy-apps true
-    iniset "$file" uwsgi chmod-socket 666
-    iniset "$file" uwsgi http-raw-body true
-    iniset "$file" uwsgi http-chunked-input true
-    iniset "$file" uwsgi http-auto-chunked true
-    iniset "$file" uwsgi http-keepalive false
+    iniset "$conf" uwsgi lazy-apps true
+    iniset "$conf" uwsgi chmod-socket 666
+    iniset "$conf" uwsgi http-raw-body true
+    iniset "$conf" uwsgi http-chunked-input true
+    iniset "$conf" uwsgi http-auto-chunked true
+    iniset "$conf" uwsgi http-keepalive false
     # Increase socket timeout for slow chunked uploads
-    iniset "$file" uwsgi socket-timeout 30
+    iniset "$conf" uwsgi socket-timeout 30
 
     enable_apache_mod proxy
     enable_apache_mod proxy_http
@@ -376,12 +376,12 @@ function write_local_proxy_http_config {
 }
 
 function remove_uwsgi_config {
-    local file=$1
+    local conf=$1
     local wsgi=$2
     local name=""
     name=$(basename $wsgi)
 
-    rm -rf $file
+    rm -rf $conf
     disable_apache_site $name
 }
 
