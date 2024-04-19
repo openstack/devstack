@@ -168,7 +168,7 @@ function cleanup_glance {
         # Cleanup reserved stores directories
         sudo rm -rf $GLANCE_STAGING_DIR $GLANCE_TASKS_DIR
     fi
-    remove_uwsgi_config "$GLANCE_UWSGI_CONF" "$GLANCE_UWSGI"
+    remove_uwsgi_config "$GLANCE_UWSGI_CONF" "glance-wsgi-api"
 }
 
 # Set multiple cinder store related config options for each of the cinder store

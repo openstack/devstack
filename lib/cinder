@@ -275,7 +275,7 @@ function cleanup_cinder {
     fi
 
     stop_process "c-api"
-    remove_uwsgi_config "$CINDER_UWSGI_CONF" "$CINDER_UWSGI"
+    remove_uwsgi_config "$CINDER_UWSGI_CONF" "cinder-wsgi"
 }
 
 # configure_cinder() - Set config files, create data dirs, etc

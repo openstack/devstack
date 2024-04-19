@@ -68,7 +68,7 @@ function is_placement_enabled {
 # runs that a clean run would need to clean up
 function cleanup_placement {
     sudo rm -f $(apache_site_config_for placement-api)
-    remove_uwsgi_config "$PLACEMENT_UWSGI_CONF" "$PLACEMENT_UWSGI"
+    remove_uwsgi_config "$PLACEMENT_UWSGI_CONF" "placement-api"
 }
 
 # _config_placement_apache_wsgi() - Set WSGI config files

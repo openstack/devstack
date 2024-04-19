@@ -402,7 +402,13 @@ function remove_uwsgi_config {
     local conf=$1
     local wsgi=$2
     local name=""
+    # TODO(stephenfin): Remove this call when everyone is using module path
+    # configuration instead of file path configuration
     name=$(basename $wsgi)
+
+    if [[ "$wsgi" = /* ]]; then
+        deprecated "Passing a wsgi script to remove_uwsgi_config is deprecated, pass an application name instead"
+    fi
 
     rm -rf $conf
     disable_apache_site $name
