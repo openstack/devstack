@@ -88,6 +88,7 @@ export NEUTRON_TEST_CONFIG_FILE=${NEUTRON_TEST_CONFIG_FILE:-"$NEUTRON_CONF_DIR/d
 # enough
 NEUTRON_DEPLOY_MOD_WSGI=$(trueorfalse False NEUTRON_DEPLOY_MOD_WSGI)
 
+NEUTRON_UWSGI=neutron.wsgi.api:application
 NEUTRON_UWSGI_CONF=$NEUTRON_CONF_DIR/neutron-api-uwsgi.ini
 
 # If NEUTRON_ENFORCE_SCOPE == True, it will set "enforce_scope"
@@ -466,7 +467,7 @@ function configure_neutron {
     iniset $NEUTRON_CONF DEFAULT rpc_state_report_workers 0
 
     if [ "$NEUTRON_DEPLOY_MOD_WSGI" == "True" ]; then
-        write_uwsgi_config "$NEUTRON_UWSGI_CONF" "$NEUTRON_BIN_DIR/neutron-api" "/networking"
+        write_uwsgi_config "$NEUTRON_UWSGI_CONF" "$NEUTRON_UWSGI" "/networking" "" "neutron-api"
     fi
 }
 
