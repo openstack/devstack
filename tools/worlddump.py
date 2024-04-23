@@ -51,7 +51,7 @@ def get_options():
 
 
 def filename(dirname, name=""):
-    now = datetime.datetime.utcnow()
+    now = datetime.datetime.now(datetime.timezone.utc)
     fmt = "worlddump-%Y-%m-%d-%H%M%S"
     if name:
         fmt += "-" + name
