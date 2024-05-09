@@ -644,6 +644,11 @@
     description: Rocky Linux 9 Blue Onyx platform test
     nodeset: devstack-single-node-rockylinux-9
     timeout: 9000
+    # NOTE(danms): This has been failing lately with some repository metadata
+    # errors. We're marking this as non-voting until it appears to have
+    # stabilized:
+    # https://zuul.openstack.org/builds?job_name=devstack-platform-rocky-blue-onyx&skip=0
+    voting: false
     vars:
       configure_swap_size: 4096
 
@@ -887,7 +892,9 @@
         - devstack-ipv6
         - devstack-platform-debian-bookworm
         - devstack-platform-debian-bullseye
-        - devstack-platform-rocky-blue-onyx
+        # NOTE(danms): Disabled due to instability, see comment in the job
+        # definition above.
+        # - devstack-platform-rocky-blue-onyx
         - devstack-enforce-scope
         - devstack-multinode
         - devstack-unit-tests
