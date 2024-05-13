@@ -1,5 +1,0 @@
----
-fixes:
-  - |
-    Fixes a NotImplementedError when using the dbcounter SQLAlchemy plugin on
-    SQLAlchemy 2.x.
