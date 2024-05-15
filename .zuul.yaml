@@ -275,7 +275,6 @@
     required-projects:
       - opendev.org/openstack/devstack
     roles:
-      - zuul: opendev.org/openstack/devstack-gate
       - zuul: opendev.org/openstack/openstack-zuul-jobs
     vars:
       devstack_localrc:
@@ -657,6 +656,7 @@
               - ^.*\.rst$
               - ^doc/.*$
         - grenade:
+            voting: false
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
@@ -690,6 +690,7 @@
               - ^.*\.rst$
               - ^doc/.*$
         - nova-ceph-multistore:
+            voting: false
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
@@ -709,6 +710,7 @@
               - ^.*\.rst$
               - ^doc/.*$
         - grenade:
+            voting: false
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
@@ -721,10 +723,13 @@
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
-        - nova-ceph-multistore:
-            irrelevant-files:
-              - ^.*\.rst$
-              - ^doc/.*$
+        # TODO(elod.illes): nova-ceph-multistore is broken in this branch,
+        # so it is set as non-voting in check queue and commented out here
+        # in gate queue until the job gets fixed.
+        # - nova-ceph-multistore:
+        #     irrelevant-files:
+        #       - ^.*\.rst$
+        #       - ^doc/.*$
     # Please add a note on each job and conditions for the job not
     # being experimental any more, so we can keep this list somewhat
     # pruned.
