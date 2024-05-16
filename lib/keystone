@@ -150,7 +150,7 @@ function cleanup_keystone {
         sudo rm -f $(apache_site_config_for keystone)
     else
         stop_process "keystone"
-        remove_uwsgi_config "$KEYSTONE_PUBLIC_UWSGI_CONF" "$KEYSTONE_PUBLIC_UWSGI"
+        remove_uwsgi_config "$KEYSTONE_PUBLIC_UWSGI_CONF" "keystone-wsgi-public"
         sudo rm -f $(apache_site_config_for keystone-wsgi-public)
     fi
 }

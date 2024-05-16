@@ -823,7 +823,7 @@ function cleanup_neutron {
     if [ "$NEUTRON_DEPLOY_MOD_WSGI" == "True" ]; then
         stop_process neutron-api
         stop_process neutron-rpc-server
-        remove_uwsgi_config "$NEUTRON_UWSGI_CONF" "$NEUTRON_BIN_DIR/neutron-api"
+        remove_uwsgi_config "$NEUTRON_UWSGI_CONF" "neutron-api"
         sudo rm -f $(apache_site_config_for neutron-api)
     fi
 
