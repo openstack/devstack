@@ -15,7 +15,9 @@ source $RC_DIR/functions
 
 # Set the target branch. This is used so that stable branching
 # does not need to update each repo below.
-TARGET_BRANCH=stable/yoga
+# NOTE(minhnlh2): The yoga release is no longer supported, so we
+# update the target branch from stable/yoga to unmaintained/yoga
+TARGET_BRANCH=unmaintained/yoga
 
 # Cycle trailing projects need to branch later than the others.
 TRAILING_TARGET_BRANCH=master
