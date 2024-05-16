@@ -37,7 +37,6 @@ openstack/devstack-plugin-container      `https://opendev.org/openstack/devstack
 openstack/devstack-plugin-kafka          `https://opendev.org/openstack/devstack-plugin-kafka <https://opendev.org/openstack/devstack-plugin-kafka>`__
 openstack/devstack-plugin-nfs            `https://opendev.org/openstack/devstack-plugin-nfs <https://opendev.org/openstack/devstack-plugin-nfs>`__
 openstack/devstack-plugin-open-cas       `https://opendev.org/openstack/devstack-plugin-open-cas <https://opendev.org/openstack/devstack-plugin-open-cas>`__
-openstack/ec2-api                        `https://opendev.org/openstack/ec2-api <https://opendev.org/openstack/ec2-api>`__
 openstack/freezer                        `https://opendev.org/openstack/freezer <https://opendev.org/openstack/freezer>`__
 openstack/freezer-api                    `https://opendev.org/openstack/freezer-api <https://opendev.org/openstack/freezer-api>`__
 openstack/freezer-tempest-plugin         `https://opendev.org/openstack/freezer-tempest-plugin <https://opendev.org/openstack/freezer-tempest-plugin>`__
@@ -62,7 +61,6 @@ openstack/mistral                        `https://opendev.org/openstack/mistral 
 openstack/monasca-api                    `https://opendev.org/openstack/monasca-api <https://opendev.org/openstack/monasca-api>`__
 openstack/monasca-events-api             `https://opendev.org/openstack/monasca-events-api <https://opendev.org/openstack/monasca-events-api>`__
 openstack/monasca-tempest-plugin         `https://opendev.org/openstack/monasca-tempest-plugin <https://opendev.org/openstack/monasca-tempest-plugin>`__
-openstack/murano                         `https://opendev.org/openstack/murano <https://opendev.org/openstack/murano>`__
 openstack/networking-bagpipe             `https://opendev.org/openstack/networking-bagpipe <https://opendev.org/openstack/networking-bagpipe>`__
 openstack/networking-baremetal           `https://opendev.org/openstack/networking-baremetal <https://opendev.org/openstack/networking-baremetal>`__
 openstack/networking-bgpvpn              `https://opendev.org/openstack/networking-bgpvpn <https://opendev.org/openstack/networking-bgpvpn>`__
@@ -84,12 +82,8 @@ openstack/osprofiler                     `https://opendev.org/openstack/osprofil
 openstack/ovn-bgp-agent                  `https://opendev.org/openstack/ovn-bgp-agent <https://opendev.org/openstack/ovn-bgp-agent>`__
 openstack/ovn-octavia-provider           `https://opendev.org/openstack/ovn-octavia-provider <https://opendev.org/openstack/ovn-octavia-provider>`__
 openstack/rally-openstack                `https://opendev.org/openstack/rally-openstack <https://opendev.org/openstack/rally-openstack>`__
-openstack/sahara                         `https://opendev.org/openstack/sahara <https://opendev.org/openstack/sahara>`__
-openstack/sahara-dashboard               `https://opendev.org/openstack/sahara-dashboard <https://opendev.org/openstack/sahara-dashboard>`__
-openstack/senlin                         `https://opendev.org/openstack/senlin <https://opendev.org/openstack/senlin>`__
 openstack/shade                          `https://opendev.org/openstack/shade <https://opendev.org/openstack/shade>`__
 openstack/skyline-apiserver              `https://opendev.org/openstack/skyline-apiserver <https://opendev.org/openstack/skyline-apiserver>`__
-openstack/solum                          `https://opendev.org/openstack/solum <https://opendev.org/openstack/solum>`__
 openstack/storlets                       `https://opendev.org/openstack/storlets <https://opendev.org/openstack/storlets>`__
 openstack/tacker                         `https://opendev.org/openstack/tacker <https://opendev.org/openstack/tacker>`__
 openstack/tap-as-a-service               `https://opendev.org/openstack/tap-as-a-service <https://opendev.org/openstack/tap-as-a-service>`__
