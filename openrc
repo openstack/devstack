@@ -7,9 +7,6 @@
 #   Set OS_USERNAME to override the default user name 'demo'
 #   Set ADMIN_PASSWORD to set the password for 'admin' and 'demo'
 
-# NOTE: support for the old NOVA_* novaclient environment variables has
-# been removed.
-
 if [[ -n "$1" ]]; then
     OS_USERNAME=$1
 fi
@@ -36,22 +33,14 @@ fi
 source $RC_DIR/lib/tls
 
 # The OpenStack ecosystem has standardized the term **project** as the
-# entity that owns resources.  In some places **tenant** remains
-# referenced, but in all cases this just means **project**.  We will
-# warn if we need to turn on legacy **tenant** support to have a
-# working environment.
+# entity that owns resources.
 export OS_PROJECT_NAME=${OS_PROJECT_NAME:-demo}
-
-echo "WARNING: setting legacy OS_TENANT_NAME to support cli tools."
-export OS_TENANT_NAME=$OS_PROJECT_NAME
 
 # In addition to the owning entity (project), nova stores the entity performing
 # the action as the **user**.
 export OS_USERNAME=${OS_USERNAME:-demo}
 
 # With Keystone you pass the keystone password instead of an api key.
-# Recent versions of novaclient use OS_PASSWORD instead of NOVA_API_KEYs
-# or NOVA_PASSWORD.
 export OS_PASSWORD=${ADMIN_PASSWORD:-secret}
 
 # Region
