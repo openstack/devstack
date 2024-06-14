@@ -1022,7 +1022,7 @@ function _configure_neutron_service {
     Q_API_PASTE_FILE=$NEUTRON_CONF_DIR/api-paste.ini
     cp $NEUTRON_DIR/etc/api-paste.ini $Q_API_PASTE_FILE
 
-    if [[ -n "$NEUTRON_ENDPOINT_SERVICE_NAME" ]]; then
+    if [[ "$NEUTRON_DEPLOY_MOD_WSGI" == "False" && -n "$NEUTRON_ENDPOINT_SERVICE_NAME" ]]; then
         _replace_api_paste_composite
     fi
 
