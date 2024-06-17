@@ -634,7 +634,9 @@ function start_neutron_service_and_check {
         run_process neutron-api "$(which uwsgi) --procname-prefix neutron-api --ini $NEUTRON_UWSGI_CONF"
         neutron_url=$Q_PROTOCOL://$Q_HOST/
         enable_service neutron-rpc-server
+        enable_service neutron-periodic-workers
         run_process neutron-rpc-server "$NEUTRON_BIN_DIR/neutron-rpc-server $cfg_file_options"
+        run_process neutron-periodic-workers "$NEUTRON_BIN_DIR/neutron-periodic-workers $cfg_file_options"
     else
         run_process q-svc "$NEUTRON_BIN_DIR/neutron-server $cfg_file_options"
         neutron_url=$service_protocol://$Q_HOST:$service_port/
@@ -706,6 +708,7 @@ function stop_other {
 
     if [ "$NEUTRON_DEPLOY_MOD_WSGI" == "True" ]; then
         stop_process neutron-rpc-server
+        stop_process neutron-periodic-workers
         stop_process neutron-api
     else
         stop_process q-svc
@@ -823,6 +826,7 @@ function cleanup_neutron {
     if [ "$NEUTRON_DEPLOY_MOD_WSGI" == "True" ]; then
         stop_process neutron-api
         stop_process neutron-rpc-server
+        stop_process neutron-periodic-workers
         remove_uwsgi_config "$NEUTRON_UWSGI_CONF" "neutron-api"
         sudo rm -f $(apache_site_config_for neutron-api)
     fi
