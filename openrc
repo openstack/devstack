@@ -32,18 +32,11 @@ fi
 # Get some necessary configuration
 source $RC_DIR/lib/tls
 
-# The OpenStack ecosystem has standardized the term **project** as the
-# entity that owns resources.
+# Minimal configuration
+export OS_AUTH_TYPE=password
 export OS_PROJECT_NAME=${OS_PROJECT_NAME:-demo}
-
-# In addition to the owning entity (project), nova stores the entity performing
-# the action as the **user**.
 export OS_USERNAME=${OS_USERNAME:-demo}
-
-# With Keystone you pass the keystone password instead of an api key.
 export OS_PASSWORD=${ADMIN_PASSWORD:-secret}
-
-# Region
 export OS_REGION_NAME=${REGION_NAME:-RegionOne}
 
 # Set the host API endpoint. This will default to HOST_IP if SERVICE_IP_VERSION
@@ -64,9 +57,6 @@ fi
 
 # Identity API version
 export OS_IDENTITY_API_VERSION=3
-
-# Ask keystoneauth1 to use keystone
-export OS_AUTH_TYPE=password
 
 # Authenticating against an OpenStack cloud using Keystone returns a **Token**
 # and **Service Catalog**.  The catalog contains the endpoints for all services
