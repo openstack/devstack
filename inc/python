@@ -41,7 +41,7 @@ function setup_devstack_virtualenv {
         # This package is currently installed via the distro and not
         # available on pypi.
         python$PYTHON3_VERSION -m venv --system-site-packages $DEVSTACK_VENV
-        pip_install -U pip
+        pip_install -U pip setuptools
     fi
     if [[ ":$PATH:" != *":$DEVSTACK_VENV/bin:"* ]] ; then
         export PATH="$DEVSTACK_VENV/bin:$PATH"

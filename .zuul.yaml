@@ -9,6 +9,16 @@
           - controller
 
 - nodeset:
+    name: openstack-single-node-noble
+    nodes:
+      - name: controller
+        label: ubuntu-noble
+    groups:
+      - name: tempest
+        nodes:
+          - controller
+
+- nodeset:
     name: openstack-single-node-focal
     nodes:
       - name: controller
@@ -125,6 +135,36 @@
         label: ubuntu-jammy
       - name: compute1
         label: ubuntu-jammy
+    groups:
+      # Node where tests are executed and test results collected
+      - name: tempest
+        nodes:
+          - controller
+      # Nodes running the compute service
+      - name: compute
+        nodes:
+          - controller
+          - compute1
+      # Nodes that are not the controller
+      - name: subnode
+        nodes:
+          - compute1
+      # Switch node for multinode networking setup
+      - name: switch
+        nodes:
+          - controller
+      # Peer nodes for multinode networking setup
+      - name: peers
+        nodes:
+          - compute1
+
+- nodeset:
+    name: openstack-two-node-noble
+    nodes:
+      - name: controller
+        label: ubuntu-noble
+      - name: compute1
+        label: ubuntu-noble
     groups:
       # Node where tests are executed and test results collected
       - name: tempest
@@ -652,6 +692,17 @@
     vars:
       configure_swap_size: 4096
 
+
+- job:
+    name: devstack-platform-ubuntu-noble
+    parent: tempest-full-py3
+    description: Ubuntu 24.04 LTS (noble) platform test
+    nodeset: openstack-single-node-noble
+    timeout: 9000
+    voting: false
+    vars:
+      configure_swap_size: 8192
+
 - job:
     name: devstack-platform-ubuntu-jammy-ovn-source
     parent: devstack-platform-ubuntu-jammy
@@ -849,6 +900,7 @@
         - devstack-platform-rocky-blue-onyx
         - devstack-platform-ubuntu-jammy-ovn-source
         - devstack-platform-ubuntu-jammy-ovs
+        - devstack-platform-ubuntu-noble
         - devstack-platform-openEuler-22.03-ovn-source
         - devstack-platform-openEuler-22.03-ovs
         - devstack-multinode
