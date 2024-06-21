@@ -306,8 +306,8 @@ function _install_rdo {
             # rdo-release.el8.rpm points to latest RDO release, use that for master
             sudo dnf -y install https://rdoproject.org/repos/rdo-release.el8.rpm
         else
-            # For stable branches use corresponding release rpm
-            rdo_release=$(echo $TARGET_BRANCH | sed "s|stable/||g")
+            # For stable/unmaintained branches use corresponding release rpm
+            rdo_release=${TARGET_BRANCH#*/}
             sudo dnf -y install https://rdoproject.org/repos/openstack-${rdo_release}/rdo-release-${rdo_release}.el8.rpm
         fi
     elif [[ $DISTRO == "rhel9" ]]; then
@@ -321,8 +321,8 @@ function _install_rdo {
             # rdo-release.el9.rpm points to latest RDO release, use that for master
             wget -P $TEMPRDODIR  https://rdoproject.org/repos/rdo-release.el9.rpm
         else
-            # For stable branches use corresponding release rpm
-            rdo_release=$(echo $TARGET_BRANCH | sed "s|stable/||g")
+            # For stable/unmaintained branches use corresponding release rpm
+            rdo_release=${TARGET_BRANCH#*/}
             wget -P $TEMPRDODIR https://rdoproject.org/repos/openstack-${rdo_release}/rdo-release-${rdo_release}.el9.rpm
         fi
         sudo rpm -ivh $TEMPRDODIR/rdo-release*rpm
