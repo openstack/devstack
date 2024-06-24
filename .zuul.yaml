@@ -68,6 +68,9 @@
         nodes:
           - controller
 
+# Note(sean-k-mooney): this is still used by horizon for
+# horizon-integration-tests, horizon-integration-pytest and
+# horizon-ui-pytest, remove when horizon is updated.
 - nodeset:
     name: devstack-single-node-debian-bullseye
     nodes:
@@ -83,16 +86,6 @@
     nodes:
       - name: controller
         label: rockylinux-9
-    groups:
-      - name: tempest
-        nodes:
-          - controller
-
-- nodeset:
-    name: devstack-single-node-openeuler-22.03
-    nodes:
-      - name: controller
-        label: openEuler-22-03-LTS
     groups:
       - name: tempest
         nodes:
@@ -463,6 +456,7 @@
         file_tracker: true
         mysql: true
         rabbit: true
+        openstack-cli-server: true
     group-vars:
       subnode:
         devstack_services:
@@ -470,6 +464,7 @@
           dstat: false
           memory_tracker: true
           file_tracker: true
+          openstack-cli-server: true
         devstack_localrc:
           # Multinode specific settings
           HOST_IP: "{{ hostvars[inventory_hostname]['nodepool']['private_ipv4'] }}"
@@ -517,7 +512,14 @@
       - opendev.org/openstack/swift
     timeout: 7200
     vars:
-      configure_swap_size: 4096
+      # based on observation of the integrated gate
+      # tempest-integrated-compute was only using ~1.7GB of swap
+      # when zswap and the host turning are enabled that increase
+      # slightly to ~2GB. we are setting the swap size to 8GB to
+      # be safe and account for more complex scenarios.
+      # we should revisit this value after some time to see if we
+      # can reduce it.
+      configure_swap_size: 8192
       devstack_localrc:
         # Common OpenStack services settings
         SWIFT_REPLICAS: 1
@@ -526,11 +528,33 @@
         DEBUG_LIBVIRT_COREDUMPS: true
         NOVA_VNC_ENABLED: true
         OVN_DBS_LOG_LEVEL: dbg
+        # tune the host to optimize memory usage and hide io latency
+        # these setting will configure the kernel to treat the host page
+        # cache and swap with equal priority, and prefer deferring writes
+        # changing the default swappiness, dirty_ratio and
+        # the vfs_cache_pressure
+        ENABLE_SYSCTL_MEM_TUNING: true
+        # the net tuning optimizes ipv4 tcp fast open and config the default
+        # qdisk policy to pfifo_fast which effectively disable all qos.
+        # this minimizes the cpu load of the host network stack
+        ENABLE_SYSCTL_NET_TUNING: true
+        # zswap allows the kernel to compress pages in memory before swapping
+        # them to disk. this can reduce the amount of swap used and improve
+        # performance. effectively this trades a small amount of cpu for an
+        # increase in swap performance by reducing the amount of data
+        # written to disk. the overall speedup is proportional to the
+        # compression ratio and the speed of the swap device.
+        ENABLE_ZSWAP: true
       devstack_local_conf:
         post-config:
           $NEUTRON_CONF:
             DEFAULT:
               global_physnet_mtu: '{{ external_bridge_mtu }}'
+          $NOVA_CPU_CONF:
+            libvirt:
+              # Use lower TB cache than default(1GiB), only applicable with
+              # libvirt>=8.0.0
+              tb_cache_size: 128
       devstack_services:
         # Core services enabled for this branch.
         # This list replaces the test-matrix.
@@ -618,6 +642,30 @@
           Q_HOST: "{{ hostvars['controller']['nodepool']['private_ipv4'] }}"
           NOVA_VNC_ENABLED: true
           ENABLE_CHASSIS_AS_GW: false
+          # tune the host to optimize memory usage and hide io latency
+          # these setting will configure the kernel to treat the host page
+          # cache and swap with equal priority, and prefer deferring writes
+          # changing the default swappiness, dirty_ratio and
+          # the vfs_cache_pressure
+          ENABLE_SYSCTL_MEM_TUNING: true
+          # the net tuning optimizes ipv4 tcp fast open and config the default
+          # qdisk policy to pfifo_fast which effectively disable all qos.
+          # this minimizes the cpu load of the host network stack
+          ENABLE_SYSCTL_NET_TUNING: true
+          # zswap allows the kernel to compress pages in memory before swapping
+          # them to disk. this can reduce the amount of swap used and improve
+          # performance. effectivly this trades a small amount of cpu for an
+          # increase in swap performance by reducing the amount of data
+          # written to disk. the overall speedup is porportional to the
+          # compression ratio and the speed of the swap device.
+          ENABLE_ZSWAP: true
+        devstack_local_conf:
+          post-config:
+            $NOVA_CPU_CONF:
+              libvirt:
+                # Use lower TB cache than default(1GiB), only applicable with
+                # libvirt>=8.0.0
+                tb_cache_size: 128
 
 - job:
     name: devstack-ipv6
@@ -670,15 +718,6 @@
       configure_swap_size: 4096
 
 - job:
-    name: devstack-platform-debian-bullseye
-    parent: tempest-full-py3
-    description: Debian Bullseye platform test
-    nodeset: devstack-single-node-debian-bullseye
-    timeout: 9000
-    vars:
-      configure_swap_size: 4096
-
-- job:
     name: devstack-platform-rocky-blue-onyx
     parent: tempest-full-py3
     description: Rocky Linux 9 Blue Onyx platform test
@@ -720,62 +759,6 @@
     parent: tempest-full-py3
     description: Ubuntu 22.04 LTS (jammy) platform test (OVS)
     nodeset: openstack-single-node-jammy
-    voting: false
-    timeout: 9000
-    vars:
-      configure_swap_size: 8192
-      devstack_localrc:
-        Q_AGENT: openvswitch
-        Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch
-        Q_ML2_TENANT_NETWORK_TYPE: vxlan
-      devstack_services:
-        # Disable OVN services
-        ovn-northd: false
-        ovn-controller: false
-        ovs-vswitchd: false
-        ovsdb-server: false
-        # Disable Neutron ML2/OVN services
-        q-ovn-metadata-agent: false
-        # Enable Neutron ML2/OVS services
-        q-agt: true
-        q-dhcp: true
-        q-l3: true
-        q-meta: true
-        q-metering: true
-    group-vars:
-      subnode:
-        devstack_services:
-          # Disable OVN services
-          ovn-controller: false
-          ovs-vswitchd: false
-          ovsdb-server: false
-          # Disable Neutron ML2/OVN services
-          q-ovn-metadata-agent: false
-          # Enable Neutron ML2/OVS services
-          q-agt: true
-
-- job:
-    name: devstack-platform-openEuler-22.03-ovn-source
-    parent: tempest-full-py3
-    description: openEuler 22.03 LTS platform test (OVN)
-    nodeset: devstack-single-node-openeuler-22.03
-    voting: false
-    timeout: 9000
-    vars:
-      configure_swap_size: 4096
-      devstack_localrc:
-        # NOTE(wxy):  OVN package is not supported by openEuler yet. Build it
-        # from source instead.
-        OVN_BUILD_FROM_SOURCE: True
-        OVN_BRANCH: "v21.06.0"
-        OVS_BRANCH: "a4b04276ab5934d087669ff2d191a23931335c87"
-        OVS_SYSCONFDIR: "/usr/local/etc/openvswitch"
-
-- job:
-    name: devstack-platform-openEuler-22.03-ovs
-    parent: tempest-full-py3
-    description: openEuler 22.03 LTS platform test (OVS)
-    nodeset: devstack-single-node-openeuler-22.03
     voting: false
     timeout: 9000
     vars:
@@ -896,13 +879,10 @@
         - devstack-enforce-scope
         - devstack-platform-centos-9-stream
         - devstack-platform-debian-bookworm
-        - devstack-platform-debian-bullseye
         - devstack-platform-rocky-blue-onyx
         - devstack-platform-ubuntu-jammy-ovn-source
         - devstack-platform-ubuntu-jammy-ovs
         - devstack-platform-ubuntu-noble
-        - devstack-platform-openEuler-22.03-ovn-source
-        - devstack-platform-openEuler-22.03-ovs
         - devstack-multinode
         - devstack-unit-tests
         - openstack-tox-bashate
@@ -943,7 +923,6 @@
         - devstack
         - devstack-ipv6
         - devstack-platform-debian-bookworm
-        - devstack-platform-debian-bullseye
         # NOTE(danms): Disabled due to instability, see comment in the job
         # definition above.
         # - devstack-platform-rocky-blue-onyx
@@ -978,7 +957,9 @@
     # pruned.
     #
     # * nova-next: maintained by nova for unreleased/undefaulted
-    #    things
+    #    things, this job is not experimental but often is used to test
+    #    things that are not yet production ready or to test what will be
+    #    the new default after a deprecation period has ended.
     # * neutron-fullstack-with-uwsgi: maintained by neutron for fullstack test
     #    when neutron-api is served by uwsgi, it's in exprimental for testing.
     #    the next cycle we can remove this  job if things turn out to be
@@ -988,7 +969,7 @@
     #    stable engouh with uwsgi.
     # * neutron-ovn-tempest-with-uwsgi: maintained by neutron for tempest test.
     #    Next cycle we can remove this if everything run out stable enough.
-    # * nova-multi-cell: maintained by nova and currently non-voting in the
+    # * nova-multi-cell: maintained by nova and now is voting in the
     #    check queue for nova changes but relies on devstack configuration
 
     experimental:
@@ -1026,9 +1007,6 @@
       jobs:
         - devstack-platform-centos-9-stream
         - devstack-platform-debian-bookworm
-        - devstack-platform-debian-bullseye
         - devstack-platform-rocky-blue-onyx
         - devstack-platform-ubuntu-jammy-ovn-source
         - devstack-platform-ubuntu-jammy-ovs
-        - devstack-platform-openEuler-22.03-ovn-source
-        - devstack-platform-openEuler-22.03-ovs
