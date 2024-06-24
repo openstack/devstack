@@ -31,7 +31,7 @@ function install_infra {
     local PIP_VIRTUAL_ENV="$REQUIREMENTS_DIR/.venv"
     [ ! -d $PIP_VIRTUAL_ENV ] && ${VIRTUALENV_CMD} $PIP_VIRTUAL_ENV
     # We don't care about testing git pbr in the requirements venv.
-    PIP_VIRTUAL_ENV=$PIP_VIRTUAL_ENV pip_install -U pbr
+    PIP_VIRTUAL_ENV=$PIP_VIRTUAL_ENV pip_install -U pbr setuptools
     PIP_VIRTUAL_ENV=$PIP_VIRTUAL_ENV pip_install $REQUIREMENTS_DIR
 
     # Unset the PIP_VIRTUAL_ENV so that PBR does not end up trapped
