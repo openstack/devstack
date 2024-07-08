@@ -68,7 +68,6 @@ try:
     env = {}
     passenv = ["CINDER_VERSION",
                "OS_AUTH_URL",
-               "OS_IDENTITY_API_VERSION",
                "OS_NO_CACHE",
                "OS_PASSWORD",
                "OS_PROJECT_NAME",
