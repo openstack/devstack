@@ -725,7 +725,6 @@
     vars:
       configure_swap_size: 4096
 
-
 - job:
     name: devstack-platform-ubuntu-noble
     parent: tempest-full-py3
@@ -1004,3 +1003,4 @@
         - devstack-platform-rocky-blue-onyx
         - devstack-platform-ubuntu-jammy-ovn-source
         - devstack-platform-ubuntu-jammy-ovs
+        - devstack-platform-ubuntu-noble
