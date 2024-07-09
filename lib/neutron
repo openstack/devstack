@@ -485,7 +485,7 @@ function create_nova_conf_neutron {
     local conf=${1:-$NOVA_CONF}
     iniset $conf neutron auth_type "password"
     iniset $conf neutron auth_url "$KEYSTONE_SERVICE_URI"
-    iniset $conf neutron username "$Q_ADMIN_USERNAME"
+    iniset $conf neutron username nova
     iniset $conf neutron password "$SERVICE_PASSWORD"
     iniset $conf neutron user_domain_name "$SERVICE_DOMAIN_NAME"
     iniset $conf neutron project_name "$SERVICE_PROJECT_NAME"
