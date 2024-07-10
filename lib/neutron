@@ -369,6 +369,24 @@ function _determine_config_l3 {
     echo "$opts"
 }
 
+function _enable_ovn_maintenance {
+    if [[ $Q_AGENT == "ovn" ]]; then
+        enable_service neutron-ovn-maintenance-worker
+    fi
+}
+
+function _run_ovn_maintenance {
+    if [[ $Q_AGENT == "ovn" ]]; then
+        run_process neutron-ovn-maintenance-worker "$NEUTRON_BIN_DIR/neutron-ovn-maintenance-worker $cfg_file_options"
+    fi
+}
+
+function _stop_ovn_maintenance {
+    if [[ $Q_AGENT == "ovn" ]]; then
+        stop_process neutron-ovn-maintenance-worker
+    fi
+}
+
 # For services and agents that require it, dynamically construct a list of
 # --config-file arguments that are passed to the binary.
 function determine_config_files {
@@ -635,8 +653,10 @@ function start_neutron_service_and_check {
         neutron_url=$Q_PROTOCOL://$Q_HOST/
         enable_service neutron-rpc-server
         enable_service neutron-periodic-workers
+        _enable_ovn_maintenance
         run_process neutron-rpc-server "$NEUTRON_BIN_DIR/neutron-rpc-server $cfg_file_options"
         run_process neutron-periodic-workers "$NEUTRON_BIN_DIR/neutron-periodic-workers $cfg_file_options"
+        _run_ovn_maintenance
     else
         run_process q-svc "$NEUTRON_BIN_DIR/neutron-server $cfg_file_options"
         neutron_url=$service_protocol://$Q_HOST:$service_port/
@@ -710,6 +730,7 @@ function stop_other {
         stop_process neutron-rpc-server
         stop_process neutron-periodic-workers
         stop_process neutron-api
+        _stop_ovn_maintenance
     else
         stop_process q-svc
     fi
@@ -827,6 +848,7 @@ function cleanup_neutron {
         stop_process neutron-api
         stop_process neutron-rpc-server
         stop_process neutron-periodic-workers
+        _stop_ovn_maintenance
         remove_uwsgi_config "$NEUTRON_UWSGI_CONF" "neutron-api"
         sudo rm -f $(apache_site_config_for neutron-api)
     fi
