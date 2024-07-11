@@ -162,10 +162,6 @@ else
     export PS4='+ $(short_source):   '
 fi
 
-# Configure Identity API version
-# TODO(frickler): Drop this when plugins no longer need it
-IDENTITY_API_VERSION=3
-
 # Global option for enforcing scope. If enabled, ENFORCE_SCOPE overrides
 # each services ${SERVICE}_ENFORCE_SCOPE variables
 ENFORCE_SCOPE=$(trueorfalse False ENFORCE_SCOPE)
