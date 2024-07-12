@@ -102,6 +102,9 @@ TEMPEST_USE_TEST_ACCOUNTS=$(trueorfalse False TEMPEST_USE_TEST_ACCOUNTS)
 # it will run tempest with
 TEMPEST_CONCURRENCY=${TEMPEST_CONCURRENCY:-$(nproc)}
 
+TEMPEST_FLAVOR_RAM=${TEMPEST_FLAVOR_RAM:-192}
+TEMPEST_FLAVOR_ALT_RAM=${TEMPEST_FLAVOR_ALT_RAM:-256}
+
 # Functions
 # ---------
 
@@ -295,13 +298,15 @@ function configure_tempest {
             if [[ ! ( $available_flavors =~ 'm1.nano' ) ]]; then
                 # Determine the flavor disk size based on the image size.
                 disk=$(image_size_in_gib $image_uuid)
-                openstack --os-cloud devstack-admin flavor create --id 42 --ram 128 --disk $disk --vcpus 1 --property hw_rng:allowed=True m1.nano
+                ram=${TEMPEST_FLAVOR_RAM}
+                openstack --os-cloud devstack-admin flavor create --id 42 --ram ${ram} --disk $disk --vcpus 1 --property hw_rng:allowed=True m1.nano
             fi
             flavor_ref=42
             if [[ ! ( $available_flavors =~ 'm1.micro' ) ]]; then
                 # Determine the alt flavor disk size based on the alt image size.
                 disk=$(image_size_in_gib $image_uuid_alt)
-                openstack --os-cloud devstack-admin flavor create --id 84 --ram 192 --disk $disk --vcpus 1 --property hw_rng:allowed=True m1.micro
+                ram=${TEMPEST_FLAVOR_ALT_RAM}
+                openstack --os-cloud devstack-admin flavor create --id 84 --ram ${ram} --disk $disk --vcpus 1 --property hw_rng:allowed=True m1.micro
             fi
             flavor_ref_alt=84
         else
