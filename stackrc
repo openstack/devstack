@@ -199,7 +199,7 @@ DATABASE_QUERY_LOGGING=$(trueorfalse False DATABASE_QUERY_LOGGING)
 
 # This can be used to turn on various non-default items in the
 # performance_schema that are of interest to us
-MYSQL_GATHER_PERFORMANCE=$(trueorfalse True MYSQL_GATHER_PERFORMANCE)
+MYSQL_GATHER_PERFORMANCE=$(trueorfalse False MYSQL_GATHER_PERFORMANCE)
 
 # This can be used to reduce the amount of memory mysqld uses while running.
 # These are unscientifically determined, and could reduce performance or
