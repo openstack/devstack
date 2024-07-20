@@ -471,7 +471,7 @@ function configure_neutron {
     # (NEUTRON_DEPLOY_MOD_WSGI=True) for the Neutron server.
     local rpc_workers
     rpc_workers=$(iniget_multiline /etc/neutron/neutron.conf DEFAULT rpc_workers)
-    if ! is_service_enabled neutron-rpc-server || [ "$rpc_workers" -eq "0" ]; then
+    if [ "$rpc_workers" == "0" ]; then
         _Q_RUN_RPC_SERVER=False
     fi
 
