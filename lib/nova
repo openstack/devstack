@@ -640,7 +640,7 @@ function configure_placement_nova_compute {
     local conf=${1:-$NOVA_CONF}
     iniset $conf placement auth_type "password"
     iniset $conf placement auth_url "$KEYSTONE_SERVICE_URI"
-    iniset $conf placement username placement
+    iniset $conf placement username nova
     iniset $conf placement password "$SERVICE_PASSWORD"
     iniset $conf placement user_domain_name "$SERVICE_DOMAIN_NAME"
     iniset $conf placement project_name "$SERVICE_TENANT_NAME"
