@@ -13,15 +13,15 @@ RC_DIR=$(cd $(dirname "${BASH_SOURCE:-$0}") && pwd)
 # Source required DevStack functions and globals
 source $RC_DIR/functions
 
-# Set the target branch. This is used so that stable branching
+# Set the target branch. This is used so that unmaintained branching
 # does not need to update each repo below.
-TARGET_BRANCH=stable/victoria
+TARGET_BRANCH=unmaintained/victoria
 
 # Cycle trailing projects need to branch later than the others.
 TRAILING_TARGET_BRANCH=master
 
-# And some repos do not create stable branches, so this is used
-# to make it explicit and avoid accidentally setting to a stable
+# And some repos do not create unmaintained branches, so this is used
+# to make it explicit and avoid accidentally setting to a unmaintained
 # branch.
 BRANCHLESS_TARGET_BRANCH=master
 
