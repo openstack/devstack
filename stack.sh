@@ -301,32 +301,15 @@ function _install_epel {
 }
 
 function _install_rdo {
-    if [[ $DISTRO == "rhel8" ]]; then
+    if [[ $DISTRO == "rhel9" ]]; then
+        rdo_release=${TARGET_BRANCH#*/}
         if [[ "$TARGET_BRANCH" == "master" ]]; then
-            # rdo-release.el8.rpm points to latest RDO release, use that for master
-            sudo dnf -y install https://rdoproject.org/repos/rdo-release.el8.rpm
+            # adding delorean-deps repo to provide current master rpms
+            sudo wget https://trunk.rdoproject.org/centos9-master/delorean-deps.repo -O /etc/yum.repos.d/delorean-deps.repo
         else
             # For stable/unmaintained branches use corresponding release rpm
-            rdo_release=${TARGET_BRANCH#*/}
-            sudo dnf -y install https://rdoproject.org/repos/openstack-${rdo_release}/rdo-release-${rdo_release}.el8.rpm
+            sudo dnf -y install centos-release-openstack-${rdo_release}
         fi
-    elif [[ $DISTRO == "rhel9" ]]; then
-        install_package wget
-        # We need to download rdo-release package using wget as installing with dnf from repo.fedoraproject.org fails in
-        # FIPS enabled systems after https://bugzilla.redhat.com/show_bug.cgi?id=2157951
-        # Until we can pull rdo-release from a server which supports EMS, this workaround is doing wget, which does
-        # not relies on openssl but on gnutls, and then install it locally using rpm
-        TEMPRDODIR=$(mktemp -d)
-        if [[ "$TARGET_BRANCH" == "master" ]]; then
-            # rdo-release.el9.rpm points to latest RDO release, use that for master
-            wget -P $TEMPRDODIR  https://rdoproject.org/repos/rdo-release.el9.rpm
-        else
-            # For stable/unmaintained branches use corresponding release rpm
-            rdo_release=${TARGET_BRANCH#*/}
-            wget -P $TEMPRDODIR https://rdoproject.org/repos/openstack-${rdo_release}/rdo-release-${rdo_release}.el9.rpm
-        fi
-        sudo rpm -ivh $TEMPRDODIR/rdo-release*rpm
-        rm -rf $TEMPRDODIR
     fi
     sudo dnf -y update
 }
