@@ -510,6 +510,7 @@
       - opendev.org/openstack/nova
       - opendev.org/openstack/placement
       - opendev.org/openstack/swift
+      - opendev.org/openstack/os-test-images
     timeout: 7200
     vars:
       # based on observation of the integrated gate
