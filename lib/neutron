@@ -143,7 +143,6 @@ Q_META_DATA_IP=${Q_META_DATA_IP:-$(ipv6_unquote $SERVICE_HOST)}
 Q_ALLOW_OVERLAPPING_IP=${Q_ALLOW_OVERLAPPING_IP:-True}
 Q_NOTIFY_NOVA_PORT_STATUS_CHANGES=${Q_NOTIFY_NOVA_PORT_STATUS_CHANGES:-True}
 Q_NOTIFY_NOVA_PORT_DATA_CHANGES=${Q_NOTIFY_NOVA_PORT_DATA_CHANGES:-True}
-_Q_RUN_RPC_SERVER=True
 VIF_PLUGGING_IS_FATAL=${VIF_PLUGGING_IS_FATAL:-True}
 VIF_PLUGGING_TIMEOUT=${VIF_PLUGGING_TIMEOUT:-300}
 
@@ -466,15 +465,6 @@ function configure_neutron {
     # clouds, therefore running without a dedicated RPC worker
     # for state reports is more than adequate.
     iniset $NEUTRON_CONF DEFAULT rpc_state_report_workers 0
-    # The default value of "rpc_workers" is None (not defined). If
-    # "rpc_workers" is explicitly set to 0, the RPC workers process should not
-    # be executed. NOTE: this service is only executed when WSGI is enabled
-    # (NEUTRON_DEPLOY_MOD_WSGI=True) for the Neutron server.
-    local rpc_workers
-    rpc_workers=$(iniget_multiline /etc/neutron/neutron.conf DEFAULT rpc_workers)
-    if [ "$rpc_workers" == "0" ]; then
-        _Q_RUN_RPC_SERVER=False
-    fi
 
     if [ "$NEUTRON_DEPLOY_MOD_WSGI" == "True" ]; then
         write_uwsgi_config "$NEUTRON_UWSGI_CONF" "$NEUTRON_UWSGI" "/networking" "" "neutron-api"
@@ -657,17 +647,24 @@ function start_neutron_service_and_check {
         service_port=$Q_PORT_INT
         service_protocol="http"
     fi
+
     # Start the Neutron service
     if [ "$NEUTRON_DEPLOY_MOD_WSGI" == "True" ]; then
+        # The default value of "rpc_workers" is None (not defined). If
+        # "rpc_workers" is explicitly set to 0, the RPC workers process
+        # should not be executed.
+        local rpc_workers
+        rpc_workers=$(iniget_multiline $NEUTRON_CONF DEFAULT rpc_workers)
+
         enable_service neutron-api
         run_process neutron-api "$(which uwsgi) --procname-prefix neutron-api --ini $NEUTRON_UWSGI_CONF"
         neutron_url=$Q_PROTOCOL://$Q_HOST/
-        if [[ "$_Q_RUN_RPC_SERVER" = True ]]; then
+        if [ "$rpc_workers" != "0" ]; then
             enable_service neutron-rpc-server
         fi
         enable_service neutron-periodic-workers
         _enable_ovn_maintenance
-        if [[ "$_Q_RUN_RPC_SERVER" = True ]]; then
+        if [ "$rpc_workers" != "0" ]; then
             run_process neutron-rpc-server "$NEUTRON_BIN_DIR/neutron-rpc-server $cfg_file_options"
         fi
         run_process neutron-periodic-workers "$NEUTRON_BIN_DIR/neutron-periodic-workers $cfg_file_options"
