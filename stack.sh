@@ -302,23 +302,14 @@ function _install_epel {
 }
 
 function _install_rdo {
-    if [[ $DISTRO == "rhel8" ]]; then
+    if [[ $DISTRO == "rhel9" ]]; then
+        rdo_release=${TARGET_BRANCH#*/}
         if [[ "$TARGET_BRANCH" == "master" ]]; then
-            # rdo-release.el8.rpm points to latest RDO release, use that for master
-            sudo dnf -y install https://rdoproject.org/repos/rdo-release.el8.rpm
+            # adding delorean-deps repo to provide current master rpms
+            sudo wget https://trunk.rdoproject.org/centos9-master/delorean-deps.repo -O /etc/yum.repos.d/delorean-deps.repo
         else
             # For stable/unmaintained branches use corresponding release rpm
-            rdo_release=${TARGET_BRANCH#*/}
-            sudo dnf -y install https://rdoproject.org/repos/openstack-${rdo_release}/rdo-release-${rdo_release}.el8.rpm
-        fi
-    elif [[ $DISTRO == "rhel9" ]]; then
-        if [[ "$TARGET_BRANCH" == "master" ]]; then
-            # rdo-release.el9.rpm points to latest RDO release, use that for master
-            sudo dnf -y install https://rdoproject.org/repos/rdo-release.el9.rpm
-        else
-            # For stable/unmaintained branches use corresponding release rpm
-            rdo_release=${TARGET_BRANCH#*/}
-            sudo dnf -y install https://rdoproject.org/repos/openstack-${rdo_release}/rdo-release-${rdo_release}.el9.rpm
+            sudo dnf -y install centos-release-openstack-${rdo_release}
         fi
     fi
     sudo dnf -y update
