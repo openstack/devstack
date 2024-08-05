@@ -43,9 +43,9 @@
       base_branch={{ devstack_sources_branch }}
       if git branch -a | grep "$base_branch" > /dev/null ; then
           git checkout $base_branch
-      elif [[ "$base_branch" == stable/* ]]; then
+      elif [[ "$base_branch" == stable/* ]] || [[ "$base_branch" == unmaintained/* ]]; then
           # Look for an eol tag for the stable branch.
-          eol_tag=${base_branch#stable/}-eol
+          eol_tag="${base_branch#*/}-eol"
           if git tag -l |grep $eol_tag >/dev/null; then
               git checkout $eol_tag
               git reset --hard $eol_tag
