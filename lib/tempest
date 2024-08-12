@@ -105,10 +105,6 @@ TEMPEST_CONCURRENCY=${TEMPEST_CONCURRENCY:-$(nproc)}
 TEMPEST_FLAVOR_RAM=${TEMPEST_FLAVOR_RAM:-192}
 TEMPEST_FLAVOR_ALT_RAM=${TEMPEST_FLAVOR_ALT_RAM:-256}
 
-OSTESTIMAGES_REPO=${OSTESTIMAGES_REPO:-${GIT_BASE}/openstack/os-test-images.git}
-OSTESTIMAGES_BRANCH=${OSTESTIMAGES_BRANCH:-$BRANCHLESS_TARGET_BRANCH}
-OSTESTIMAGES_DIR=${DEST}/os-test-images
-
 # Functions
 # ---------
 
@@ -369,7 +365,7 @@ function configure_tempest {
         iniset $TEMPEST_CONFIG image images_manifest_file ${OSTESTIMAGES_DIR}/images/manifest.yaml
         local image_conversion
         image_conversion=$(iniget $GLANCE_IMAGE_IMPORT_CONF image_conversion output_format)
-        if [[ "$image_conversion" ]]; then
+        if [[ -n "$image_conversion" ]]; then
             iniset $TEMPEST_CONFIG image-feature-enabled image_conversion True
         fi
     fi
