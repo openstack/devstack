@@ -771,7 +771,7 @@ function get_default_host_ip {
     if [ -z "$host_ip" -o "$host_ip" == "dhcp" ]; then
         host_ip=""
         # Find the interface used for the default route
-        host_ip_iface=${host_ip_iface:-$(ip -f $af route | awk '/default/ {print $5}' | head -1)}
+        host_ip_iface=${host_ip_iface:-$(ip -f $af route list match default table all | grep via | awk '/default/ {print $5}' | head -1)}
         local host_ips
         host_ips=$(LC_ALL=C ip -f $af addr show ${host_ip_iface} | sed /temporary/d |awk /$af'/ {split($2,parts,"/");  print parts[1]}')
         local ip
