@@ -51,7 +51,7 @@ function start_etcd3 {
     fi
     cmd+=" --listen-client-urls http://$SERVICE_HOST:$ETCD_PORT"
     if [ "$ENABLE_DEBUG_LOG_LEVEL" == "True" ]; then
-        cmd+=" --debug"
+        cmd+=" --log-level=debug"
     fi
 
     local unitfile="$SYSTEMD_DIR/$ETCD_SYSTEMD_SERVICE"
