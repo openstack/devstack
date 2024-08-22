@@ -68,7 +68,7 @@ Shared Guest Interface
 .. warning::
 
    This is not a recommended configuration. Because of interactions
-   between ovs and bridging, if you reboot your box with active
+   between OVS and bridging, if you reboot your box with active
    networking you may lose network connectivity to your system.
 
 If you need your guests accessible on the network, but only have 1
@@ -114,3 +114,41 @@ For IPv6, ``FIXED_RANGE_V6`` will default to the first /64 of the value of
 ``FIXED_RANGE_V6`` will just use the value of that directly.
 ``SUBNETPOOL_PREFIX_V6`` will just default to the value of
 ``IPV6_ADDRS_SAFE_TO_USE`` directly.
+
+.. _ssh:
+
+SSH access to instances
+=======================
+
+To validate connectivity, you can create an instance using the
+``$PRIVATE_NETWORK_NAME`` network (default: ``private``), create a floating IP
+using the ``$PUBLIC_NETWORK_NAME`` network (default: ``public``), and attach
+this floating IP to the instance:
+
+.. code-block:: shell
+
+    openstack keypair create --public-key ~/.ssh/id_rsa.pub test-keypair
+    openstack server create --network private --key-name test-keypair ... test-server
+    fip_id=$(openstack floating ip create public -f value -c id)
+    openstack server add floating ip test-server ${fip_id}
+
+Once done, ensure you have enabled SSH and ICMP (ping) access for the security
+group used for the instance. You can either create a custom security group and
+specify it when creating the instance or add it after creation, or you can
+modify the ``default`` security group created by default for each project.
+Let's do the latter:
+
+.. code-block:: shell
+
+    openstack security group rule create --proto icmp --dst-port 0 default
+    openstack security group rule create --proto tcp --dst-port 22 default
+
+Finally, SSH into the instance. If you used the Cirros instance uploaded by
+default, then you can run the following:
+
+.. code-block:: shell
+
+    openstack server ssh test-server -- -l cirros
+
+This will connect using the ``cirros`` user and the keypair you configured when
+creating the instance.

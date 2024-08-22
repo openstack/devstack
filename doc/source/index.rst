@@ -133,6 +133,8 @@ there.
 You can ``source openrc`` in your shell, and then use the
 ``openstack`` command line tool to manage your devstack.
 
+You can :ref:`create a VM and SSH into it <ssh>`.
+
 You can ``cd /opt/stack/tempest`` and run tempest tests that have
 been configured to work with your devstack.
 
