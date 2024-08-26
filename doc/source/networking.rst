@@ -152,3 +152,41 @@ default, then you can run the following:
 
 This will connect using the ``cirros`` user and the keypair you configured when
 creating the instance.
+
+Remote SSH access to instances
+==============================
+
+You can also SSH to created instances on your DevStack host from other hosts.
+This can be helpful if you are e.g. deploying DevStack in a VM on an existing
+cloud and wish to do development on your local machine. To do this, you will
+either need to configure the guest to be `locally accessible <Locally
+Accessible Guests>`__ or you will need to enable tunneling for the floating IP
+address range of the ``$PUBLIC_NETWORK_NAME`` network (default: ``public``)
+defined by ``$FLOATING_RANGE`` (default: ``172.24.4.0/24``). We're going to use
+a useful utility called `shuttle`__ here, but there are many other ways to
+accomplish this.
+
+First, ensure you have allowed SSH and HTTP(S) traffic to your DevStack host.
+Allowing HTTP(S) traffic is necessary so you can use the OpenStack APIs
+remotely. How you do this will depend on where your DevStack host is running.
+
+Once this is done, install ``sshuttle`` on your localhost:
+
+.. code-block:: bash
+
+    sudo apt-get install sshuttle || yum install sshuttle
+
+Finally, start ``sshuttle`` using the floating IP address range. Assuming you
+are using the default value for ``$FLOATING_RANGE``, you can do:
+
+.. code-block:: bash
+
+    sshuttle -r username@devstack-host 172.24.4.0/24
+
+(where ``username`` and ``devstack-host`` are the username and hostname of your
+DevStack host).
+
+You should now be able to create an instance and SSH into it, using the
+instructions provided :ref:`above <ssh>`.
+
+.. __: https://github.com/sshuttle/sshuttle
