@@ -4,8 +4,4 @@ Pygments
 docutils
 sphinx>=2.0.0,!=2.1.0 # BSD
 openstackdocstheme>=2.2.1 # Apache-2.0
-nwdiag
-blockdiag
-sphinxcontrib-blockdiag
-sphinxcontrib-nwdiag
 zuul-sphinx>=0.2.0

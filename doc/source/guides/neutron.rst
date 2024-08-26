@@ -41,19 +41,8 @@ network and is on a shared subnet with other machines.  The
 `local.conf` exhibited here assumes that 1500 is a reasonable MTU to
 use on that network.
 
-.. nwdiag::
-
-        nwdiag {
-                inet [ shape = cloud ];
-                router;
-                inet -- router;
-
-                network hardware_network {
-                        address = "172.18.161.0/24"
-                        router [ address = "172.18.161.1" ];
-                        devstack-1 [ address = "172.18.161.6" ];
-                }
-        }
+.. image:: /assets/images/neutron-network-1.png
+   :alt: Network configuration for a single DevStack node
 
 
 DevStack Configuration
@@ -100,21 +89,8 @@ also want to do multinode testing and networking.
 Physical Network Setup
 ~~~~~~~~~~~~~~~~~~~~~~
 
-.. nwdiag::
-
-        nwdiag {
-                inet [ shape = cloud ];
-                router;
-                inet -- router;
-
-                network hardware_network {
-                        address = "172.18.161.0/24"
-                        router [ address = "172.18.161.1" ];
-                        devstack-1 [ address = "172.18.161.6" ];
-                        devstack-2 [ address = "172.18.161.7" ];
-                }
-        }
-
+.. image:: /assets/images/neutron-network-2.png
+   :alt: Network configuration for multiple DevStack nodes
 
 After DevStack installs and configures Neutron, traffic from guest VMs
 flows out of `devstack-2` (the compute node) and is encapsulated in a
@@ -222,8 +198,6 @@ connect OpenStack nodes (like `devstack-2`) together. This bridge is
 used so that project network traffic, using the VXLAN tunneling
 protocol, flows between each compute node where project instances run.
 
-
-
 DevStack Compute Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -268,30 +242,8 @@ to the neutron L3 service.
 Physical Network Setup
 ----------------------
 
-.. nwdiag::
-
-        nwdiag {
-                inet [ shape = cloud ];
-                router;
-                inet -- router;
-
-                network provider_net {
-                        address = "203.0.113.0/24"
-                        router [ address = "203.0.113.1" ];
-                        controller;
-                        compute1;
-                        compute2;
-                }
-
-                network control_plane {
-                        router [ address = "10.0.0.1" ]
-                        address = "10.0.0.0/24"
-                        controller [ address = "10.0.0.2" ]
-                        compute1 [ address = "10.0.0.3" ]
-                        compute2 [ address = "10.0.0.4" ]
-                }
-        }
-
+.. image:: /assets/images/neutron-network-3.png
+   :alt: Network configuration for provider networks
 
 On a compute node, the first interface, eth0 is used for the OpenStack
 management (API, message bus, etc) as well as for ssh for an

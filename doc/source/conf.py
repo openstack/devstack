@@ -23,14 +23,14 @@
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = [ 'sphinx.ext.autodoc',
-               'zuul_sphinx',
-               'openstackdocstheme',
-               'sphinxcontrib.blockdiag',
-               'sphinxcontrib.nwdiag' ]
+extensions = [
+    'sphinx.ext.autodoc',
+    'zuul_sphinx',
+    'openstackdocstheme',
+]
 
 # openstackdocstheme options
-openstackdocs_repo_name = 'openstack-dev/devstack'
+openstackdocs_repo_name = 'openstack/devstack'
 openstackdocs_pdf_link = True
 openstackdocs_bug_project = 'devstack'
 openstackdocs_bug_tag = ''
