@@ -158,26 +158,66 @@ Remote SSH access to instances
 
 You can also SSH to created instances on your DevStack host from other hosts.
 This can be helpful if you are e.g. deploying DevStack in a VM on an existing
-cloud and wish to do development on your local machine. To do this, you will
-either need to configure the guest to be `locally accessible <Locally
-Accessible Guests>`__ or you will need to enable tunneling for the floating IP
+cloud and wish to do development on your local machine. There are a few ways to
+do this.
+
+.. rubric:: Configure instances to be locally accessible
+
+The most obvious way is to configure guests to be locally accessible, as
+described `above <Locally Accessible Guests>`__. This has the advantage of
+requiring no further effort on the client. However, it is more involved and
+requires either support from your cloud or some inadvisable workarounds.
+
+.. rubric:: Use your DevStack host as a jump host
+
+You can choose to use your DevStack host as a jump host. To SSH to a instance
+this way, pass the standard ``-J`` option to the ``openstack ssh`` / ``ssh``
+command. For example:
+
+.. code-block::
+
+    openstack server ssh test-server -- -l cirros -J username@devstack-host
+
+(where ``test-server`` is name of an existing instance, as described
+:ref:`previously <ssh>`, and ``username`` and ``devstack-host`` are the
+username and hostname of your DevStack host).
+
+This can also be configured via your ``~/.ssh/config`` file, making it rather
+effortless. However, it only allows SSH access. If you want to access e.g. a
+web application on the instance, you will need to configure an SSH tunnel and
+forward select ports using the ``-L`` option. For example, to forward HTTP
+traffic:
+
+.. code-block::
+
+    openstack server ssh test-server -- -l cirros -L 8080:username@devstack-host:80
+
+(where ``test-server`` is name of an existing instance, as described
+:ref:`previously <ssh>`, and ``username`` and ``devstack-host`` are the
+username and hostname of your DevStack host).
+
+As you can imagine, this can quickly get out of hand, particularly for more
+complex guest applications with multiple ports.
+
+.. rubric:: Use a proxy or VPN tool
+
+You can use a proxy or VPN tool to enable tunneling for the floating IP
 address range of the ``$PUBLIC_NETWORK_NAME`` network (default: ``public``)
-defined by ``$FLOATING_RANGE`` (default: ``172.24.4.0/24``). We're going to use
-a useful utility called `shuttle`__ here, but there are many other ways to
-accomplish this.
-
-First, ensure you have allowed SSH and HTTP(S) traffic to your DevStack host.
-Allowing HTTP(S) traffic is necessary so you can use the OpenStack APIs
-remotely. How you do this will depend on where your DevStack host is running.
-
-Once this is done, install ``sshuttle`` on your localhost:
+defined by ``$FLOATING_RANGE`` (default: ``172.24.4.0/24``). There are many
+such tools available to do this. For example, we could use a useful utility
+called `shuttle`__. To enable tunneling using ``shuttle``, first ensure you
+have allowed SSH and HTTP(S) traffic to your DevStack host. Allowing HTTP(S)
+traffic is necessary so you can use the OpenStack APIs remotely. How you do
+this will depend on where your DevStack host is running. Once this is done,
+install ``sshuttle`` on your localhost:
 
 .. code-block:: bash
 
     sudo apt-get install sshuttle || yum install sshuttle
 
-Finally, start ``sshuttle`` using the floating IP address range. Assuming you
-are using the default value for ``$FLOATING_RANGE``, you can do:
+Finally, start ``sshuttle`` on your localhost using the floating IP address
+range. For example, assuming you are using the default value for
+``$FLOATING_RANGE``, you can do:
 
 .. code-block:: bash
 
@@ -186,7 +226,13 @@ are using the default value for ``$FLOATING_RANGE``, you can do:
 (where ``username`` and ``devstack-host`` are the username and hostname of your
 DevStack host).
 
-You should now be able to create an instance and SSH into it, using the
-instructions provided :ref:`above <ssh>`.
+You should now be able to create an instance and SSH into it:
+
+.. code-block:: bash
+
+    openstack server ssh test-server -- -l cirros
+
+(where ``test-server`` is name of an existing instance, as described
+:ref:`previously <ssh>`)
 
 .. __: https://github.com/sshuttle/sshuttle
