@@ -340,8 +340,24 @@ function compile_ovn {
         ./boot.sh
     fi
 
+    # NOTE(mnaser): OVN requires that you build using the OVS from the
+    #               submodule.
+    #
+    #               https://github.com/ovn-org/ovn/blob/3fb397b63663297acbcbf794e1233951222ae5af/Documentation/intro/install/general.rst#bootstrapping
+    #               https://github.com/ovn-org/ovn/issues/128
+    git submodule update --init
+    pushd ovs
+    if [ ! -f configure ] ; then
+        ./boot.sh
+    fi
     if [ ! -f config.status ] || [ configure -nt config.status ] ; then
-        ./configure --with-ovs-source=$DEST/$OVS_REPO_NAME $prefix $localstatedir
+        ./configure
+    fi
+    make -j$(($(nproc) + 1))
+    popd
+
+    if [ ! -f config.status ] || [ configure -nt config.status ] ; then
+        ./configure $prefix $localstatedir
     fi
     make -j$(($(nproc) + 1))
     sudo make install
