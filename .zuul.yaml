@@ -732,7 +732,6 @@
     description: Ubuntu 24.04 LTS (noble) platform test
     nodeset: openstack-single-node-noble
     timeout: 9000
-    voting: false
     vars:
       configure_swap_size: 8192
 
@@ -917,6 +916,7 @@
         - devstack
         - devstack-ipv6
         - devstack-platform-debian-bookworm
+        - devstack-platform-ubuntu-noble
         # NOTE(danms): Disabled due to instability, see comment in the job
         # definition above.
         # - devstack-platform-rocky-blue-onyx
