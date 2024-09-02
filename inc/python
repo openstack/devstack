@@ -474,7 +474,10 @@ function setup_package {
     pip_install $flags "$project_dir$extras"
     # ensure that further actions can do things like setup.py sdist
     if [[ "$flags" == "-e" && "$GLOBAL_VENV" == "False" ]]; then
-        safe_chown -R $STACK_USER $1/*.egg-info
+        # egg-info is not created when project have pyproject.toml
+        if [ -d $1/*.egg-info ]; then
+            safe_chown -R $STACK_USER $1/*.egg-info
+        fi
     fi
 }
 
