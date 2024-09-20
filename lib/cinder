@@ -476,20 +476,19 @@ function create_cinder_accounts {
 
         create_service_user "cinder" $extra_role
 
-        # block-storage is the official service type
-        get_or_create_service "cinder" "block-storage" "Cinder Volume Service"
-        if [ "$CINDER_USE_MOD_WSGI" == "False" ]; then
-            get_or_create_endpoint \
-                "block-storage" \
-                "$REGION_NAME" \
-                "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v3"
+        local cinder_api_url
+        if [[ "$CINDER_USE_MOD_WSGI" == "False" ]]; then
+            cinder_api_url="$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT"
         else
-            get_or_create_endpoint \
-                "block-storage" \
-                "$REGION_NAME" \
-                "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST/volume/v3"
+            cinder_api_url="$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST/volume"
         fi
 
+        # block-storage is the official service type
+        get_or_create_service "cinder" "block-storage" "Cinder Volume Service"
+        get_or_create_endpoint \
+            "block-storage" \
+            "$REGION_NAME" \
+            "$cinder_api_url/v3"
         configure_cinder_internal_tenant
     fi
 }
