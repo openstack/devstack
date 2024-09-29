@@ -76,7 +76,8 @@ def main():
         # with zuulv3 native jobs and ansible capture it may become
         # clearer what to do
         if HAS_DATE.search(line) is None:
-            now = datetime.datetime.utcnow()
+            now = datetime.datetime.now(datetime.timezone.utc).replace(
+                    tzinfo=None)
             ts_line = ("%s | %s" % (
                 now.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3],
                 line))
