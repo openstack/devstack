@@ -53,7 +53,8 @@ function configure_database_postgresql {
         pg_hba=/var/lib/pgsql/data/pg_hba.conf
         pg_conf=/var/lib/pgsql/data/postgresql.conf
         if ! sudo [ -e $pg_hba ]; then
-            sudo postgresql-setup initdb
+            localectl set-locale LANG=en_US.UTF-8
+            sudo -E postgresql-setup initdb
         fi
     elif is_ubuntu; then
         version=`psql --version | cut -d ' ' -f3 | cut -d. -f1-2`
@@ -108,7 +109,7 @@ EOF
         if is_ubuntu; then
             install_package postgresql
         elif is_fedora || is_suse; then
-            install_package postgresql-server
+            install_package postgresql-server langpacks-en glibc-langpack-en
             if is_fedora; then
                 sudo systemctl enable postgresql
             fi
