@@ -439,7 +439,7 @@
     description: |
       Minimal devstack base job, intended for use by jobs that need
       less than the normal minimum set of required-projects.
-    nodeset: openstack-single-node-jammy
+    nodeset: openstack-single-node-noble
     required-projects:
       - opendev.org/openstack/requirements
     vars:
@@ -686,7 +686,7 @@
 - job:
     name: devstack-multinode
     parent: devstack
-    nodeset: openstack-two-node-jammy
+    nodeset: openstack-two-node-noble
     description: |
       Simple multinode test to verify multinode functionality on devstack side.
       This is not meant to be used as a parent job.
@@ -727,18 +727,18 @@
       configure_swap_size: 4096
 
 - job:
-    name: devstack-platform-ubuntu-noble
+    name: devstack-platform-ubuntu-jammy
     parent: tempest-full-py3
-    description: Ubuntu 24.04 LTS (noble) platform test
-    nodeset: openstack-single-node-noble
+    description: Ubuntu 22.04 LTS (Jammy) platform test
+    nodeset: openstack-single-node-jammy
     timeout: 9000
     vars:
       configure_swap_size: 8192
 
 - job:
-    name: devstack-platform-ubuntu-jammy-ovn-source
-    parent: devstack-platform-ubuntu-jammy
-    description: Ubuntu 22.04 LTS (jammy) platform test (OVN from source)
+    name: devstack-platform-ubuntu-noble-ovn-source
+    parent: devstack-platform-ubuntu-noble
+    description: Ubuntu 24.04 LTS (noble) platform test (OVN from source)
     voting: false
     vars:
       devstack_localrc:
@@ -748,10 +748,10 @@
         OVS_SYSCONFDIR: "/usr/local/etc/openvswitch"
 
 - job:
-    name: devstack-platform-ubuntu-jammy-ovs
+    name: devstack-platform-ubuntu-noble-ovs
     parent: tempest-full-py3
-    description: Ubuntu 22.04 LTS (jammy) platform test (OVS)
-    nodeset: openstack-single-node-jammy
+    description: Ubuntu 24.04 LTS (noble) platform test (OVS)
+    nodeset: openstack-single-node-noble
     voting: false
     timeout: 9000
     vars:
@@ -853,7 +853,7 @@
 
 - job:
     name: devstack-unit-tests
-    nodeset: ubuntu-jammy
+    nodeset: ubuntu-noble
     description: |
       Runs unit tests on devstack project.
 
@@ -873,9 +873,9 @@
         - devstack-platform-centos-9-stream
         - devstack-platform-debian-bookworm
         - devstack-platform-rocky-blue-onyx
-        - devstack-platform-ubuntu-jammy-ovn-source
-        - devstack-platform-ubuntu-jammy-ovs
-        - devstack-platform-ubuntu-noble
+        - devstack-platform-ubuntu-noble-ovn-source
+        - devstack-platform-ubuntu-noble-ovs
+        - devstack-platform-ubuntu-jammy
         - devstack-multinode
         - devstack-unit-tests
         - openstack-tox-bashate
@@ -1002,6 +1002,6 @@
         - devstack-platform-centos-9-stream
         - devstack-platform-debian-bookworm
         - devstack-platform-rocky-blue-onyx
-        - devstack-platform-ubuntu-jammy-ovn-source
-        - devstack-platform-ubuntu-jammy-ovs
-        - devstack-platform-ubuntu-noble
+        - devstack-platform-ubuntu-noble-ovn-source
+        - devstack-platform-ubuntu-noble-ovs
+        - devstack-platform-ubuntu-jammy
