@@ -46,6 +46,10 @@ function recreate_database_postgresql {
     createdb -h $DATABASE_HOST -U$DATABASE_USER -l C -T template0 -E utf8 $db
 }
 
+function _exit_pg_init {
+    sudo cat /var/lib/pgsql/initdb_postgresql.log
+}
+
 function configure_database_postgresql {
     local pg_conf pg_dir pg_hba check_role version
     echo_summary "Configuring and starting PostgreSQL"
@@ -53,7 +57,9 @@ function configure_database_postgresql {
         pg_hba=/var/lib/pgsql/data/pg_hba.conf
         pg_conf=/var/lib/pgsql/data/postgresql.conf
         if ! sudo [ -e $pg_hba ]; then
+            trap _exit_pg_init EXIT
             sudo postgresql-setup initdb
+            trap - EXIT
         fi
     elif is_ubuntu; then
         version=`psql --version | cut -d ' ' -f3 | cut -d. -f1-2`
