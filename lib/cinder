@@ -482,12 +482,12 @@ function create_cinder_accounts {
             get_or_create_endpoint \
                 "block-storage" \
                 "$REGION_NAME" \
-                "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v3/\$(project_id)s"
+                "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT/v3"
         else
             get_or_create_endpoint \
                 "block-storage" \
                 "$REGION_NAME" \
-                "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST/volume/v3/\$(project_id)s"
+                "$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST/volume/v3"
         fi
 
         configure_cinder_internal_tenant
