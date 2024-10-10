@@ -49,7 +49,7 @@ fi
 KEYSTONE_CONF_DIR=${KEYSTONE_CONF_DIR:-/etc/keystone}
 KEYSTONE_CONF=$KEYSTONE_CONF_DIR/keystone.conf
 KEYSTONE_PUBLIC_UWSGI_CONF=$KEYSTONE_CONF_DIR/keystone-uwsgi-public.ini
-KEYSTONE_PUBLIC_UWSGI=$KEYSTONE_BIN_DIR/keystone-wsgi-public
+KEYSTONE_PUBLIC_UWSGI=keystone.wsgi.api:application
 
 # Select the Identity backend driver
 KEYSTONE_IDENTITY_BACKEND=${KEYSTONE_IDENTITY_BACKEND:-sql}
@@ -226,7 +226,7 @@ function configure_keystone {
 
     iniset $KEYSTONE_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
 
-    write_uwsgi_config "$KEYSTONE_PUBLIC_UWSGI_CONF" "$KEYSTONE_PUBLIC_UWSGI" "/identity"
+    write_uwsgi_config "$KEYSTONE_PUBLIC_UWSGI_CONF" "$KEYSTONE_PUBLIC_UWSGI" "/identity" "" "keystone-api"
 
     iniset $KEYSTONE_CONF DEFAULT max_token_size 16384
 
