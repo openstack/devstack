@@ -62,10 +62,8 @@ if is_service_enabled tls-proxy; then
     Q_PROTOCOL="https"
 fi
 
-
 # Set up default directories
 GITDIR["python-neutronclient"]=$DEST/python-neutronclient
-
 
 NEUTRON_DIR=$DEST/neutron
 NEUTRON_FWAAS_DIR=$DEST/neutron-fwaas
@@ -80,11 +78,6 @@ fi
 NEUTRON_CONF_DIR=/etc/neutron
 NEUTRON_CONF=$NEUTRON_CONF_DIR/neutron.conf
 export NEUTRON_TEST_CONFIG_FILE=${NEUTRON_TEST_CONFIG_FILE:-"$NEUTRON_CONF_DIR/debug.ini"}
-
-# NEUTRON_DEPLOY_MOD_WSGI defines how neutron is deployed, allowed values:
-# - False : Run neutron under Eventlet
-# - True (default) : Run neutron under uwsgi
-NEUTRON_DEPLOY_MOD_WSGI=$(trueorfalse True NEUTRON_DEPLOY_MOD_WSGI)
 
 NEUTRON_UWSGI=neutron.wsgi.api:application
 NEUTRON_UWSGI_CONF=$NEUTRON_CONF_DIR/neutron-api-uwsgi.ini
@@ -153,7 +146,7 @@ _Q_PLUGIN_EXTRA_CONF_PATH=/etc/neutron
 
 # The name of the service in the endpoint URL
 NEUTRON_ENDPOINT_SERVICE_NAME=${NEUTRON_ENDPOINT_SERVICE_NAME-"networking"}
-if [[ "$NEUTRON_DEPLOY_MOD_WSGI" == "True" && -z "$NEUTRON_ENDPOINT_SERVICE_NAME" ]]; then
+if [[ -z "$NEUTRON_ENDPOINT_SERVICE_NAME" ]]; then
     NEUTRON_ENDPOINT_SERVICE_NAME="networking"
 fi
 
@@ -451,9 +444,7 @@ function configure_neutron {
     # for state reports is more than adequate.
     iniset $NEUTRON_CONF DEFAULT rpc_state_report_workers 0
 
-    if [ "$NEUTRON_DEPLOY_MOD_WSGI" == "True" ]; then
-        write_uwsgi_config "$NEUTRON_UWSGI_CONF" "$NEUTRON_UWSGI" "/networking" "" "neutron-api"
-    fi
+    write_uwsgi_config "$NEUTRON_UWSGI_CONF" "$NEUTRON_UWSGI" "/networking" "" "neutron-api"
 }
 
 function configure_neutron_nova {
@@ -499,11 +490,7 @@ function create_nova_conf_neutron {
 # Migrated from keystone_data.sh
 function create_neutron_accounts {
     local neutron_url
-    if [ "$NEUTRON_DEPLOY_MOD_WSGI" == "True" ]; then
-        neutron_url=$Q_PROTOCOL://$SERVICE_HOST/
-    else
-        neutron_url=$Q_PROTOCOL://$SERVICE_HOST:$Q_PORT/
-    fi
+    neutron_url=$Q_PROTOCOL://$SERVICE_HOST/
     if [ ! -z "$NEUTRON_ENDPOINT_SERVICE_NAME" ]; then
         neutron_url=$neutron_url$NEUTRON_ENDPOINT_SERVICE_NAME
     fi
@@ -634,34 +621,25 @@ function start_neutron_service_and_check {
     fi
 
     # Start the Neutron service
-    if [ "$NEUTRON_DEPLOY_MOD_WSGI" == "True" ]; then
-        # The default value of "rpc_workers" is None (not defined). If
-        # "rpc_workers" is explicitly set to 0, the RPC workers process
-        # should not be executed.
-        local rpc_workers
-        rpc_workers=$(iniget_multiline $NEUTRON_CONF DEFAULT rpc_workers)
+    # The default value of "rpc_workers" is None (not defined). If
+    # "rpc_workers" is explicitly set to 0, the RPC workers process
+    # should not be executed.
+    local rpc_workers
+    rpc_workers=$(iniget_multiline $NEUTRON_CONF DEFAULT rpc_workers)
 
-        enable_service neutron-api
-        run_process neutron-api "$(which uwsgi) --procname-prefix neutron-api --ini $NEUTRON_UWSGI_CONF"
-        neutron_url=$Q_PROTOCOL://$Q_HOST/
-        if [ "$rpc_workers" != "0" ]; then
-            enable_service neutron-rpc-server
-        fi
-        enable_service neutron-periodic-workers
-        _enable_ovn_maintenance
-        if [ "$rpc_workers" != "0" ]; then
-            run_process neutron-rpc-server "$NEUTRON_BIN_DIR/neutron-rpc-server $cfg_file_options"
-        fi
-        run_process neutron-periodic-workers "$NEUTRON_BIN_DIR/neutron-periodic-workers $cfg_file_options"
-        _run_ovn_maintenance
-    else
-        run_process q-svc "$NEUTRON_BIN_DIR/neutron-server $cfg_file_options"
-        neutron_url=$service_protocol://$Q_HOST:$service_port/
-        # Start proxy if enabled
-        if is_service_enabled tls-proxy; then
-            start_tls_proxy neutron '*' $Q_PORT $Q_HOST $Q_PORT_INT
-        fi
+    enable_service neutron-api
+    run_process neutron-api "$(which uwsgi) --procname-prefix neutron-api --ini $NEUTRON_UWSGI_CONF"
+    neutron_url=$Q_PROTOCOL://$Q_HOST/
+    if [ "$rpc_workers" != "0" ]; then
+        enable_service neutron-rpc-server
     fi
+    enable_service neutron-periodic-workers
+    _enable_ovn_maintenance
+    if [ "$rpc_workers" != "0" ]; then
+        run_process neutron-rpc-server "$NEUTRON_BIN_DIR/neutron-rpc-server $cfg_file_options"
+    fi
+    run_process neutron-periodic-workers "$NEUTRON_BIN_DIR/neutron-periodic-workers $cfg_file_options"
+    _run_ovn_maintenance
     if [ ! -z "$NEUTRON_ENDPOINT_SERVICE_NAME" ]; then
         neutron_url=$neutron_url$NEUTRON_ENDPOINT_SERVICE_NAME
     fi
@@ -723,14 +701,10 @@ function stop_other {
         [ ! -z "$pid" ] && sudo kill -9 $pid
     fi
 
-    if [ "$NEUTRON_DEPLOY_MOD_WSGI" == "True" ]; then
-        stop_process neutron-rpc-server
-        stop_process neutron-periodic-workers
-        stop_process neutron-api
-        _stop_ovn_maintenance
-    else
-        stop_process q-svc
-    fi
+    stop_process neutron-rpc-server
+    stop_process neutron-periodic-workers
+    stop_process neutron-api
+    _stop_ovn_maintenance
 
     if is_service_enabled q-l3 neutron-l3; then
         sudo pkill -f "radvd -C $DATA_DIR/neutron/ra"
@@ -841,14 +815,12 @@ function _configure_public_network_connectivity {
 # cleanup_neutron() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
 function cleanup_neutron {
-    if [ "$NEUTRON_DEPLOY_MOD_WSGI" == "True" ]; then
-        stop_process neutron-api
-        stop_process neutron-rpc-server
-        stop_process neutron-periodic-workers
-        _stop_ovn_maintenance
-        remove_uwsgi_config "$NEUTRON_UWSGI_CONF" "neutron-api"
-        sudo rm -f $(apache_site_config_for neutron-api)
-    fi
+    stop_process neutron-api
+    stop_process neutron-rpc-server
+    stop_process neutron-periodic-workers
+    _stop_ovn_maintenance
+    remove_uwsgi_config "$NEUTRON_UWSGI_CONF" "neutron-api"
+    sudo rm -f $(apache_site_config_for neutron-api)
 
     if [[ -n "$OVS_PHYSICAL_BRIDGE" ]]; then
         _move_neutron_addresses_route "$OVS_PHYSICAL_BRIDGE" "$PUBLIC_INTERFACE" False True "inet"
@@ -955,12 +927,6 @@ function _configure_neutron_common {
     # Format logging
     setup_logging $NEUTRON_CONF
 
-    if is_service_enabled tls-proxy && [ "$NEUTRON_DEPLOY_MOD_WSGI" == "False" ]; then
-        # Set the service port for a proxy to take the original
-        iniset $NEUTRON_CONF DEFAULT bind_port "$Q_PORT_INT"
-        iniset $NEUTRON_CONF oslo_middleware enable_proxy_headers_parsing True
-    fi
-
     _neutron_setup_rootwrap
 }
 
@@ -1026,24 +992,11 @@ function _configure_neutron_plugin_agent {
     neutron_plugin_configure_plugin_agent
 }
 
-function _replace_api_paste_composite {
-    local sep
-    sep=$(echo -ne "\x01")
-    # Replace it
-    $sudo sed -i -e "s/\/\: neutronversions_composite/\/"${NEUTRON_ENDPOINT_SERVICE_NAME}"\/\: neutronversions_composite/" "$Q_API_PASTE_FILE"
-    $sudo sed -i -e "s/\/healthcheck\: healthcheck/\/"${NEUTRON_ENDPOINT_SERVICE_NAME}"\/healthcheck\: healthcheck/" "$Q_API_PASTE_FILE"
-    $sudo sed -i -e "s/\/v2.0\: neutronapi_v2_0/\/"${NEUTRON_ENDPOINT_SERVICE_NAME}"\/v2.0\: neutronapi_v2_0/" "$Q_API_PASTE_FILE"
-}
-
 # _configure_neutron_service() - Set config files for neutron service
 # It is called when q-svc is enabled.
 function _configure_neutron_service {
     Q_API_PASTE_FILE=$NEUTRON_CONF_DIR/api-paste.ini
     cp $NEUTRON_DIR/etc/api-paste.ini $Q_API_PASTE_FILE
-
-    if [[ "$NEUTRON_DEPLOY_MOD_WSGI" == "False" && -n "$NEUTRON_ENDPOINT_SERVICE_NAME" ]]; then
-        _replace_api_paste_composite
-    fi
 
     # Update either configuration file with plugin
     iniset $NEUTRON_CONF DEFAULT core_plugin $Q_PLUGIN_CLASS
