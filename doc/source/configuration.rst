@@ -367,10 +367,6 @@ mod_wsgi also has an override toggle available that can be set in your
 adopted standardized deployment mechanisms and more generally moved away from
 eventlet.
 
-Example (Nova)::
-
-    NOVA_USE_MOD_WSGI="True"
-
 Example (Swift)::
 
     SWIFT_USE_MOD_WSGI="True"
