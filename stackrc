@@ -223,6 +223,9 @@ GIT_TIMEOUT=${GIT_TIMEOUT:-0}
 # proxy uwsgi in front of it, or "mod_wsgi", which runs in
 # apache. mod_wsgi is deprecated, don't use it.
 WSGI_MODE=${WSGI_MODE:-"uwsgi"}
+if [[ "$WSGI_MODE" != "uwsgi" ]]; then
+    die $LINENO "$WSGI_MODE is no longer a supported WSGI mode. Only uwsgi is valid."
+fi
 
 # Repositories
 # ------------
