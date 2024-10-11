@@ -51,15 +51,6 @@ KEYSTONE_CONF=$KEYSTONE_CONF_DIR/keystone.conf
 KEYSTONE_PUBLIC_UWSGI_CONF=$KEYSTONE_CONF_DIR/keystone-uwsgi-public.ini
 KEYSTONE_PUBLIC_UWSGI=$KEYSTONE_BIN_DIR/keystone-wsgi-public
 
-# KEYSTONE_DEPLOY defines how keystone is deployed, allowed values:
-# - mod_wsgi : Run keystone under Apache HTTPd mod_wsgi
-# - uwsgi : Run keystone under uwsgi
-if [[ "$WSGI_MODE" == "uwsgi" ]]; then
-    KEYSTONE_DEPLOY=uwsgi
-else
-    KEYSTONE_DEPLOY=mod_wsgi
-fi
-
 # Select the Identity backend driver
 KEYSTONE_IDENTITY_BACKEND=${KEYSTONE_IDENTITY_BACKEND:-sql}
 
@@ -144,15 +135,9 @@ function is_keystone_enabled {
 # cleanup_keystone() - Remove residual data files, anything left over from previous
 # runs that a clean run would need to clean up
 function cleanup_keystone {
-    if [ "$KEYSTONE_DEPLOY" == "mod_wsgi" ]; then
-        # These files will be created if we are running WSGI_MODE="mod_wsgi"
-        disable_apache_site keystone
-        sudo rm -f $(apache_site_config_for keystone)
-    else
-        stop_process "keystone"
-        remove_uwsgi_config "$KEYSTONE_PUBLIC_UWSGI_CONF" "keystone-wsgi-public"
-        sudo rm -f $(apache_site_config_for keystone-wsgi-public)
-    fi
+    stop_process "keystone"
+    remove_uwsgi_config "$KEYSTONE_PUBLIC_UWSGI_CONF" "keystone-wsgi-public"
+    sudo rm -f $(apache_site_config_for keystone-wsgi-public)
 }
 
 # _config_keystone_apache_wsgi() - Set WSGI config files of Keystone
@@ -241,12 +226,7 @@ function configure_keystone {
 
     iniset $KEYSTONE_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
 
-    if [ "$KEYSTONE_DEPLOY" == "mod_wsgi" ]; then
-        iniset $KEYSTONE_CONF DEFAULT logging_exception_prefix "%(asctime)s.%(msecs)03d %(process)d TRACE %(name)s %(instance)s"
-        _config_keystone_apache_wsgi
-    else # uwsgi
-        write_uwsgi_config "$KEYSTONE_PUBLIC_UWSGI_CONF" "$KEYSTONE_PUBLIC_UWSGI" "/identity"
-    fi
+    write_uwsgi_config "$KEYSTONE_PUBLIC_UWSGI_CONF" "$KEYSTONE_PUBLIC_UWSGI" "/identity"
 
     iniset $KEYSTONE_CONF DEFAULT max_token_size 16384
 
@@ -543,10 +523,6 @@ function install_keystone {
     if is_service_enabled ldap; then
         setup_develop $KEYSTONE_DIR ldap
     fi
-
-    if [ "$KEYSTONE_DEPLOY" == "mod_wsgi" ]; then
-        install_apache_wsgi
-    fi
 }
 
 # start_keystone() - Start running processes
@@ -559,12 +535,7 @@ function start_keystone {
         auth_protocol="http"
     fi
 
-    if [ "$KEYSTONE_DEPLOY" == "mod_wsgi" ]; then
-        enable_apache_site keystone
-        restart_apache_server
-    else # uwsgi
-        run_process keystone "$(which uwsgi) --procname-prefix keystone --ini $KEYSTONE_PUBLIC_UWSGI_CONF" ""
-    fi
+    run_process keystone "$(which uwsgi) --procname-prefix keystone --ini $KEYSTONE_PUBLIC_UWSGI_CONF" ""
 
     echo "Waiting for keystone to start..."
     # Check that the keystone service is running. Even if the tls tunnel
@@ -589,12 +560,7 @@ function start_keystone {
 
 # stop_keystone() - Stop running processes
 function stop_keystone {
-    if [ "$KEYSTONE_DEPLOY" == "mod_wsgi" ]; then
-        disable_apache_site keystone
-        restart_apache_server
-    else
-        stop_process keystone
-    fi
+    stop_process keystone
 }
 
 # bootstrap_keystone() - Initialize user, role and project
