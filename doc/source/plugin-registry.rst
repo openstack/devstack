@@ -48,9 +48,7 @@ openstack/ironic-inspector               `https://opendev.org/openstack/ironic-i
 openstack/ironic-prometheus-exporter     `https://opendev.org/openstack/ironic-prometheus-exporter <https://opendev.org/openstack/ironic-prometheus-exporter>`__
 openstack/ironic-ui                      `https://opendev.org/openstack/ironic-ui <https://opendev.org/openstack/ironic-ui>`__
 openstack/keystone                       `https://opendev.org/openstack/keystone <https://opendev.org/openstack/keystone>`__
-openstack/kuryr-kubernetes               `https://opendev.org/openstack/kuryr-kubernetes <https://opendev.org/openstack/kuryr-kubernetes>`__
 openstack/kuryr-libnetwork               `https://opendev.org/openstack/kuryr-libnetwork <https://opendev.org/openstack/kuryr-libnetwork>`__
-openstack/kuryr-tempest-plugin           `https://opendev.org/openstack/kuryr-tempest-plugin <https://opendev.org/openstack/kuryr-tempest-plugin>`__
 openstack/magnum                         `https://opendev.org/openstack/magnum <https://opendev.org/openstack/magnum>`__
 openstack/magnum-ui                      `https://opendev.org/openstack/magnum-ui <https://opendev.org/openstack/magnum-ui>`__
 openstack/manila                         `https://opendev.org/openstack/manila <https://opendev.org/openstack/manila>`__
