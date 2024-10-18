@@ -133,7 +133,7 @@ GLANCE_SERVICE_PORT=${GLANCE_SERVICE_PORT:-9292}
 GLANCE_SERVICE_PORT_INT=${GLANCE_SERVICE_PORT_INT:-19292}
 GLANCE_HOSTPORT=${GLANCE_HOSTPORT:-$GLANCE_SERVICE_HOST:$GLANCE_SERVICE_PORT}
 GLANCE_SERVICE_PROTOCOL=${GLANCE_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
-GLANCE_UWSGI=$GLANCE_BIN_DIR/glance-wsgi-api
+GLANCE_UWSGI=glance.wsgi.api:application
 GLANCE_UWSGI_CONF=$GLANCE_CONF_DIR/glance-uwsgi.ini
 
 # Glance default limit for Devstack
@@ -472,12 +472,11 @@ function configure_glance {
     fi
 
     if [[ "$GLANCE_STANDALONE" == False ]]; then
-        write_local_uwsgi_http_config "$GLANCE_UWSGI_CONF" "$GLANCE_UWSGI" "/image"
+        write_local_uwsgi_http_config "$GLANCE_UWSGI_CONF" "$GLANCE_UWSGI" "/image" "glance-api"
         # Grab our uwsgi listen address and use that to fill out our
         # worker_self_reference_url config
         iniset $GLANCE_API_CONF DEFAULT worker_self_reference_url \
-               $(awk '-F= ' '/^http-socket/ { print "http://"$2}' \
-                    $GLANCE_UWSGI_CONF)
+               $(awk '-F= ' '/^http-socket/ { print "http://"$2}' $GLANCE_UWSGI_CONF)
     else
         write_local_proxy_http_config glance "http://$GLANCE_SERVICE_HOST:$GLANCE_SERVICE_PORT_INT" "/image"
         iniset $GLANCE_API_CONF DEFAULT bind_host $GLANCE_SERVICE_LISTEN_ADDRESS

@@ -313,9 +313,7 @@ function write_uwsgi_config {
 # For services using chunked encoding, the only services known to use this
 # currently are Glance and Swift, we need to use an http proxy instead of
 # mod_proxy_uwsgi because the chunked encoding gets dropped. See:
-# https://github.com/unbit/uwsgi/issues/1540 You can workaround this on python2
-# but that involves having apache buffer the request before sending it to
-# uwsgi.
+# https://github.com/unbit/uwsgi/issues/1540.
 function write_local_uwsgi_http_config {
     local conf=$1
     local wsgi=$2
