@@ -656,7 +656,7 @@ esac
 
 #IMAGE_URLS="https://download.cirros-cloud.net/${CIRROS_VERSION}/cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-disk.img" # cirros full disk image
 
-CIRROS_VERSION=${CIRROS_VERSION:-"0.6.2"}
+CIRROS_VERSION=${CIRROS_VERSION:-"0.6.3"}
 CIRROS_ARCH=${CIRROS_ARCH:-$(uname -m)}
 
 # Set default image based on ``VIRT_DRIVER`` and ``LIBVIRT_TYPE``, either of
@@ -673,11 +673,11 @@ if [[ "$DOWNLOAD_DEFAULT_IMAGES" == "True" ]]; then
                 lxc) # the cirros root disk in the uec tarball is empty, so it will not work for lxc
                     DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-rootfs}
                     DEFAULT_IMAGE_FILE_NAME=${DEFAULT_IMAGE_FILE_NAME:-cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-rootfs.img.gz}
-                    IMAGE_URLS+="https://download.cirros-cloud.net/${CIRROS_VERSION}/${DEFAULT_IMAGE_FILE_NAME}";;
+                    IMAGE_URLS+="https://github.com/cirros-dev/cirros/releases/download/${CIRROS_VERSION}/${DEFAULT_IMAGE_FILE_NAME}";;
                 *) # otherwise, use the qcow image
                     DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-disk}
                     DEFAULT_IMAGE_FILE_NAME=${DEFAULT_IMAGE_FILE_NAME:-cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-disk.img}
-                    IMAGE_URLS+="https://download.cirros-cloud.net/${CIRROS_VERSION}/${DEFAULT_IMAGE_FILE_NAME}";;
+                    IMAGE_URLS+="https://github.com/cirros-dev/cirros/releases/download/${CIRROS_VERSION}/${DEFAULT_IMAGE_FILE_NAME}";;
                 esac
             ;;
         vsphere)
@@ -688,7 +688,7 @@ if [[ "$DOWNLOAD_DEFAULT_IMAGES" == "True" ]]; then
             # Use the same as the default for libvirt
             DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-disk}
             DEFAULT_IMAGE_FILE_NAME=${DEFAULT_IMAGE_FILE_NAME:-cirros-${CIRROS_VERSION}-${CIRROS_ARCH}-disk.img}
-            IMAGE_URLS+="http://download.cirros-cloud.net/${CIRROS_VERSION}/${DEFAULT_IMAGE_FILE_NAME}";;
+            IMAGE_URLS+="https://github.com/cirros-dev/cirros/releases/download/${CIRROS_VERSION}/${DEFAULT_IMAGE_FILE_NAME}";;
     esac
     DOWNLOAD_DEFAULT_IMAGES=False
 fi
