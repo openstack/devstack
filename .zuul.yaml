@@ -432,6 +432,8 @@
       - ^releasenotes/.*$
       # Translations
       - ^.*/locale/.*po$
+      # pre-commit config
+      - ^.pre-commit-config.yaml$
 
 - job:
     name: devstack-minimal
