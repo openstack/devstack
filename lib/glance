@@ -104,6 +104,9 @@ GLANCE_ENABLE_QUOTAS=$(trueorfalse True GLANCE_ENABLE_QUOTAS)
 # For more detail: https://docs.openstack.org/oslo.policy/latest/configuration/index.html#oslo_policy.enforce_scope
 GLANCE_ENFORCE_SCOPE=$(trueorfalse True GLANCE_ENFORCE_SCOPE)
 
+# Flag to disable image format inspection on upload
+GLANCE_ENFORCE_IMAGE_FORMAT=$(trueorfalse True GLANCE_ENFORCE_IMAGE_FORMAT)
+
 GLANCE_CONF_DIR=${GLANCE_CONF_DIR:-/etc/glance}
 GLANCE_METADEF_DIR=$GLANCE_CONF_DIR/metadefs
 GLANCE_API_CONF=$GLANCE_CONF_DIR/glance-api.conf
@@ -343,6 +346,7 @@ function configure_glance {
     # Only use these if you know what you are doing!  See OSSN-0065
     iniset $GLANCE_API_CONF DEFAULT show_image_direct_url $GLANCE_SHOW_DIRECT_URL
     iniset $GLANCE_API_CONF DEFAULT show_multiple_locations $GLANCE_SHOW_MULTIPLE_LOCATIONS
+    iniset $GLANCE_API_CONF image_format require_image_format_match $GLANCE_ENFORCE_IMAGE_FORMAT
 
     # Configure glance_store
     configure_glance_store $USE_CINDER_FOR_GLANCE $GLANCE_ENABLE_MULTIPLE_STORES

@@ -368,6 +368,7 @@ function configure_tempest {
         if [[ -n "$image_conversion" ]]; then
             iniset $TEMPEST_CONFIG image-feature-enabled image_conversion True
         fi
+        iniset $TEMPEST_CONFIG image-feature-enabled image_format_enforcement $GLANCE_ENFORCE_IMAGE_FORMAT
     fi
 
     iniset $TEMPEST_CONFIG network project_network_cidr $FIXED_RANGE
