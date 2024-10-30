@@ -15,7 +15,7 @@
 
 echo "Ensuring we don't have crazy refs"
 
-REFS=`grep BRANCH stackrc | grep -v 'TARGET_BRANCH' | grep -v 'NOVNC_BRANCH'`
+REFS=`grep BRANCH stackrc | grep -v 'TARGET_BRANCH' | grep -v 'NOVNC_BRANCH' | grep -v 'TEMPEST_BRANCH'`
 rc=$?
 if [[ $rc -eq 0 ]]; then
     echo "Branch defaults must be one of the *TARGET_BRANCH values. Found:"

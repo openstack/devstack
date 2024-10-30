@@ -756,7 +756,8 @@
         - devstack-multinode
         - devstack-unit-tests
         - openstack-tox-bashate
-        - ironic-tempest-bios-ipmi-direct-tinyipa
+        - ironic-tempest-bios-ipmi-direct-tinyipa:
+            voting: false
         - swift-dsvm-functional
         - grenade:
             # NOTE(elod.illes): needs to be set back as voting, when grenade
@@ -812,7 +813,10 @@
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
-        - ironic-tempest-bios-ipmi-direct-tinyipa
+        # TODO(ykarel): ironic-tempest job is broken in this branch,
+        # so it is set as non-voting in check queue and commented out here
+        # in gate queue until the job gets fixed.
+        # - ironic-tempest-bios-ipmi-direct-tinyipa
         - swift-dsvm-functional
         - grenade:
             # NOTE(elod.illes): needs to be set back as voting, when grenade
