@@ -85,7 +85,7 @@ fi
 # Global toggle for enabling services under mod_wsgi. If this is set to
 # ``True`` all services that use HTTPD + mod_wsgi as the preferred method of
 # deployment, will be deployed under Apache. If this is set to ``False`` all
-# services will rely on the local toggle variable (e.g. ``KEYSTONE_USE_MOD_WSGI``)
+# services will rely on the local toggle variable.
 ENABLE_HTTPD_MOD_WSGI_SERVICES=True
 
 # Set the default Nova APIs to enable
