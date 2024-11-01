@@ -75,14 +75,6 @@ NOVA_CPU_CELL=${NOVA_CPU_CELL:-1}
 
 NOVA_API_PASTE_INI=${NOVA_API_PASTE_INI:-$NOVA_CONF_DIR/api-paste.ini}
 
-# Toggle for deploying Nova-API under a wsgi server. We default to
-# true to use UWSGI, but allow False so that fall back to the
-# eventlet server can happen for grenade runs.
-# NOTE(cdent): We can adjust to remove the eventlet-base api service
-# after pike, at which time we can stop using NOVA_USE_MOD_WSGI to
-# mean "use uwsgi" because we'll be always using uwsgi.
-NOVA_USE_MOD_WSGI=${NOVA_USE_MOD_WSGI:-True}
-
 # We do not need to report service status every 10s for devstack-like
 # deployments. In the gate this generates extra work for the services and the
 # database which are already taxed.
@@ -393,11 +385,7 @@ function create_nova_accounts {
         create_service_user "nova" "admin"
 
         local nova_api_url
-        if [[ "$NOVA_USE_MOD_WSGI" == "False" ]]; then
-            nova_api_url="$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT"
-        else
-            nova_api_url="$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST/compute"
-        fi
+        nova_api_url="$NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST/compute"
 
         get_or_create_service "nova_legacy" "compute_legacy" "Nova Compute Service (Legacy 2.0)"
         get_or_create_endpoint \
@@ -512,11 +500,6 @@ function create_nova_conf {
         else
             iniset $NOVA_CONF oslo_policy enforce_new_defaults False
             iniset $NOVA_CONF oslo_policy enforce_scope False
-        fi
-        if is_service_enabled tls-proxy && [ "$NOVA_USE_MOD_WSGI" == "False" ]; then
-            # Set the service port for a proxy to take the original
-            iniset $NOVA_CONF DEFAULT osapi_compute_listen_port "$NOVA_SERVICE_PORT_INT"
-            iniset $NOVA_CONF DEFAULT osapi_compute_link_prefix $NOVA_SERVICE_PROTOCOL://$NOVA_SERVICE_HOST:$NOVA_SERVICE_PORT
         fi
 
         configure_keystone_authtoken_middleware $NOVA_CONF nova
@@ -998,17 +981,8 @@ function start_nova_api {
     local old_path=$PATH
     export PATH=$NOVA_BIN_DIR:$PATH
 
-    if [ "$NOVA_USE_MOD_WSGI" == "False" ]; then
-        run_process n-api "$NOVA_BIN_DIR/nova-api"
-        nova_url=$service_protocol://$SERVICE_HOST:$service_port
-        # Start proxy if tsl enabled
-        if is_service_enabled tls-proxy; then
-            start_tls_proxy nova '*' $NOVA_SERVICE_PORT $NOVA_SERVICE_HOST $NOVA_SERVICE_PORT_INT
-        fi
-    else
-        run_process "n-api" "$(which uwsgi) --procname-prefix nova-api --ini $NOVA_UWSGI_CONF"
-        nova_url=$service_protocol://$SERVICE_HOST/compute/v2.1/
-    fi
+    run_process "n-api" "$(which uwsgi) --procname-prefix nova-api --ini $NOVA_UWSGI_CONF"
+    nova_url=$service_protocol://$SERVICE_HOST/compute/v2.1/
 
     echo "Waiting for nova-api to start..."
     if ! wait_for_service $SERVICE_TIMEOUT $nova_url; then
@@ -1114,11 +1088,7 @@ function start_nova_rest {
     local compute_cell_conf=$NOVA_CONF
 
     run_process n-sch "$NOVA_BIN_DIR/nova-scheduler --config-file $compute_cell_conf"
-    if [ "$NOVA_USE_MOD_WSGI" == "False" ]; then
-        run_process n-api-meta "$NOVA_BIN_DIR/nova-api-metadata --config-file $compute_cell_conf"
-    else
-        run_process n-api-meta "$(which uwsgi) --procname-prefix nova-api-meta --ini $NOVA_METADATA_UWSGI_CONF"
-    fi
+    run_process n-api-meta "$(which uwsgi) --procname-prefix nova-api-meta --ini $NOVA_METADATA_UWSGI_CONF"
 
     export PATH=$old_path
 }
