@@ -160,10 +160,6 @@ fi
 # Supported backup drivers are in lib/cinder_backups
 CINDER_BACKUP_DRIVER=${CINDER_BACKUP_DRIVER:-swift}
 
-# Toggle for deploying Cinder under a wsgi server. Legacy mod_wsgi
-# reference should be cleaned up to more accurately refer to uwsgi.
-CINDER_USE_MOD_WSGI=${CINDER_USE_MOD_WSGI:-True}
-
 # Source the enabled backends
 if is_service_enabled c-vol && [[ -n "$CINDER_ENABLED_BACKENDS" ]]; then
     for be in ${CINDER_ENABLED_BACKENDS//,/ }; do
@@ -393,14 +389,8 @@ function configure_cinder {
     if is_service_enabled tls-proxy; then
         if [[ "$ENABLED_SERVICES" =~ "c-api" ]]; then
             # Set the service port for a proxy to take the original
-            if [ "$CINDER_USE_MOD_WSGI" == "True" ]; then
-                iniset $CINDER_CONF DEFAULT osapi_volume_listen_port $CINDER_SERVICE_PORT_INT
-                iniset $CINDER_CONF oslo_middleware enable_proxy_headers_parsing True
-            else
-                iniset $CINDER_CONF DEFAULT osapi_volume_listen_port $CINDER_SERVICE_PORT_INT
-                iniset $CINDER_CONF DEFAULT public_endpoint $CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT
-                iniset $CINDER_CONF DEFAULT osapi_volume_base_URL $CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT
-            fi
+            iniset $CINDER_CONF DEFAULT osapi_volume_listen_port $CINDER_SERVICE_PORT_INT
+            iniset $CINDER_CONF oslo_middleware enable_proxy_headers_parsing True
         fi
     fi
 
@@ -411,7 +401,7 @@ function configure_cinder {
     iniset_rpc_backend cinder $CINDER_CONF
 
     # Format logging
-    setup_logging $CINDER_CONF $CINDER_USE_MOD_WSGI
+    setup_logging $CINDER_CONF
 
     if is_service_enabled c-api; then
         write_uwsgi_config "$CINDER_UWSGI_CONF" "$CINDER_UWSGI" "/volume"
@@ -477,11 +467,7 @@ function create_cinder_accounts {
         create_service_user "cinder" $extra_role
 
         local cinder_api_url
-        if [[ "$CINDER_USE_MOD_WSGI" == "False" ]]; then
-            cinder_api_url="$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST:$CINDER_SERVICE_PORT"
-        else
-            cinder_api_url="$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST/volume"
-        fi
+        cinder_api_url="$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST/volume"
 
         # block-storage is the official service type
         get_or_create_service "cinder" "block-storage" "Cinder Volume Service"
@@ -609,10 +595,6 @@ function start_cinder {
     local service_port=$CINDER_SERVICE_PORT
     local service_protocol=$CINDER_SERVICE_PROTOCOL
     local cinder_url
-    if is_service_enabled tls-proxy && [ "$CINDER_USE_MOD_WSGI" == "False" ]; then
-        service_port=$CINDER_SERVICE_PORT_INT
-        service_protocol="http"
-    fi
     if [ "$CINDER_TARGET_HELPER" = "tgtadm" ]; then
         if is_service_enabled c-vol; then
             # Delete any old stack.conf
@@ -629,17 +611,8 @@ function start_cinder {
     fi
 
     if [[ "$ENABLED_SERVICES" =~ "c-api" ]]; then
-        if [ "$CINDER_USE_MOD_WSGI" == "False" ]; then
-            run_process c-api "$CINDER_BIN_DIR/cinder-api --config-file $CINDER_CONF"
-            cinder_url=$service_protocol://$SERVICE_HOST:$service_port
-            # Start proxy if tls enabled
-            if is_service_enabled tls-proxy; then
-                start_tls_proxy cinder '*' $CINDER_SERVICE_PORT $CINDER_SERVICE_HOST $CINDER_SERVICE_PORT_INT
-            fi
-        else
-            run_process "c-api" "$(which uwsgi) --procname-prefix cinder-api --ini $CINDER_UWSGI_CONF"
-            cinder_url=$service_protocol://$SERVICE_HOST/volume/v3
-        fi
+        run_process "c-api" "$(which uwsgi) --procname-prefix cinder-api --ini $CINDER_UWSGI_CONF"
+        cinder_url=$service_protocol://$SERVICE_HOST/volume/v3
     fi
 
     echo "Waiting for Cinder API to start..."
