@@ -41,6 +41,12 @@ else
     GLANCE_BIN_DIR=$(get_python_exec_prefix)
 fi
 
+#S3 for Glance
+GLANCE_USE_S3=$(trueorfalse False GLANCE_USE_S3)
+GLANCE_S3_DEFAULT_BACKEND=${GLANCE_S3_DEFAULT_BACKEND:-s3_fast}
+GLANCE_S3_BUCKET_ON_PUT=$(trueorfalse True GLANCE_S3_BUCKET_ON_PUT)
+GLANCE_S3_BUCKET_NAME=${GLANCE_S3_BUCKET_NAME:-images}
+
 # Cinder for Glance
 USE_CINDER_FOR_GLANCE=$(trueorfalse False USE_CINDER_FOR_GLANCE)
 # GLANCE_CINDER_DEFAULT_BACKEND should be one of the values
@@ -174,6 +180,34 @@ function cleanup_glance {
     remove_uwsgi_config "$GLANCE_UWSGI_CONF" "glance-wsgi-api"
 }
 
+# Set multiple s3 store related config options
+#
+function configure_multiple_s3_stores {
+    enabled_backends="${GLANCE_S3_DEFAULT_BACKEND}:s3"
+
+    iniset $GLANCE_API_CONF DEFAULT enabled_backends ${enabled_backends}
+    iniset $GLANCE_API_CONF glance_store default_backend $GLANCE_S3_DEFAULT_BACKEND
+}
+
+# Set common S3 store options to given config section
+#
+# Arguments:
+# config_section
+#
+function set_common_s3_store_params {
+    local config_section="$1"
+    openstack ec2 credential create
+    iniset $GLANCE_API_CONF $config_section s3_store_host "$SWIFT_SERVICE_PROTOCOL://$SERVICE_HOST:$S3_SERVICE_PORT"
+    iniset $GLANCE_API_CONF $config_section s3_store_access_key "$(openstack ec2 credential list -c Access -f value)"
+    iniset $GLANCE_API_CONF $config_section s3_store_secret_key "$(openstack ec2 credential list -c Secret -f value)"
+    iniset $GLANCE_API_CONF $config_section s3_store_create_bucket_on_put $GLANCE_S3_BUCKET_ON_PUT
+    iniset $GLANCE_API_CONF $config_section s3_store_bucket $GLANCE_S3_BUCKET_NAME
+    iniset $GLANCE_API_CONF $config_section s3_store_bucket_url_format "path"
+    if is_service_enabled tls-proxy; then
+        iniset $GLANCE_API_CONF $config_section s3_store_cacert $SSL_BUNDLE_FILE
+    fi
+}
+
 # Set multiple cinder store related config options for each of the cinder store
 #
 function configure_multiple_cinder_stores {
@@ -258,7 +292,6 @@ function configure_glance_store {
     local be
 
     if [[ "$glance_enable_multiple_stores" == "False" ]]; then
-        # Configure traditional glance_store
         if [[ "$use_cinder_for_glance" == "True" ]]; then
             # set common glance_store parameters
             iniset $GLANCE_API_CONF glance_store stores "cinder,file,http"
@@ -281,7 +314,7 @@ function configure_glance_store {
         if [[ "$use_cinder_for_glance" == "True" ]]; then
             # Configure multiple cinder stores for glance
             configure_multiple_cinder_stores
-        else
+        elif ! is_service_enabled s-proxy && [[ "$GLANCE_USE_S3" == "False" ]]; then
             # Configure multiple file stores for glance
             configure_multiple_file_stores
         fi
@@ -360,8 +393,15 @@ function configure_glance {
 
     # No multiple stores for swift yet
     if [[ "$GLANCE_ENABLE_MULTIPLE_STORES" == "False" ]]; then
-        # Store the images in swift if enabled.
-        if is_service_enabled s-proxy; then
+        # Return if s3api is enabled for glance
+        if [[ "$GLANCE_USE_S3" == "True" ]]; then
+            if is_service_enabled s3api; then
+                # set common glance_store parameters
+                iniset $GLANCE_API_CONF glance_store stores "s3,file,http"
+                iniset $GLANCE_API_CONF glance_store default_store s3
+            fi
+        elif is_service_enabled s-proxy; then
+            # Store the images in swift if enabled.
             iniset $GLANCE_API_CONF glance_store default_store swift
             iniset $GLANCE_API_CONF glance_store swift_store_create_container_on_put True
 
@@ -378,6 +418,12 @@ function configure_glance {
             iniset $GLANCE_SWIFT_STORE_CONF ref1 key $SERVICE_PASSWORD
             iniset $GLANCE_SWIFT_STORE_CONF ref1 auth_address $KEYSTONE_SERVICE_URI/v3
             iniset $GLANCE_SWIFT_STORE_CONF ref1 auth_version 3
+        fi
+    else
+        if [[ "$GLANCE_USE_S3" == "True" ]]; then
+            if is_service_enabled s3api; then
+                configure_multiple_s3_stores
+            fi
         fi
     fi
 
@@ -484,6 +530,13 @@ function create_glance_accounts {
             configure_glance_quotas
         fi
 
+        if is_service_enabled s3api && [[ "$GLANCE_USE_S3" == "True" ]]; then
+            if [[ "$GLANCE_ENABLE_MULTIPLE_STORES" == "False" ]]; then
+                set_common_s3_store_params glance_store
+            else
+                set_common_s3_store_params $GLANCE_S3_DEFAULT_BACKEND
+            fi
+        fi
     fi
 }
 
