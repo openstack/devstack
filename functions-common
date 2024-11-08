@@ -420,7 +420,7 @@ function _ensure_lsb_release {
     elif [[ -x $(command -v zypper 2>/dev/null) ]]; then
         sudo zypper -n install lsb-release
     elif [[ -x $(command -v dnf 2>/dev/null) ]]; then
-        sudo dnf install -y redhat-lsb-core || sudo dnf install -y openeuler-lsb
+        sudo dnf install -y python3-distro || sudo dnf install -y openeuler-lsb
     else
         die $LINENO "Unable to find or auto-install lsb_release"
     fi
@@ -433,9 +433,9 @@ function _ensure_lsb_release {
 #  - os_VENDOR
 #  - os_PACKAGE
 function GetOSVersion {
-    # CentOS Stream 9 and RHEL 9 do not provide lsb_release
+    # CentOS Stream 9/10 and RHEL 9/10 do not provide lsb_release
     source /etc/os-release
-    if [[ "${ID}${VERSION}" == "centos9" ]] || [[ "${ID}${VERSION}" =~ "rhel9" ]]; then
+    if [[ "${ID}${VERSION}" =~ "centos" ]] || [[ "${ID}${VERSION}" =~ "rhel" ]]; then
         os_RELEASE=${VERSION_ID}
         os_CODENAME="n/a"
         os_VENDOR=$(echo $NAME | tr -d '[:space:]')
@@ -482,9 +482,8 @@ function GetDistro {
         "$os_VENDOR" =~ (OracleServer) || \
         "$os_VENDOR" =~ (Rocky) || \
         "$os_VENDOR" =~ (Virtuozzo) ]]; then
-        # Drop the . release as we assume it's compatible
-        # XXX re-evaluate when we get RHEL10
-        DISTRO="rhel${os_RELEASE::1}"
+        MAJOR_VERSION=$(echo $os_RELEASE | cut -d. -f1)
+        DISTRO="rhel${MAJOR_VERSION}"
     elif [[ "$os_VENDOR" =~ (openEuler) ]]; then
         DISTRO="openEuler-$os_RELEASE"
     else

@@ -49,6 +49,16 @@
           - controller
 
 - nodeset:
+    name: devstack-single-node-centos-10-stream
+    nodes:
+      - name: controller
+        label: centos-10-stream
+    groups:
+      - name: tempest
+        nodes:
+          - controller
+
+- nodeset:
     name: devstack-single-node-opensuse-15
     nodes:
       - name: controller

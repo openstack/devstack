@@ -709,22 +709,22 @@ function _start_ovn_services {
     _start_process "$OVS_VSWITCHD_SERVICE"
 
     if is_service_enabled ovn-northd ; then
-        _start_process "$OVN_NORTHD_SERVICE"
+        _start_process "$OVN_NORTHD_SERVICE" && sleep 1
     fi
     if is_service_enabled ovn-controller ; then
-        _start_process "$OVN_CONTROLLER_SERVICE"
+        _start_process "$OVN_CONTROLLER_SERVICE" && sleep 1
     fi
     if is_service_enabled ovn-controller-vtep ; then
-        _start_process "$OVN_CONTROLLER_VTEP_SERVICE"
+        _start_process "$OVN_CONTROLLER_VTEP_SERVICE" && sleep 1
     fi
     if is_service_enabled ovs-vtep ; then
-        _start_process "devstack@ovs-vtep.service"
+        _start_process "devstack@ovs-vtep.service" && sleep 1
     fi
     if is_service_enabled q-ovn-metadata-agent neutron-ovn-metadata-agent ; then
-        _start_process "devstack@q-ovn-metadata-agent.service"
+        _start_process "devstack@q-ovn-metadata-agent.service" && sleep 1
     fi
     if is_service_enabled q-ovn-agent neutron-ovn-agent ; then
-        _start_process "devstack@q-ovn-agent.service"
+        _start_process "devstack@q-ovn-agent.service" && sleep 1
     fi
 }
 

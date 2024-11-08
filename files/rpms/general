@@ -10,9 +10,11 @@ glibc-langpack-en # dist:rhel9
 graphviz # needed only for docs
 httpd
 httpd-devel
-iptables-nft # dist:rhel9
+iptables-nft # dist:rhel9,rhel10
 iptables-services
-java-1.8.0-openjdk-headless
+java-1.8.0-openjdk-headless # not:rhel10
+java-21-openjdk-headless # dist:rhel10
+kernel-modules-extra # dist:rhel10 to be removed once iptables-1.8.11-1.el10 available in repo https://gitlab.com/redhat/centos-stream/rpms/iptables/-/commit/ca25de4fcfe4908cf93a8e57aaff49103f577b21 c.f https://issues.redhat.com/browse/RHEL-65224
 libffi-devel
 libjpeg-turbo-devel # Pillow 3.0.0
 libxml2-devel # lxml
@@ -23,7 +25,8 @@ net-tools
 openssh-server
 openssl
 openssl-devel # to rebuild pyOpenSSL if needed
-pcre-devel # for python-pcre
+pcre-devel # not:rhel10 for python-pcre
+pcre2-devel # dist:rhel10 for python-pcre2
 pkgconfig
 postgresql-devel  # psycopg2
 psmisc
