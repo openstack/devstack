@@ -230,7 +230,7 @@ write_devstack_version
 
 # Warn users who aren't on an explicitly supported distro, but allow them to
 # override check and attempt installation with ``FORCE=yes ./stack``
-SUPPORTED_DISTROS="bookworm|jammy|noble|rhel9"
+SUPPORTED_DISTROS="bookworm|jammy|noble|rhel9|rhel10"
 
 if [[ ! ${DISTRO} =~ $SUPPORTED_DISTROS ]]; then
     echo "WARNING: this script has not been tested on $DISTRO"
@@ -302,16 +302,17 @@ function _install_epel {
 }
 
 function _install_rdo {
-    if [[ $DISTRO == "rhel9" ]]; then
+    if [[ $DISTRO =~ "rhel" ]]; then
+        VERSION=${DISTRO:4:2}
         rdo_release=${TARGET_BRANCH#*/}
         if [[ "$TARGET_BRANCH" == "master" ]]; then
             # adding delorean-deps repo to provide current master rpms
-            sudo wget https://trunk.rdoproject.org/centos9-master/delorean-deps.repo -O /etc/yum.repos.d/delorean-deps.repo
+            sudo wget https://trunk.rdoproject.org/centos${VERSION}-master/delorean-deps.repo -O /etc/yum.repos.d/delorean-deps.repo
         else
             if sudo dnf provides centos-release-openstack-${rdo_release} >/dev/null 2>&1; then
                 sudo dnf -y install centos-release-openstack-${rdo_release}
             else
-                sudo wget https://trunk.rdoproject.org/centos9-${rdo_release}/delorean-deps.repo -O /etc/yum.repos.d/delorean-deps.repo
+                sudo wget https://trunk.rdoproject.org/centos${VERSION}-${rdo_release}/delorean-deps.repo -O /etc/yum.repos.d/delorean-deps.repo
             fi
         fi
     fi
@@ -408,6 +409,11 @@ elif [[ $DISTRO == "rhel9" ]]; then
     if is_package_installed curl-minimal; then
         sudo dnf swap -y curl-minimal curl
     fi
+elif [[ $DISTRO == "rhel10" ]]; then
+    # for CentOS Stream 10 repository
+    sudo dnf config-manager --set-enabled crb
+    # rabbitmq and other packages are provided by RDO repositories.
+    _install_rdo
 elif [[ $DISTRO == "openEuler-22.03" ]]; then
     # There are some problem in openEuler. We should fix it first. Some required
     # package/action runs before fixup script. So we can't fix there.
