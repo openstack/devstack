@@ -71,32 +71,6 @@ function cleanup_placement {
     remove_uwsgi_config "$PLACEMENT_UWSGI_CONF" "placement-api"
 }
 
-# _config_placement_apache_wsgi() - Set WSGI config files
-function _config_placement_apache_wsgi {
-    local placement_api_apache_conf
-    local venv_path=""
-    local placement_bin_dir=""
-    placement_bin_dir=$(get_python_exec_prefix)
-    placement_api_apache_conf=$(apache_site_config_for placement-api)
-
-    if [[ ${USE_VENV} = True ]]; then
-        venv_path="python-path=${PROJECT_VENV["placement"]}/lib/$(python_version)/site-packages"
-        placement_bin_dir=${PROJECT_VENV["placement"]}/bin
-    fi
-
-    sudo cp $FILES/apache-placement-api.template $placement_api_apache_conf
-    sudo sed -e "
-        s|%APACHE_NAME%|$APACHE_NAME|g;
-        s|%PUBLICWSGI%|$placement_bin_dir/placement-api|g;
-        s|%SSLENGINE%|$placement_ssl|g;
-        s|%SSLCERTFILE%|$placement_certfile|g;
-        s|%SSLKEYFILE%|$placement_keyfile|g;
-        s|%USER%|$STACK_USER|g;
-        s|%VIRTUALENV%|$venv_path|g
-        s|%APIWORKERS%|$API_WORKERS|g
-    " -i $placement_api_apache_conf
-}
-
 # create_placement_conf() - Write config
 function create_placement_conf {
     rm -f $PLACEMENT_CONF
@@ -112,11 +86,7 @@ function configure_placement {
     sudo install -d -o $STACK_USER $PLACEMENT_CONF_DIR
     create_placement_conf
 
-    if [[ "$WSGI_MODE" == "uwsgi" ]]; then
-        write_uwsgi_config "$PLACEMENT_UWSGI_CONF" "$PLACEMENT_UWSGI" "/placement"
-    else
-        _config_placement_apache_wsgi
-    fi
+    write_uwsgi_config "$PLACEMENT_UWSGI_CONF" "$PLACEMENT_UWSGI" "/placement"
     if [[ "$PLACEMENT_ENFORCE_SCOPE" == "True" || "$ENFORCE_SCOPE" == "True" ]]; then
         iniset $PLACEMENT_CONF oslo_policy enforce_new_defaults True
         iniset $PLACEMENT_CONF oslo_policy enforce_scope True
@@ -147,7 +117,6 @@ function init_placement {
 
 # install_placement() - Collect source and prepare
 function install_placement {
-    install_apache_wsgi
     # Install the openstackclient placement client plugin for CLI
     pip_install_gr osc-placement
     git_clone $PLACEMENT_REPO $PLACEMENT_DIR $PLACEMENT_BRANCH
@@ -156,12 +125,7 @@ function install_placement {
 
 # start_placement_api() - Start the API processes ahead of other things
 function start_placement_api {
-    if [[ "$WSGI_MODE" == "uwsgi" ]]; then
-        run_process "placement-api" "$(which uwsgi) --procname-prefix placement --ini $PLACEMENT_UWSGI_CONF"
-    else
-        enable_apache_site placement-api
-        restart_apache_server
-    fi
+    run_process "placement-api" "$(which uwsgi) --procname-prefix placement --ini $PLACEMENT_UWSGI_CONF"
 
     echo "Waiting for placement-api to start..."
     if ! wait_for_service $SERVICE_TIMEOUT $PLACEMENT_SERVICE_PROTOCOL://$PLACEMENT_SERVICE_HOST/placement; then
@@ -175,12 +139,7 @@ function start_placement {
 
 # stop_placement() - Disable the api service and stop it.
 function stop_placement {
-    if [[ "$WSGI_MODE" == "uwsgi" ]]; then
-        stop_process "placement-api"
-    else
-        disable_apache_site placement-api
-        restart_apache_server
-    fi
+    stop_process "placement-api"
 }
 
 # Restore xtrace
