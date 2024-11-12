@@ -323,7 +323,7 @@ a file, keep service logs and disable color in the stored files.
 
    [[local|localrc]]
    DEST=/opt/stack/
-   LOGFILE=$LOGDIR/stack.sh.log
+   LOGFILE=$DEST/stack.sh.log
    LOG_COLOR=False
 
 Database Backend
