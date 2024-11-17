@@ -199,13 +199,7 @@ function pip_install {
         echo "Using python $PYTHON3_VERSION to install $package_dir"
     else
         local cmd_pip="python$PYTHON3_VERSION -m pip"
-        # See
-        #  https://github.com/pypa/setuptools/issues/2232
-        #  http://lists.openstack.org/pipermail/openstack-discuss/2020-August/016905.html
-        # this makes setuptools >=50 use the platform distutils.
-        # We only want to do this on global pip installs, not if
-        # installing in a virtualenv
-        local sudo_pip="sudo -H LC_ALL=en_US.UTF-8 SETUPTOOLS_USE_DISTUTILS=stdlib "
+        local sudo_pip="sudo -H LC_ALL=en_US.UTF-8"
         echo "Using python $PYTHON3_VERSION to install $package_dir"
     fi
 
