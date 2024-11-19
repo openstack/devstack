@@ -956,15 +956,6 @@
     #    things, this job is not experimental but often is used to test
     #    things that are not yet production ready or to test what will be
     #    the new default after a deprecation period has ended.
-    # * neutron-fullstack-with-uwsgi: maintained by neutron for fullstack test
-    #    when neutron-api is served by uwsgi, it's in exprimental for testing.
-    #    the next cycle we can remove this  job if things turn out to be
-    #    stable enough.
-    # * neutron-functional-with-uwsgi: maintained by neutron for functional
-    #    test. Next cycle we can remove this one if things turn out to be
-    #    stable engouh with uwsgi.
-    # * neutron-ovn-tempest-with-uwsgi: maintained by neutron for tempest test.
-    #    Next cycle we can remove this if everything run out stable enough.
     # * nova-multi-cell: maintained by nova and now is voting in the
     #    check queue for nova changes but relies on devstack configuration
 
@@ -972,9 +963,6 @@
       jobs:
         - nova-multi-cell
         - nova-next
-        - neutron-fullstack-with-uwsgi
-        - neutron-functional-with-uwsgi
-        - neutron-ovn-tempest-with-uwsgi
         - devstack-plugin-ceph-tempest-py3:
             irrelevant-files:
               - ^.*\.rst$
