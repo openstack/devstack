@@ -939,14 +939,6 @@
         - openstack-tox-bashate
         - ironic-tempest-bios-ipmi-direct-tinyipa
         - swift-dsvm-functional
-        - grenade:
-            irrelevant-files:
-              - ^.*\.rst$
-              - ^doc/.*$
-        - neutron-ovs-grenade-multinode:
-            irrelevant-files:
-              - ^.*\.rst$
-              - ^doc/.*$
         - neutron-ovn-tempest-ovs-release:
             voting: false
             irrelevant-files:
@@ -979,10 +971,6 @@
         - devstack-multinode
         - devstack-unit-tests
         - openstack-tox-bashate
-        - neutron-ovs-grenade-multinode:
-            irrelevant-files:
-              - ^.*\.rst$
-              - ^doc/.*$
         - ironic-tempest-bios-ipmi-direct-tinyipa
         - swift-dsvm-functional
         - grenade:
