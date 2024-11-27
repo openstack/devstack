@@ -31,6 +31,7 @@ openstack/ceilometer                     `https://opendev.org/openstack/ceilomet
 openstack/cloudkitty                     `https://opendev.org/openstack/cloudkitty <https://opendev.org/openstack/cloudkitty>`__
 openstack/cyborg                         `https://opendev.org/openstack/cyborg <https://opendev.org/openstack/cyborg>`__
 openstack/designate                      `https://opendev.org/openstack/designate <https://opendev.org/openstack/designate>`__
+openstack/designate-tempest-plugin       `https://opendev.org/openstack/designate-tempest-plugin <https://opendev.org/openstack/designate-tempest-plugin>`__
 openstack/devstack-plugin-amqp1          `https://opendev.org/openstack/devstack-plugin-amqp1 <https://opendev.org/openstack/devstack-plugin-amqp1>`__
 openstack/devstack-plugin-ceph           `https://opendev.org/openstack/devstack-plugin-ceph <https://opendev.org/openstack/devstack-plugin-ceph>`__
 openstack/devstack-plugin-container      `https://opendev.org/openstack/devstack-plugin-container <https://opendev.org/openstack/devstack-plugin-container>`__
