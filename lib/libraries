@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# lib/oslo
+# lib/libraries
 #
 # Functions to install libraries from git
 #
