@@ -42,9 +42,6 @@ function setup_devstack_virtualenv {
         # available on pypi.
         $PYTHON -m venv --system-site-packages "${DEVSTACK_VENV}"
         pip_install -U pip setuptools[core]
-        #NOTE(rpittau): workaround for simplejson removal in osc
-        #  https://review.opendev.org/c/openstack/python-openstackclient/+/920001
-        pip_install -U simplejson
     fi
     if [[ ":$PATH:" != *":$DEVSTACK_VENV/bin:"* ]] ; then
         export PATH="$DEVSTACK_VENV/bin:$PATH"
