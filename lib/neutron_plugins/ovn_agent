@@ -704,6 +704,25 @@ function _start_ovs {
     fi
 }
 
+function _wait_for_ovn_and_set_custom_config {
+    # Wait for the service to be ready
+    # Check for socket and db files for both OVN NB and SB
+    wait_for_sock_file $OVN_RUNDIR/ovnnb_db.sock
+    wait_for_sock_file $OVN_RUNDIR/ovnsb_db.sock
+    wait_for_db_file $OVN_DATADIR/ovnnb_db.db
+    wait_for_db_file $OVN_DATADIR/ovnsb_db.db
+
+    if is_service_enabled tls-proxy; then
+        sudo ovn-nbctl --db=unix:$OVN_RUNDIR/ovnnb_db.sock set-ssl $INT_CA_DIR/private/$DEVSTACK_CERT_NAME.key $INT_CA_DIR/$DEVSTACK_CERT_NAME.crt $INT_CA_DIR/ca-chain.pem
+        sudo ovn-sbctl --db=unix:$OVN_RUNDIR/ovnsb_db.sock set-ssl $INT_CA_DIR/private/$DEVSTACK_CERT_NAME.key $INT_CA_DIR/$DEVSTACK_CERT_NAME.crt $INT_CA_DIR/ca-chain.pem
+    fi
+
+    sudo ovn-nbctl --db=unix:$OVN_RUNDIR/ovnnb_db.sock set-connection p${OVN_PROTO}:6641:$SERVICE_LISTEN_ADDRESS -- set connection . inactivity_probe=60000
+    sudo ovn-sbctl --db=unix:$OVN_RUNDIR/ovnsb_db.sock set-connection p${OVN_PROTO}:6642:$SERVICE_LISTEN_ADDRESS -- set connection . inactivity_probe=60000
+    sudo ovs-appctl -t $OVN_RUNDIR/ovnnb_db.ctl vlog/set console:off syslog:$OVN_DBS_LOG_LEVEL file:$OVN_DBS_LOG_LEVEL
+    sudo ovs-appctl -t $OVN_RUNDIR/ovnsb_db.ctl vlog/set console:off syslog:$OVN_DBS_LOG_LEVEL file:$OVN_DBS_LOG_LEVEL
+}
+
 # start_ovn() - Start running processes, including screen
 function start_ovn {
     echo "Starting OVN"
@@ -725,21 +744,8 @@ function start_ovn {
             _start_process "$OVN_NORTHD_SERVICE"
         fi
 
-        # Wait for the service to be ready
-        # Check for socket and db files for both OVN NB and SB
-        wait_for_sock_file $OVN_RUNDIR/ovnnb_db.sock
-        wait_for_sock_file $OVN_RUNDIR/ovnsb_db.sock
-        wait_for_db_file $OVN_DATADIR/ovnnb_db.db
-        wait_for_db_file $OVN_DATADIR/ovnsb_db.db
+        _wait_for_ovn_and_set_custom_config
 
-        if is_service_enabled tls-proxy; then
-            sudo ovn-nbctl --db=unix:$OVN_RUNDIR/ovnnb_db.sock set-ssl $INT_CA_DIR/private/$DEVSTACK_CERT_NAME.key $INT_CA_DIR/$DEVSTACK_CERT_NAME.crt $INT_CA_DIR/ca-chain.pem
-            sudo ovn-sbctl --db=unix:$OVN_RUNDIR/ovnsb_db.sock set-ssl $INT_CA_DIR/private/$DEVSTACK_CERT_NAME.key $INT_CA_DIR/$DEVSTACK_CERT_NAME.crt $INT_CA_DIR/ca-chain.pem
-        fi
-        sudo ovn-nbctl --db=unix:$OVN_RUNDIR/ovnnb_db.sock set-connection p${OVN_PROTO}:6641:$SERVICE_LISTEN_ADDRESS -- set connection . inactivity_probe=60000
-        sudo ovn-sbctl --db=unix:$OVN_RUNDIR/ovnsb_db.sock set-connection p${OVN_PROTO}:6642:$SERVICE_LISTEN_ADDRESS -- set connection . inactivity_probe=60000
-        sudo ovs-appctl -t $OVN_RUNDIR/ovnnb_db.ctl vlog/set console:off syslog:$OVN_DBS_LOG_LEVEL file:$OVN_DBS_LOG_LEVEL
-        sudo ovs-appctl -t $OVN_RUNDIR/ovnsb_db.ctl vlog/set console:off syslog:$OVN_DBS_LOG_LEVEL file:$OVN_DBS_LOG_LEVEL
     fi
 
     if is_service_enabled ovn-controller ; then
