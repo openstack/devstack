@@ -293,6 +293,8 @@ function write_uwsgi_config {
     iniset "$conf" uwsgi add-header "Connection: close"
     # This ensures that file descriptors aren't shared between processes.
     iniset "$conf" uwsgi lazy-apps true
+    # Starting time of the WSGi server
+    iniset "$conf" uwsgi start-time %t
 
     # If we said bind directly to http, then do that and don't start the apache proxy
     if [[ -n "$http" ]]; then
@@ -367,6 +369,8 @@ function write_local_uwsgi_http_config {
     iniset "$conf" uwsgi http-keepalive false
     # Increase socket timeout for slow chunked uploads
     iniset "$conf" uwsgi socket-timeout 30
+    # Starting time of the WSGi server
+    iniset "$conf" uwsgi start-time %t
 
     enable_apache_mod proxy
     enable_apache_mod proxy_http
