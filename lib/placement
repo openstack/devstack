@@ -37,7 +37,7 @@ if [[ ${USE_VENV} = True ]]; then
 else
     PLACEMENT_BIN_DIR=$(get_python_exec_prefix)
 fi
-PLACEMENT_UWSGI=$PLACEMENT_BIN_DIR/placement-api
+PLACEMENT_UWSGI=placement.wsgi.api:application
 PLACEMENT_UWSGI_CONF=$PLACEMENT_CONF_DIR/placement-uwsgi.ini
 
 if is_service_enabled tls-proxy; then
@@ -86,7 +86,7 @@ function configure_placement {
     sudo install -d -o $STACK_USER $PLACEMENT_CONF_DIR
     create_placement_conf
 
-    write_uwsgi_config "$PLACEMENT_UWSGI_CONF" "$PLACEMENT_UWSGI" "/placement"
+    write_uwsgi_config "$PLACEMENT_UWSGI_CONF" "$PLACEMENT_UWSGI" "/placement" "" "placement-api"
     if [[ "$PLACEMENT_ENFORCE_SCOPE" == "True" || "$ENFORCE_SCOPE" == "True" ]]; then
         iniset $PLACEMENT_CONF oslo_policy enforce_new_defaults True
         iniset $PLACEMENT_CONF oslo_policy enforce_scope True
