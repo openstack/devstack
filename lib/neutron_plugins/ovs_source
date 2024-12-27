@@ -20,7 +20,7 @@ Q_BUILD_OVS_FROM_GIT=$(trueorfalse False Q_BUILD_OVS_FROM_GIT)
 OVS_REPO=${OVS_REPO:-https://github.com/openvswitch/ovs.git}
 OVS_REPO_NAME=$(basename ${OVS_REPO} | cut -f1 -d'.')
 OVS_REPO_NAME=${OVS_REPO_NAME:-ovs}
-OVS_BRANCH=${OVS_BRANCH:-0047ca3a0290f1ef954f2c76b31477cf4b9755f5}
+OVS_BRANCH=${OVS_BRANCH:-branch-3.3}
 
 # Functions
 
