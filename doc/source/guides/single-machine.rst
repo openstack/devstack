@@ -62,7 +62,7 @@ to have sudo privileges:
 
 .. code-block:: console
 
-    $ apt-get install sudo -y || yum install -y sudo
+    $ apt-get install sudo -y || dnf install -y sudo
     $ echo "stack ALL=(ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/stack
 
 .. note:: On some systems you may need to use ``sudo visudo``.
@@ -81,7 +81,7 @@ We'll grab the latest version of DevStack via https:
 
 .. code-block:: console
 
-    $ sudo apt-get install git -y || sudo yum install -y git
+    $ sudo apt-get install git -y || sudo dnf install -y git
     $ git clone https://opendev.org/openstack/devstack
     $ cd devstack
 
