@@ -137,7 +137,7 @@ GLANCE_UWSGI=$GLANCE_BIN_DIR/glance-wsgi-api
 GLANCE_UWSGI_CONF=$GLANCE_CONF_DIR/glance-uwsgi.ini
 
 # Glance default limit for Devstack
-GLANCE_LIMIT_IMAGE_SIZE_TOTAL=${GLANCE_LIMIT_IMAGE_SIZE_TOTAL:-1000}
+GLANCE_LIMIT_IMAGE_SIZE_TOTAL=${GLANCE_LIMIT_IMAGE_SIZE_TOTAL:-2000}
 
 # If wsgi mode is uwsgi run glance under uwsgi, else default to eventlet
 # TODO(mtreinish): Remove the eventlet path here and in all the similar
