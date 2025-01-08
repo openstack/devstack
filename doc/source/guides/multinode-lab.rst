@@ -210,6 +210,48 @@ only needs to be performed for subnodes.
 
 .. _Cells v2: https://docs.openstack.org/nova/latest/user/cells.html
 
+Configure Tempest Node to run the Tempest tests
+-----------------------------------------------
+
+If there is a need to execute Tempest tests against different Cluster
+Controller node then it can be done by re-using the ``local.conf`` file from
+the Cluster Controller node but with not enabled Controller services in
+``ENABLED_SERVICES`` variable. This variable needs to contain only ``tempest``
+as a configured service. Then variable ``SERVICES_FOR_TEMPEST`` must be
+configured to contain those services that were enabled on the Cluster
+Controller node in the ``ENABLED_SERVICES`` variable. For example the
+``local.conf`` file could look as follows:
+
+::
+
+    [[local|localrc]]
+    HOST_IP=192.168.42.12 # change this per compute node
+    FIXED_RANGE=10.4.128.0/20
+    FLOATING_RANGE=192.168.42.128/25
+    LOGFILE=/opt/stack/logs/stack.sh.log
+    ADMIN_PASSWORD=labstack
+    DATABASE_PASSWORD=supersecret
+    RABBIT_PASSWORD=supersecret
+    SERVICE_PASSWORD=supersecret
+    DATABASE_TYPE=mysql
+    SERVICE_HOST=192.168.42.11
+    MYSQL_HOST=$SERVICE_HOST
+    RABBIT_HOST=$SERVICE_HOST
+    GLANCE_HOSTPORT=$SERVICE_HOST:9292
+    NOVA_VNC_ENABLED=True
+    NOVNCPROXY_URL="http://$SERVICE_HOST:6080/vnc_lite.html"
+    VNCSERVER_LISTEN=$HOST_IP
+    VNCSERVER_PROXYCLIENT_ADDRESS=$VNCSERVER_LISTEN
+    ENABLED_SERVICES=tempest
+    SERVICES_FOR_TEMPEST=keystone,nova,neutron,glance
+
+Then just execute the devstack:
+
+::
+
+    ./stack.sh
+
+
 Cleaning Up After DevStack
 --------------------------
 
