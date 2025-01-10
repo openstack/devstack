@@ -509,6 +509,10 @@ function create_nova_conf {
         configure_cinder_access
     fi
 
+    if is_service_enabled manila; then
+        configure_manila_access
+    fi
+
     if [ -n "$NOVA_STATE_PATH" ]; then
         iniset $NOVA_CONF DEFAULT state_path "$NOVA_STATE_PATH"
         iniset $NOVA_CONF oslo_concurrency lock_path "$NOVA_STATE_PATH"
@@ -652,6 +656,18 @@ function configure_cinder_access {
         CINDER_SERVICE_PORT=${CINDER_SERVICE_PORT:-8776}
         iniset $NOVA_CONF cinder cafile $SSL_BUNDLE_FILE
     fi
+}
+
+# Configure access to manila.
+function configure_manila_access {
+    iniset $NOVA_CONF manila os_region_name "$REGION_NAME"
+    iniset $NOVA_CONF manila auth_type "password"
+    iniset $NOVA_CONF manila auth_url "$KEYSTONE_SERVICE_URI"
+    iniset $NOVA_CONF manila username nova
+    iniset $NOVA_CONF manila password "$SERVICE_PASSWORD"
+    iniset $NOVA_CONF manila user_domain_name "$SERVICE_DOMAIN_NAME"
+    iniset $NOVA_CONF manila project_name "$SERVICE_TENANT_NAME"
+    iniset $NOVA_CONF manila project_domain_name "$SERVICE_DOMAIN_NAME"
 }
 
 function configure_console_compute {
