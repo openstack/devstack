@@ -745,8 +745,8 @@
     vars:
       devstack_localrc:
         OVN_BUILD_FROM_SOURCE: True
-        OVN_BRANCH: "v21.06.0"
-        OVS_BRANCH: "a4b04276ab5934d087669ff2d191a23931335c87"
+        OVN_BRANCH: "branch-24.03"
+        OVS_BRANCH: "branch-3.3"
         OVS_SYSCONFDIR: "/usr/local/etc/openvswitch"
 
 - job:
