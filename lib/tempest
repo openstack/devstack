@@ -197,6 +197,8 @@ function configure_tempest {
         pip_install_gr testrepository
     fi
 
+    local ENABLED_SERVICES=${SERVICES_FOR_TEMPEST:=$ENABLED_SERVICES}
+
     local image_lines
     local images
     local num_images
