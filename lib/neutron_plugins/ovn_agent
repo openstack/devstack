@@ -704,30 +704,6 @@ function _start_ovs {
     fi
 }
 
-function _start_ovn_services {
-    _start_process "$OVSDB_SERVER_SERVICE"
-    _start_process "$OVS_VSWITCHD_SERVICE"
-
-    if is_service_enabled ovn-northd ; then
-        _start_process "$OVN_NORTHD_SERVICE"
-    fi
-    if is_service_enabled ovn-controller ; then
-        _start_process "$OVN_CONTROLLER_SERVICE"
-    fi
-    if is_service_enabled ovn-controller-vtep ; then
-        _start_process "$OVN_CONTROLLER_VTEP_SERVICE"
-    fi
-    if is_service_enabled ovs-vtep ; then
-        _start_process "devstack@ovs-vtep.service"
-    fi
-    if is_service_enabled q-ovn-metadata-agent neutron-ovn-metadata-agent ; then
-        _start_process "devstack@q-ovn-metadata-agent.service"
-    fi
-    if is_service_enabled q-ovn-agent neutron-ovn-agent ; then
-        _start_process "devstack@q-ovn-agent.service"
-    fi
-}
-
 # start_ovn() - Start running processes, including screen
 function start_ovn {
     echo "Starting OVN"
@@ -797,8 +773,6 @@ function start_ovn {
         # Format logging
         setup_logging $OVN_AGENT_CONF
     fi
-
-    _start_ovn_services
 }
 
 function _stop_ovs_dp {
