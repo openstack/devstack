@@ -90,6 +90,7 @@ function merge_config_file {
     local real_configfile
     real_configfile=$(eval echo $configfile)
     if [ ! -f $real_configfile ]; then
+        mkdir -p $(dirname $real_configfile) || die $LINENO "could not create the directory of $real_configfile ($configfile)"
         touch $real_configfile || die $LINENO "could not create config file $real_configfile ($configfile)"
     fi
 
