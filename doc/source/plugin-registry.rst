@@ -38,6 +38,7 @@ openstack/devstack-plugin-container      `https://opendev.org/openstack/devstack
 openstack/devstack-plugin-kafka          `https://opendev.org/openstack/devstack-plugin-kafka <https://opendev.org/openstack/devstack-plugin-kafka>`__
 openstack/devstack-plugin-nfs            `https://opendev.org/openstack/devstack-plugin-nfs <https://opendev.org/openstack/devstack-plugin-nfs>`__
 openstack/devstack-plugin-open-cas       `https://opendev.org/openstack/devstack-plugin-open-cas <https://opendev.org/openstack/devstack-plugin-open-cas>`__
+openstack/devstack-plugin-prometheus     `https://opendev.org/openstack/devstack-plugin-prometheus <https://opendev.org/openstack/devstack-plugin-prometheus>`__
 openstack/freezer                        `https://opendev.org/openstack/freezer <https://opendev.org/openstack/freezer>`__
 openstack/freezer-api                    `https://opendev.org/openstack/freezer-api <https://opendev.org/openstack/freezer-api>`__
 openstack/freezer-tempest-plugin         `https://opendev.org/openstack/freezer-tempest-plugin <https://opendev.org/openstack/freezer-tempest-plugin>`__
@@ -169,7 +170,6 @@ x/rsd-virt-for-nova                      `https://opendev.org/x/rsd-virt-for-nov
 x/scalpels                               `https://opendev.org/x/scalpels <https://opendev.org/x/scalpels>`__
 x/slogging                               `https://opendev.org/x/slogging <https://opendev.org/x/slogging>`__
 x/stackube                               `https://opendev.org/x/stackube <https://opendev.org/x/stackube>`__
-x/tap-as-a-service-dashboard             `https://opendev.org/x/tap-as-a-service-dashboard <https://opendev.org/x/tap-as-a-service-dashboard>`__
 x/tatu                                   `https://opendev.org/x/tatu <https://opendev.org/x/tatu>`__
 x/trio2o                                 `https://opendev.org/x/trio2o <https://opendev.org/x/trio2o>`__
 x/valet                                  `https://opendev.org/x/valet <https://opendev.org/x/valet>`__
