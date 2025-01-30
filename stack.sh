@@ -1304,10 +1304,7 @@ if is_service_enabled ovn-controller ovn-controller-vtep; then
     start_ovn_services
 fi
 
-if is_service_enabled neutron-api; then
-    echo_summary "Starting Neutron"
-    start_neutron_api
-elif is_service_enabled q-svc; then
+if is_service_enabled q-svc neutron-api; then
     echo_summary "Starting Neutron"
     configure_neutron_after_post_config
     start_neutron_service_and_check
@@ -1324,7 +1321,7 @@ if is_service_enabled neutron; then
     start_neutron
 fi
 # Once neutron agents are started setup initial network elements
-if is_service_enabled q-svc && [[ "$NEUTRON_CREATE_INITIAL_NETWORKS" == "True" ]]; then
+if is_service_enabled q-svc neutron-api && [[ "$NEUTRON_CREATE_INITIAL_NETWORKS" == "True" ]]; then
     echo_summary "Creating initial neutron network elements"
     # Here's where plugins can wire up their own networks instead
     # of the code in lib/neutron_plugins/services/l3
