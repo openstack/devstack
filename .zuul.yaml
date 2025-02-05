@@ -311,6 +311,36 @@
           - compute1
           - compute2
 
+- nodeset:
+    name: devstack-two-node-debian-bookworm
+    nodes:
+      - name: controller
+        label: debian-bookworm
+      - name: compute1
+        label: debian-bookworm
+    groups:
+      # Node where tests are executed and test results collected
+      - name: tempest
+        nodes:
+          - controller
+      # Nodes running the compute service
+      - name: compute
+        nodes:
+          - controller
+          - compute1
+      # Nodes that are not the controller
+      - name: subnode
+        nodes:
+          - compute1
+      # Switch node for multinode networking setup
+      - name: switch
+        nodes:
+          - controller
+      # Peer nodes for multinode networking setup
+      - name: peers
+        nodes:
+          - compute1
+
 - job:
     name: devstack-base
     parent: openstack-multinode-fips

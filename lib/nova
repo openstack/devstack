@@ -127,6 +127,9 @@ QEMU_CONF=/etc/libvirt/qemu.conf
 # ``NOVA_VNC_ENABLED`` can be used to forcibly enable VNC configuration.
 # In multi-node setups allows compute hosts to not run ``n-novnc``.
 NOVA_VNC_ENABLED=$(trueorfalse False NOVA_VNC_ENABLED)
+# same as ``NOVA_VNC_ENABLED`` but for Spice and serial console respectively.
+NOVA_SPICE_ENABLED=$(trueorfalse False NOVA_SPICE_ENABLED)
+NOVA_SERIAL_ENABLED=$(trueorfalse False NOVA_SERIAL_ENABLED)
 
 # Get hypervisor configuration
 # ----------------------------
@@ -464,7 +467,7 @@ function create_nova_conf {
     # only setup database connections and cache backend if there are services
     # that require them running on the host. The ensures that n-cpu doesn't
     # leak a need to use the db in a multinode scenario.
-    if is_service_enabled n-api n-cond n-sched; then
+    if is_service_enabled n-api n-cond n-sched n-spice n-novnc n-sproxy; then
         # If we're in multi-tier cells mode, we want our control services pointing
         # at cell0 instead of cell1 to ensure isolation. If not, we point everything
         # at the main database like normal.
@@ -716,7 +719,7 @@ function configure_console_compute {
         iniset $NOVA_CPU_CONF vnc enabled false
     fi
 
-    if is_service_enabled n-spice; then
+    if is_service_enabled n-spice || [ "$NOVA_SPICE_ENABLED" != False ]; then
         # Address on which instance spiceservers will listen on compute hosts.
         # For multi-host, this should be the management ip of the compute host.
         SPICESERVER_PROXYCLIENT_ADDRESS=${SPICESERVER_PROXYCLIENT_ADDRESS:-$default_proxyclient_addr}
@@ -726,7 +729,7 @@ function configure_console_compute {
         iniset $NOVA_CPU_CONF spice server_proxyclient_address "$SPICESERVER_PROXYCLIENT_ADDRESS"
     fi
 
-    if is_service_enabled n-sproxy; then
+    if is_service_enabled n-sproxy || [ "$NOVA_SERIAL_ENABLED" != False ]; then
         iniset $NOVA_CPU_CONF serial_console enabled True
         iniset $NOVA_CPU_CONF serial_console base_url "ws://$SERVICE_HOST:$((6082 + offset))/"
     fi

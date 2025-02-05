@@ -514,8 +514,14 @@ function configure_tempest {
         iniset $TEMPEST_CONFIG compute-feature-enabled volume_multiattach True
     fi
 
-    if is_service_enabled n-novnc; then
+    if is_service_enabled n-novnc || [ "$NOVA_VNC_ENABLED" != False ]; then
         iniset $TEMPEST_CONFIG compute-feature-enabled vnc_console True
+    fi
+    if is_service_enabled n-spice || [ "$NOVA_SPICE_ENABLED" != False ]; then
+        iniset $TEMPEST_CONFIG compute-feature-enabled spice_console True
+    fi
+    if is_service_enabled n-sproxy || [ "$NOVA_SERIAL_ENABLED" != False ]; then
+        iniset $TEMPEST_CONFIG compute-feature-enabled serial_console True
     fi
 
     # Network
