@@ -241,8 +241,7 @@ TENANT_VLAN_RANGE=${TENANT_VLAN_RANGE:-}
 # If using VLANs for tenant networks, or if using flat or VLAN
 # provider networks, set in ``localrc`` to the name of the physical
 # network, and also configure ``OVS_PHYSICAL_BRIDGE`` for the
-# openvswitch agent or ``LB_PHYSICAL_INTERFACE`` for the linuxbridge
-# agent, as described below.
+# openvswitch agent, as described below.
 #
 # Example: ``PHYSICAL_NETWORK=default``
 PHYSICAL_NETWORK=${PHYSICAL_NETWORK:-public}
@@ -256,18 +255,6 @@ PHYSICAL_NETWORK=${PHYSICAL_NETWORK:-public}
 #
 # Example: ``OVS_PHYSICAL_BRIDGE=br-eth1``
 OVS_PHYSICAL_BRIDGE=${OVS_PHYSICAL_BRIDGE:-br-ex}
-
-# With the linuxbridge agent, if using VLANs for tenant networks,
-# or if using flat or VLAN provider networks, set in ``localrc`` to
-# the name of the network interface to use for the physical
-# network.
-#
-# Example: ``LB_PHYSICAL_INTERFACE=eth1``
-if [[ $Q_AGENT == "linuxbridge" && -z ${LB_PHYSICAL_INTERFACE} ]]; then
-    default_route_dev=$( (ip route; ip -6 route) | grep ^default | head -n 1 | awk '{print $5}')
-    die_if_not_set $LINENO default_route_dev "Failure retrieving default route device"
-    LB_PHYSICAL_INTERFACE=$default_route_dev
-fi
 
 # With the openvswitch plugin, set to True in ``localrc`` to enable
 # provider GRE tunnels when ``ENABLE_TENANT_TUNNELS`` is False.
@@ -887,10 +874,6 @@ function cleanup_neutron {
 
     if is_neutron_ovs_base_plugin; then
         neutron_ovs_base_cleanup
-    fi
-
-    if [[ $Q_AGENT == "linuxbridge" ]]; then
-        neutron_lb_cleanup
     fi
 
     # delete all namespaces created by neutron
