@@ -73,6 +73,7 @@ source $TOP_DIR/lib/swift
 source $TOP_DIR/lib/neutron
 source $TOP_DIR/lib/ldap
 source $TOP_DIR/lib/dstat
+source $TOP_DIR/lib/atop
 source $TOP_DIR/lib/etcd3
 
 # Extras Source
@@ -173,6 +174,10 @@ if is_service_enabled openstack-cli-server; then
 fi
 
 stop_dstat
+
+if is_service_enabled atop; then
+    stop_atop
+fi
 
 # NOTE: Cinder automatically installs the lvm2 package, independently of the
 # enabled backends. So if Cinder is enabled, and installed successfully we are

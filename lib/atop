@@ -1,0 +1,48 @@
+#!/bin/bash
+#
+# lib/atop
+# Functions to start and stop atop
+
+# Dependencies:
+#
+# - ``functions`` file
+
+# ``stack.sh`` calls the entry points in this order:
+#
+# - configure_atop
+# - install_atop
+# - start_atop
+# - stop_atop
+
+# Save trace setting
+_XTRACE_ATOP=$(set +o | grep xtrace)
+set +o xtrace
+
+function configure_atop {
+        cat <<EOF | sudo tee /etc/default/atop >/dev/null
+# /etc/default/atop
+# see man atoprc for more possibilities to configure atop execution
+
+LOGOPTS="-R"
+LOGINTERVAL=${ATOP_LOGINTERVAL:-"30"}
+LOGGENERATIONS=${ATOP_LOGGENERATIONS:-"1"}
+LOGPATH=$LOGDIR/atop
+EOF
+}
+
+function install_atop {
+    install_package atop
+}
+
+# start_() - Start running processes
+function start_atop {
+    start_service atop
+}
+
+# stop_atop() stop atop process
+function stop_atop {
+    stop_service atop
+}
+
+# Restore xtrace
+$_XTRACE_ATOP

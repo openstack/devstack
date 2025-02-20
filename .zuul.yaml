@@ -387,6 +387,7 @@
         '{{ devstack_conf_dir }}/.localrc.auto': logs
         '{{ devstack_conf_dir }}/.stackenv': logs
         '{{ devstack_log_dir }}/dstat-csv.log': logs
+        '{{ devstack_log_dir }}/atop': logs
         '{{ devstack_log_dir }}/devstacklog.txt': logs
         '{{ devstack_log_dir }}/devstacklog.txt.summary': logs
         '{{ devstack_log_dir }}/tcpdump.pcap': logs
