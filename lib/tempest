@@ -586,6 +586,7 @@ function configure_tempest {
         TEMPEST_VOLUME_REVERT_TO_SNAPSHOT=${TEMPEST_VOLUME_REVERT_TO_SNAPSHOT:-True}
     fi
     iniset $TEMPEST_CONFIG volume-feature-enabled volume_revert $(trueorfalse False TEMPEST_VOLUME_REVERT_TO_SNAPSHOT)
+    iniset $TEMPEST_CONFIG volume-feature-enabled extend_attached_encrypted_volume ${TEMPEST_EXTEND_ATTACHED_ENCRYPTED_VOLUME:-False}
     if [[ "$CINDER_BACKUP_DRIVER" == *"swift"* ]]; then
         iniset $TEMPEST_CONFIG volume backup_driver swift
     fi
