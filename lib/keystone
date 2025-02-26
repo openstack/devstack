@@ -592,7 +592,7 @@ function bootstrap_keystone {
 # create_ldap_domain() - Create domain file and initialize domain with a user
 function create_ldap_domain {
     # Creates domain Users
-    openstack --os-identity-api-version=3 domain create --description "LDAP domain" Users
+    openstack domain create --description "LDAP domain" Users
 
     # Create domain file inside etc/keystone/domains
     KEYSTONE_LDAP_DOMAIN_FILE=$KEYSTONE_CONF_DIR/domains/keystone.Users.conf

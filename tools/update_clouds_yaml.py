@@ -14,14 +14,14 @@
 
 # Update the clouds.yaml file.
 
-
 import argparse
 import os.path
+import sys
 
 import yaml
 
 
-class UpdateCloudsYaml(object):
+class UpdateCloudsYaml:
     def __init__(self, args):
         if args.file:
             self._clouds_path = args.file
@@ -32,6 +32,14 @@ class UpdateCloudsYaml(object):
             self._create_directory = True
         self._clouds = {}
 
+        if args.os_identity_api_version != '3':
+            print("ERROR: Only identity API v3 is supported")
+            sys.exit(1)
+
+        if args.os_volume_api_version != '3':
+            print("ERROR: Only block storage API v3 is supported")
+            sys.exit(1)
+
         self._cloud = args.os_cloud
         self._cloud_data = {
             'region_name': args.os_region_name,
@@ -40,20 +48,23 @@ class UpdateCloudsYaml(object):
             'auth': {
                 'auth_url': args.os_auth_url,
                 'username': args.os_username,
+                'user_domain_id': 'default',
                 'password': args.os_password,
             },
         }
+
         if args.os_project_name and args.os_system_scope:
             print(
-                "WARNING: os_project_name and os_system_scope were both"
-                " given. os_system_scope will take priority.")
-        if args.os_project_name and not args.os_system_scope:
-            self._cloud_data['auth']['project_name'] = args.os_project_name
-        if args.os_identity_api_version == '3' and not args.os_system_scope:
-            self._cloud_data['auth']['user_domain_id'] = 'default'
-            self._cloud_data['auth']['project_domain_id'] = 'default'
-        if args.os_system_scope:
+                "WARNING: os_project_name and os_system_scope were both "
+                "given. os_system_scope will take priority."
+            )
+
+        if args.os_system_scope:  # system-scoped
             self._cloud_data['auth']['system_scope'] = args.os_system_scope
+        elif args.os_project_name:  # project-scoped
+            self._cloud_data['auth']['project_name'] = args.os_project_name
+            self._cloud_data['auth']['project_domain_id'] = 'default'
+
         if args.os_cacert:
             self._cloud_data['cacert'] = args.os_cacert
 
