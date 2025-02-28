@@ -19,7 +19,8 @@ _XTRACE_ATOP=$(set +o | grep xtrace)
 set +o xtrace
 
 function configure_atop {
-        cat <<EOF | sudo tee /etc/default/atop >/dev/null
+    mkdir -p $LOGDIR/atop
+    cat <<EOF | sudo tee /etc/default/atop >/dev/null
 # /etc/default/atop
 # see man atoprc for more possibilities to configure atop execution
 
