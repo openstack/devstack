@@ -24,7 +24,7 @@ Install a couple of packages to bootstrap configuration:
 
 ::
 
-    apt-get install -y git sudo || yum install -y git sudo
+    apt-get install -y git sudo || dnf install -y git sudo
 
 Network Configuration
 ---------------------

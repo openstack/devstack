@@ -232,7 +232,7 @@ an early phase of its execution.  These packages may be defined in a
 plugin as files that contain new-line separated lists of packages
 required by the plugin
 
-Supported packaging systems include apt and yum across multiple
+Supported packaging systems include apt and dnf across multiple
 distributions.  To enable a plugin to hook into this and install
 package dependencies, packages may be listed at the following
 locations in the top-level of the plugin repository:

@@ -213,7 +213,7 @@ install ``sshuttle`` on your localhost:
 
 .. code-block:: bash
 
-    sudo apt-get install sshuttle || yum install sshuttle
+    sudo apt-get install sshuttle || dnf install sshuttle
 
 Finally, start ``sshuttle`` on your localhost using the floating IP address
 range. For example, assuming you are using the default value for
