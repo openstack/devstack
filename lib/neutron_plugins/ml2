@@ -114,9 +114,6 @@ function neutron_plugin_configure_service {
     populate_ml2_config /$Q_PLUGIN_CONF_FILE securitygroup enable_security_group=$Q_USE_SECGROUP
 
     populate_ml2_config /$Q_PLUGIN_CONF_FILE ml2 mechanism_drivers=$Q_ML2_PLUGIN_MECHANISM_DRIVERS
-    if [[ "$Q_ML2_PLUGIN_MECHANISM_DRIVERS" == *"linuxbridge"* ]]; then
-        iniset $NEUTRON_CONF experimental linuxbridge True
-    fi
     populate_ml2_config /$Q_PLUGIN_CONF_FILE ml2 overlay_ip_version=$TUNNEL_IP_VERSION
 
     if [[ -n "$Q_ML2_PLUGIN_TYPE_DRIVERS" ]]; then

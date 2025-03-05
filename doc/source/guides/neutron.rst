@@ -451,44 +451,6 @@ by default. If you want to remove all the extension drivers (even
 'port_security'), set ``Q_ML2_PLUGIN_EXT_DRIVERS`` to blank.
 
 
-Using Linux Bridge instead of Open vSwitch
-------------------------------------------
-
-The configuration for using the Linux Bridge ML2 driver is fairly
-straight forward. The Linux Bridge configuration for DevStack is similar
-to the :ref:`Open vSwitch based single interface <single-interface-ovs>`
-setup, with small modifications for the interface mappings.
-
-
-::
-
-    [[local|localrc]]
-    HOST_IP=172.18.161.6
-    SERVICE_HOST=172.18.161.6
-    MYSQL_HOST=172.18.161.6
-    RABBIT_HOST=172.18.161.6
-    GLANCE_HOSTPORT=172.18.161.6:9292
-    ADMIN_PASSWORD=secret
-    DATABASE_PASSWORD=secret
-    RABBIT_PASSWORD=secret
-    SERVICE_PASSWORD=secret
-
-    ## Neutron options
-    Q_USE_SECGROUP=True
-    FLOATING_RANGE="172.18.161.0/24"
-    IPV4_ADDRS_SAFE_TO_USE="10.0.0.0/24"
-    Q_FLOATING_ALLOCATION_POOL=start=172.18.161.250,end=172.18.161.254
-    PUBLIC_NETWORK_GATEWAY="172.18.161.1"
-    PUBLIC_INTERFACE=eth0
-
-    Q_USE_PROVIDERNET_FOR_PUBLIC=True
-
-    # Linuxbridge Settings
-    Q_AGENT=linuxbridge
-    LB_PHYSICAL_INTERFACE=eth0
-    PUBLIC_PHYSICAL_NETWORK=default
-    LB_INTERFACE_MAPPINGS=default:eth0
-
 Using MacVTap instead of Open vSwitch
 ------------------------------------------
 
@@ -556,7 +518,7 @@ the MacVTap mechanism driver:
 
     [[local|localrc]]
     ...
-    Q_ML2_PLUGIN_MECHANISM_DRIVERS=openvswitch,linuxbridge,macvtap
+    Q_ML2_PLUGIN_MECHANISM_DRIVERS=openvswitch,macvtap
     ...
 
 For the MacVTap compute node, use this local.conf:

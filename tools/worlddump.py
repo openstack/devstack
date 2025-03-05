@@ -31,7 +31,6 @@ GMR_PROCESSES = (
     'nova-compute',
     'neutron-dhcp-agent',
     'neutron-l3-agent',
-    'neutron-linuxbridge-agent',
     'neutron-metadata-agent',
     'neutron-openvswitch-agent',
     'cinder-volume',
