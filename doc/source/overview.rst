@@ -52,12 +52,6 @@ Web Server
 
 -  Apache
 
-OpenStack Network
------------------
-
--  Neutron: A basic configuration approximating the original FlatDHCP
-   mode using OpenVSwitch.
-
 Services
 --------
 
