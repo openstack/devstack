@@ -10,6 +10,7 @@
     DocumentRoot %HORIZON_DIR%/.blackhole/
     Alias %WEBROOT%/media %HORIZON_DIR%/openstack_dashboard/static
     Alias %WEBROOT%/static %HORIZON_DIR%/static
+    Alias /static %HORIZON_DIR%/static
 
     RedirectMatch "^/$" "%WEBROOT%/"
 
