@@ -455,7 +455,7 @@
     pre-run: playbooks/pre.yaml
     run: playbooks/devstack.yaml
     post-run: playbooks/post.yaml
-    irrelevant-files:
+    irrelevant-files: &common-irrelevant-files
       # Documentation related
       - ^.*\.rst$
       - ^api-ref/.*$
@@ -465,6 +465,8 @@
       - ^.*/locale/.*po$
       # pre-commit config
       - ^.pre-commit-config.yaml$
+      # gitreview config
+      - ^.gitreview$
 
 - job:
     name: devstack-minimal
@@ -915,35 +917,21 @@
         - ironic-tempest-bios-ipmi-direct-tinyipa
         - swift-dsvm-functional
         - grenade:
-            irrelevant-files:
-              - ^.*\.rst$
-              - ^doc/.*$
+            irrelevant-files: *common-irrelevant-files
         - neutron-ovs-grenade-multinode:
-            irrelevant-files:
-              - ^.*\.rst$
-              - ^doc/.*$
+            irrelevant-files: *common-irrelevant-files
         - neutron-ovn-tempest-ovs-release:
             voting: false
-            irrelevant-files:
-              - ^.*\.rst$
-              - ^doc/.*$
+            irrelevant-files: *common-irrelevant-files
         - tempest-multinode-full-py3:
             voting: false
-            irrelevant-files:
-              - ^.*\.rst$
-              - ^doc/.*$
+            irrelevant-files: *common-irrelevant-files
         - openstacksdk-functional-devstack:
-            irrelevant-files:
-              - ^.*\.rst$
-              - ^doc/.*$
+            irrelevant-files: *common-irrelevant-files
         - tempest-ipv6-only:
-            irrelevant-files:
-              - ^.*\.rst$
-              - ^doc/.*$
+            irrelevant-files: *common-irrelevant-files
         - nova-ceph-multistore:
-            irrelevant-files:
-              - ^.*\.rst$
-              - ^doc/.*$
+            irrelevant-files: *common-irrelevant-files
     gate:
       jobs:
         - devstack
@@ -958,27 +946,17 @@
         - devstack-unit-tests
         - openstack-tox-bashate
         - neutron-ovs-grenade-multinode:
-            irrelevant-files:
-              - ^.*\.rst$
-              - ^doc/.*$
+            irrelevant-files: *common-irrelevant-files
         - ironic-tempest-bios-ipmi-direct-tinyipa
         - swift-dsvm-functional
         - grenade:
-            irrelevant-files:
-              - ^.*\.rst$
-              - ^doc/.*$
+            irrelevant-files: *common-irrelevant-files
         - openstacksdk-functional-devstack:
-            irrelevant-files:
-              - ^.*\.rst$
-              - ^doc/.*$
+            irrelevant-files: *common-irrelevant-files
         - tempest-ipv6-only:
-            irrelevant-files:
-              - ^.*\.rst$
-              - ^doc/.*$
+            irrelevant-files: *common-irrelevant-files
         - nova-ceph-multistore:
-            irrelevant-files:
-              - ^.*\.rst$
-              - ^doc/.*$
+            irrelevant-files: *common-irrelevant-files
     # Please add a note on each job and conditions for the job not
     # being experimental any more, so we can keep this list somewhat
     # pruned.
@@ -995,25 +973,15 @@
         - nova-multi-cell
         - nova-next
         - devstack-plugin-ceph-tempest-py3:
-            irrelevant-files:
-              - ^.*\.rst$
-              - ^doc/.*$
+            irrelevant-files: *common-irrelevant-files
         - neutron-ovs-tempest-dvr:
-            irrelevant-files:
-              - ^.*\.rst$
-              - ^doc/.*$
+            irrelevant-files: *common-irrelevant-files
         - neutron-ovs-tempest-dvr-ha-multinode-full:
-            irrelevant-files:
-              - ^.*\.rst$
-              - ^doc/.*$
+            irrelevant-files: *common-irrelevant-files
         - cinder-tempest-lvm-multibackend:
-            irrelevant-files:
-              - ^.*\.rst$
-              - ^doc/.*$
+            irrelevant-files: *common-irrelevant-files
         - tempest-pg-full:
-            irrelevant-files:
-              - ^.*\.rst$
-              - ^doc/.*$
+            irrelevant-files: *common-irrelevant-files
         - devstack-no-tls-proxy
     periodic:
       jobs:
