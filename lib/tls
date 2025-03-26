@@ -452,6 +452,7 @@ function enable_mod_ssl {
 # ===============
 
 function tune_apache_connections {
+    local should_restart=$1
     local tuning_file=$APACHE_SETTINGS_DIR/connection-tuning.conf
     if ! [ -f $tuning_file ] ; then
         sudo bash -c "cat > $tuning_file" << EOF
@@ -494,7 +495,12 @@ ThreadLimit          64
 MaxRequestsPerChild   0
 </IfModule>
 EOF
-        restart_apache_server
+        if [ "$should_restart" != "norestart" ] ; then
+            # Only restart the apache server if we know we really want to
+            # do so. Too many restarts in a short period of time is treated
+            # as an error by systemd.
+            restart_apache_server
+        fi
     fi
 }
 
@@ -509,7 +515,8 @@ function start_tls_proxy {
     # 8190 is the default apache size.
     local f_header_size=${6:-8190}
 
-    tune_apache_connections
+    # We don't restart apache here as we'll do it at the end of the function.
+    tune_apache_connections norestart
 
     local config_file
     config_file=$(apache_site_config_for $b_service)
@@ -558,7 +565,9 @@ $listen_string
 </VirtualHost>
 EOF
     for mod in headers ssl proxy proxy_http; do
-        enable_apache_mod $mod
+        # We don't need to restart here as we will restart once at the end
+        # of the function.
+        enable_apache_mod $mod norestart
     done
     enable_apache_site $b_service
     restart_apache_server
