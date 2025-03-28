@@ -131,12 +131,7 @@ function install_libs {
     # python client libraries we might need from git can go here
     _install_lib_from_source "python-barbicanclient"
 
-
     # etcd (because tooz does not have a hard dependency on these)
-    #
-    # NOTE(sdague): this is currently a work around because tooz
-    # doesn't pull in etcd3.
-    pip_install etcd3
     pip_install etcd3gw
 }
 
