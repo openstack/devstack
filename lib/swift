@@ -318,8 +318,8 @@ function generate_swift_config_services {
     iniuncomment ${swift_node_config} DEFAULT mount_check
     iniset ${swift_node_config} DEFAULT mount_check false
 
-    iniuncomment ${swift_node_config} ${server_type}-replicator vm_test_mode
-    iniset ${swift_node_config} ${server_type}-replicator vm_test_mode yes
+    iniuncomment ${swift_node_config} ${server_type}-replicator rsync_module
+    iniset ${swift_node_config} ${server_type}-replicator rsync_module "{replication_ip}::${server_type}{replication_port}"
 
     # Using a sed and not iniset/iniuncomment because we want to a global
     # modification and make sure it works for new sections.
