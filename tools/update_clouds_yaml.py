@@ -32,19 +32,9 @@ class UpdateCloudsYaml:
             self._create_directory = True
         self._clouds = {}
 
-        if args.os_identity_api_version != '3':
-            print("ERROR: Only identity API v3 is supported")
-            sys.exit(1)
-
-        if args.os_volume_api_version != '3':
-            print("ERROR: Only block storage API v3 is supported")
-            sys.exit(1)
-
         self._cloud = args.os_cloud
         self._cloud_data = {
             'region_name': args.os_region_name,
-            'identity_api_version': args.os_identity_api_version,
-            'volume_api_version': args.os_volume_api_version,
             'auth': {
                 'auth_url': args.os_auth_url,
                 'username': args.os_username,
@@ -100,8 +90,6 @@ def main():
     parser.add_argument('--file')
     parser.add_argument('--os-cloud', required=True)
     parser.add_argument('--os-region-name', default='RegionOne')
-    parser.add_argument('--os-identity-api-version', default='3')
-    parser.add_argument('--os-volume-api-version', default='3')
     parser.add_argument('--os-cacert')
     parser.add_argument('--os-auth-url', required=True)
     parser.add_argument('--os-username', required=True)
