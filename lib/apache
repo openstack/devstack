@@ -122,11 +122,6 @@ function install_apache_uwsgi {
             sudo a2enmod proxy_uwsgi
             restart_apache_server
         fi
-    elif is_fedora; then
-        # redhat is missing a nice way to turn on/off modules
-        echo "LoadModule proxy_uwsgi_module modules/mod_proxy_uwsgi.so" \
-            | sudo tee /etc/httpd/conf.modules.d/02-proxy-uwsgi.conf
-        restart_apache_server
     fi
 }
 
