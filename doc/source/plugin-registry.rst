@@ -24,6 +24,7 @@ official OpenStack projects.
 ======================================== ===
 Plugin Name                              URL
 ======================================== ===
+openstack/aetos                          `https://opendev.org/openstack/aetos <https://opendev.org/openstack/aetos>`__
 openstack/aodh                           `https://opendev.org/openstack/aodh <https://opendev.org/openstack/aodh>`__
 openstack/barbican                       `https://opendev.org/openstack/barbican <https://opendev.org/openstack/barbican>`__
 openstack/blazar                         `https://opendev.org/openstack/blazar <https://opendev.org/openstack/blazar>`__
