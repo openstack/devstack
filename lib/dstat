@@ -33,7 +33,7 @@ function start_dstat {
     # To enable memory_tracker add:
     #    enable_service memory_tracker
     # to your localrc
-    run_process memory_tracker "$TOP_DIR/tools/memory_tracker.sh" "" "root"
+    run_process memory_tracker "$TOP_DIR/tools/memory_tracker.sh" "" "root" "PYTHON=python${PYTHON3_VERSION}"
 
     # TODO(jh): Fail when using the old service name otherwise consumers might
     # never notice that is has been removed.
