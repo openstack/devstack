@@ -489,11 +489,7 @@ function install_python3 {
     if is_ubuntu; then
         apt_get install python${PYTHON3_VERSION} python${PYTHON3_VERSION}-dev
     elif is_fedora; then
-        if [ "$os_VENDOR" = "Fedora" ]; then
-            install_package python${PYTHON3_VERSION//.}
-        else
-            install_package python${PYTHON3_VERSION//.} python${PYTHON3_VERSION//.}-devel
-        fi
+        install_package python${PYTHON3_VERSION}-devel python${PYTHON3_VERSION}-pip
     fi
 }
 
