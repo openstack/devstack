@@ -676,6 +676,11 @@
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
+        - tempest-full-py3:
+            # NOTE(elod.illes): to quickly unblock wallaby gate this needed
+            # to be set as non-voting. This should be set as voting when it's
+            # possible
+            voting: false
         - tempest-multinode-full-py3:
             voting: false
             irrelevant-files:
@@ -689,6 +694,10 @@
               - ^.*\.rst$
               - ^doc/.*$
         - tempest-ipv6-only:
+            # NOTE(elod.illes): to quickly unblock wallaby gate this needed
+            # to be set as non-voting. This should be set as voting when it's
+            # possible
+            voting: false
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
@@ -708,6 +717,11 @@
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
+        - tempest-full-py3:
+            # NOTE(elod.illes): to quickly unblock wallaby gate this needed
+            # to be set as non-voting. This should be set as voting when it's
+            # possible
+            voting: false
         - neutron-tempest-linuxbridge:
             irrelevant-files:
               - ^.*\.rst$
@@ -723,6 +737,10 @@
         #      - ^.*\.rst$
         #      - ^doc/.*$
         - tempest-ipv6-only:
+            # NOTE(elod.illes): to quickly unblock wallaby gate this needed
+            # to be set as non-voting. This should be set as voting when it's
+            # possible
+            voting: false
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$

@@ -39,6 +39,7 @@ FILES=$TOP_DIR/files
 
 PIP_GET_PIP_URL=${PIP_GET_PIP_URL:-"https://bootstrap.pypa.io/get-pip.py"}
 PIP_GET_PIP36_URL=${PIP_GET_PIP36_URL:-"https://bootstrap.pypa.io/pip/3.6/get-pip.py"}
+PIP_GET_PIP38_URL=${PIP_GET_PIP38_URL:-"https://bootstrap.pypa.io/pip/3.8/get-pip.py"}
 
 GetDistro
 echo "Distro: $DISTRO"
@@ -62,6 +63,9 @@ function install_get_pip {
     if [[ "$PYTHON3_VERSION" = "3.6" ]]; then
         _pip_url=$PIP_GET_PIP36_URL
         _local_pip="$FILES/$(basename $_pip_url)-py36"
+    elif [[ "$PYTHON3_VERSION" = "3.8" ]]; then
+        _pip_url=$PIP_GET_PIP38_URL
+        _local_pip="$FILES/$(basename $_pip_url)-py38"
     else
         _pip_url=$PIP_GET_PIP_URL
         _local_pip="$FILES/$(basename $_pip_url)"
