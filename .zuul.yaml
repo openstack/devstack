@@ -735,6 +735,10 @@
     parent: tempest-full-py3
     description: CentOS 9 Stream platform test
     nodeset: devstack-single-node-centos-9-stream
+    vars:
+      devstack_localrc:
+        # TODO(ykarel) Remove this when moving to 10-stream
+        PYTHON3_VERSION: 3.11
     timeout: 9000
     voting: false
 
@@ -760,6 +764,9 @@
     voting: false
     vars:
       configure_swap_size: 4096
+      devstack_localrc:
+        # TODO(ykarel) Remove this when moving to rocky10
+        PYTHON3_VERSION: 3.11
 
 - job:
     name: devstack-platform-ubuntu-jammy
