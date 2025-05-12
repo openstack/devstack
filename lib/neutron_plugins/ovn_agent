@@ -300,18 +300,6 @@ function create_public_bridge {
     _configure_public_network_connectivity
 }
 
-function _disable_libvirt_apparmor {
-    if ! sudo aa-status --enabled ; then
-        return 0
-    fi
-    # NOTE(arosen): This is used as a work around to allow newer versions
-    # of libvirt to work with ovs configured ports. See LP#1466631.
-    # requires the apparmor-utils
-    install_package apparmor-utils
-    # disables apparmor for libvirtd
-    sudo aa-complain /etc/apparmor.d/usr.sbin.libvirtd
-}
-
 
 # OVN compilation functions
 # -------------------------
@@ -614,7 +602,6 @@ function init_ovn {
     # in the ovn, ovn-nb, or ovs databases.  We're going to trash them and
     # create new ones on each devstack run.
 
-    _disable_libvirt_apparmor
     local mkdir_cmd="mkdir -p ${OVN_DATADIR}"
 
     if [[ "$OVN_BUILD_FROM_SOURCE" == "False" ]]; then
