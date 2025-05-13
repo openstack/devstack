@@ -356,7 +356,7 @@ async_init
 # Certain services such as rabbitmq require that the local hostname resolves
 # correctly.  Make sure it exists in /etc/hosts so that is always true.
 LOCAL_HOSTNAME=`hostname -s`
-if ! fgrep -qwe "$LOCAL_HOSTNAME" /etc/hosts; then
+if ! grep -Fqwe "$LOCAL_HOSTNAME" /etc/hosts; then
     sudo sed -i "s/\(^127.0.0.1.*\)/\1 $LOCAL_HOSTNAME/" /etc/hosts
 fi
 
