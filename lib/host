@@ -35,7 +35,7 @@ ENABLE_ZSWAP=$(trueorfalse False ENABLE_ZSWAP)
 # lz4 is very fast although it does not have the best compression
 # zstd has much better compression but more latency
 ZSWAP_COMPRESSOR=${ZSWAP_COMPRESSOR:="lz4"}
-ZSWAP_ZPOOL=${ZSWAP_ZPOOL:="z3fold"}
+ZSWAP_ZPOOL=${ZSWAP_ZPOOL:="zsmalloc"}
 function configure_zswap {
     if [[ $ENABLE_ZSWAP == "True" ]] ; then
         # Centos 9 stream seems to only support enabling but not run time
