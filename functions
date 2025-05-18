@@ -147,7 +147,8 @@ function upload_image {
                 if [[ $rc -ne 0 ]]; then
                     if [[ "$attempt" -eq "$max_attempts" ]]; then
                         echo "Not found: $image_url"
-                        return
+                        # Signal failure to download to the caller, so they can fail early
+                        return 1
                     fi
                     echo "Download failed, retrying in $attempt second, attempt: $attempt"
                     sleep $attempt
