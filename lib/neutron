@@ -82,11 +82,9 @@ NEUTRON_CONF=$NEUTRON_CONF_DIR/neutron.conf
 export NEUTRON_TEST_CONFIG_FILE=${NEUTRON_TEST_CONFIG_FILE:-"$NEUTRON_CONF_DIR/debug.ini"}
 
 # NEUTRON_DEPLOY_MOD_WSGI defines how neutron is deployed, allowed values:
-# - False (default) : Run neutron under Eventlet
-# - True : Run neutron under uwsgi
-# TODO(annp): Switching to uwsgi in next cycle if things turn out to be stable
-# enough
-NEUTRON_DEPLOY_MOD_WSGI=$(trueorfalse False NEUTRON_DEPLOY_MOD_WSGI)
+# - False : Run neutron under Eventlet
+# - True (default) : Run neutron under uwsgi
+NEUTRON_DEPLOY_MOD_WSGI=$(trueorfalse True NEUTRON_DEPLOY_MOD_WSGI)
 
 NEUTRON_UWSGI=neutron.wsgi.api:application
 NEUTRON_UWSGI_CONF=$NEUTRON_CONF_DIR/neutron-api-uwsgi.ini
