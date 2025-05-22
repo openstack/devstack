@@ -44,6 +44,7 @@ openstack/freezer                        `https://opendev.org/openstack/freezer 
 openstack/freezer-api                    `https://opendev.org/openstack/freezer-api <https://opendev.org/openstack/freezer-api>`__
 openstack/freezer-tempest-plugin         `https://opendev.org/openstack/freezer-tempest-plugin <https://opendev.org/openstack/freezer-tempest-plugin>`__
 openstack/freezer-web-ui                 `https://opendev.org/openstack/freezer-web-ui <https://opendev.org/openstack/freezer-web-ui>`__
+openstack/grian-ui                       `https://opendev.org/openstack/grian-ui <https://opendev.org/openstack/grian-ui>`__
 openstack/heat                           `https://opendev.org/openstack/heat <https://opendev.org/openstack/heat>`__
 openstack/heat-dashboard                 `https://opendev.org/openstack/heat-dashboard <https://opendev.org/openstack/heat-dashboard>`__
 openstack/ironic                         `https://opendev.org/openstack/ironic <https://opendev.org/openstack/ironic>`__
