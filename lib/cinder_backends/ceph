@@ -31,6 +31,7 @@ set +o xtrace
 # configure_cinder_backend_ceph $name
 function configure_cinder_backend_ceph {
     local be_name=$1
+    local be_name2="${be_name}2"
 
     iniset $CINDER_CONF $be_name volume_backend_name $be_name
     iniset $CINDER_CONF $be_name volume_driver "cinder.volume.drivers.rbd.RBDDriver"
@@ -40,6 +41,17 @@ function configure_cinder_backend_ceph {
     iniset $CINDER_CONF $be_name rbd_secret_uuid "$CINDER_CEPH_UUID"
     iniset $CINDER_CONF $be_name rbd_flatten_volume_from_snapshot False
     iniset $CINDER_CONF $be_name rbd_max_clone_depth 5
+
+    if [[ "$MULTI_CEPH" == 'True' ]]; then
+        iniset $CINDER_CONF $be_name2 volume_backend_name $be_name2
+        iniset $CINDER_CONF $be_name2 volume_driver "cinder.volume.drivers.rbd.RBDDriver"
+        iniset $CINDER_CONF $be_name2 rbd_ceph_conf "$CEPH2_CONF_FILE"
+        iniset $CINDER_CONF $be_name2 rbd_pool "$CINDER_CEPH_POOL"
+        iniset $CINDER_CONF $be_name2 rbd_user "$CINDER_CEPH2_USER"
+        iniset $CINDER_CONF $be_name2 rbd_secret_uuid "$CINDER_CEPH2_UUID"
+        iniset $CINDER_CONF $be_name2 rbd_flatten_volume_from_snapshot False
+        iniset $CINDER_CONF $be_name2 rbd_max_clone_depth 5
+    fi
 }
 
 # Restore xtrace
