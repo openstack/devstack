@@ -11,13 +11,11 @@
 # - ``FILES``
 # - ``BASE_SQL_CONN``
 # - ``SERVICE_HOST``, ``SERVICE_PROTOCOL``
-# - ``S3_SERVICE_PORT`` (template backend only)
 
 # ``stack.sh`` calls the entry points in this order:
 #
 # - install_keystone
 # - configure_keystone
-# - _config_keystone_apache_wsgi
 # - init_keystone
 # - start_keystone
 # - bootstrap_keystone
@@ -140,38 +138,6 @@ function cleanup_keystone {
     sudo rm -f $(apache_site_config_for keystone-wsgi-public)
 }
 
-# _config_keystone_apache_wsgi() - Set WSGI config files of Keystone
-function _config_keystone_apache_wsgi {
-    local keystone_apache_conf
-    keystone_apache_conf=$(apache_site_config_for keystone)
-    keystone_ssl_listen="#"
-    local keystone_ssl=""
-    local keystone_certfile=""
-    local keystone_keyfile=""
-    local keystone_service_port=$KEYSTONE_SERVICE_PORT
-    local venv_path=""
-
-    if is_service_enabled tls-proxy; then
-        keystone_service_port=$KEYSTONE_SERVICE_PORT_INT
-    fi
-    if [[ ${USE_VENV} = True ]]; then
-        venv_path="python-path=${PROJECT_VENV["keystone"]}/lib/$(python_version)/site-packages"
-    fi
-
-    sudo cp $FILES/apache-keystone.template $keystone_apache_conf
-    sudo sed -e "
-        s|%PUBLICPORT%|$keystone_service_port|g;
-        s|%APACHE_NAME%|$APACHE_NAME|g;
-        s|%SSLLISTEN%|$keystone_ssl_listen|g;
-        s|%SSLENGINE%|$keystone_ssl|g;
-        s|%SSLCERTFILE%|$keystone_certfile|g;
-        s|%SSLKEYFILE%|$keystone_keyfile|g;
-        s|%USER%|$STACK_USER|g;
-        s|%VIRTUALENV%|$venv_path|g
-        s|%KEYSTONE_BIN%|$KEYSTONE_BIN_DIR|g
-    " -i $keystone_apache_conf
-}
-
 # configure_keystone() - Set config files, create data dirs, etc
 function configure_keystone {
     sudo install -d -o $STACK_USER $KEYSTONE_CONF_DIR
@@ -200,13 +166,6 @@ function configure_keystone {
     iniset $KEYSTONE_CONF api response_validation error
 
     iniset_rpc_backend keystone $KEYSTONE_CONF oslo_messaging_notifications
-
-    local service_port=$KEYSTONE_SERVICE_PORT
-
-    if is_service_enabled tls-proxy; then
-        # Set the service ports for a proxy to take the originals
-        service_port=$KEYSTONE_SERVICE_PORT_INT
-    fi
 
     # Override the endpoints advertised by keystone so that clients use the correct
     # endpoint. By default, the keystone server uses the public_port which isn't
@@ -546,23 +505,13 @@ function install_keystone {
 
 # start_keystone() - Start running processes
 function start_keystone {
-    # Get right service port for testing
-    local service_port=$KEYSTONE_SERVICE_PORT
-    local auth_protocol=$KEYSTONE_SERVICE_PROTOCOL
-    if is_service_enabled tls-proxy; then
-        service_port=$KEYSTONE_SERVICE_PORT_INT
-        auth_protocol="http"
-    fi
-
     run_process keystone "$(which uwsgi) --procname-prefix keystone --ini $KEYSTONE_PUBLIC_UWSGI_CONF" ""
 
     echo "Waiting for keystone to start..."
     # Check that the keystone service is running. Even if the tls tunnel
     # should be enabled, make sure the internal port is checked using
-    # unencryted traffic at this point.
-    # If running in Apache, use the path rather than port.
-
-    local service_uri=$auth_protocol://$KEYSTONE_SERVICE_HOST/identity/v3/
+    # unencryted traffic at this point (ignore KEYSTONE_SERVICE_PROTOCOL).
+    local service_uri=http://$KEYSTONE_SERVICE_HOST/identity/v3/
 
     if ! wait_for_service $SERVICE_TIMEOUT $service_uri; then
         die $LINENO "keystone did not start"

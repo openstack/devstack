@@ -964,24 +964,17 @@ function install_nova {
 
 # start_nova_api() - Start the API process ahead of other things
 function start_nova_api {
-    # Get right service port for testing
-    local service_port=$NOVA_SERVICE_PORT
-    local service_protocol=$NOVA_SERVICE_PROTOCOL
-    local nova_url
-    if is_service_enabled tls-proxy; then
-        service_port=$NOVA_SERVICE_PORT_INT
-        service_protocol="http"
-    fi
-
     # Hack to set the path for rootwrap
     local old_path=$PATH
     export PATH=$NOVA_BIN_DIR:$PATH
 
     run_process "n-api" "$(which uwsgi) --procname-prefix nova-api --ini $NOVA_UWSGI_CONF"
-    nova_url=$service_protocol://$SERVICE_HOST/compute/v2.1/
 
     echo "Waiting for nova-api to start..."
-    if ! wait_for_service $SERVICE_TIMEOUT $nova_url; then
+    # Check that the nova API service is running.
+    local service_url=$NOVA_SERVICE_PROTOCOL://$SERVICE_HOST/compute/v2.1/
+
+    if ! wait_for_service $SERVICE_TIMEOUT $service_url; then
         die $LINENO "nova-api did not start"
     fi
 

@@ -313,7 +313,6 @@ function configure_cinder {
     iniset $CINDER_CONF DEFAULT api_paste_config $CINDER_API_PASTE_INI
     iniset $CINDER_CONF DEFAULT rootwrap_config "$CINDER_CONF_DIR/rootwrap.conf"
     iniset $CINDER_CONF DEFAULT osapi_volume_extension cinder.api.contrib.standard_extensions
-    iniset $CINDER_CONF DEFAULT osapi_volume_listen $CINDER_SERVICE_LISTEN_ADDRESS
     iniset $CINDER_CONF DEFAULT state_path $CINDER_STATE_PATH
     iniset $CINDER_CONF oslo_concurrency lock_path $CINDER_STATE_PATH
     iniset $CINDER_CONF DEFAULT my_ip "$CINDER_MY_IP"
@@ -381,7 +380,6 @@ function configure_cinder {
     if is_service_enabled tls-proxy; then
         if [[ "$ENABLED_SERVICES" =~ "c-api" ]]; then
             # Set the service port for a proxy to take the original
-            iniset $CINDER_CONF DEFAULT osapi_volume_listen_port $CINDER_SERVICE_PORT_INT
             iniset $CINDER_CONF oslo_middleware enable_proxy_headers_parsing True
         fi
     fi
@@ -402,8 +400,6 @@ function configure_cinder {
     if [[ -r $CINDER_PLUGINS/$CINDER_DRIVER ]]; then
         configure_cinder_driver
     fi
-
-    iniset $CINDER_CONF DEFAULT osapi_volume_workers "$API_WORKERS"
 
     iniset $CINDER_CONF DEFAULT glance_api_servers "$GLANCE_URL"
     if is_service_enabled tls-proxy; then
@@ -602,9 +598,6 @@ function _configure_tgt_for_config_d {
 
 # start_cinder() - Start running processes
 function start_cinder {
-    local service_port=$CINDER_SERVICE_PORT
-    local service_protocol=$CINDER_SERVICE_PROTOCOL
-    local cinder_url
     if [ "$CINDER_TARGET_HELPER" = "tgtadm" ]; then
         if is_service_enabled c-vol; then
             # Delete any old stack.conf
@@ -620,12 +613,12 @@ function start_cinder {
         fi
     fi
 
-    if [[ "$ENABLED_SERVICES" =~ "c-api" ]]; then
-        run_process "c-api" "$(which uwsgi) --procname-prefix cinder-api --ini $CINDER_UWSGI_CONF"
-        cinder_url=$service_protocol://$SERVICE_HOST/volume/v3
-    fi
+    run_process "c-api" "$(which uwsgi) --procname-prefix cinder-api --ini $CINDER_UWSGI_CONF"
 
     echo "Waiting for Cinder API to start..."
+    # Check that the cinder API service is running,
+    local cinder_url=$CINDER_SERVICE_PROTOCOL://$SERVICE_HOST/volume/v3/
+
     if ! wait_for_service $SERVICE_TIMEOUT $cinder_url; then
         die $LINENO "c-api did not start"
     fi
@@ -663,7 +656,7 @@ function create_one_type {
         # TODO (e0ne): use openstack client once it will support cinder in noauth mode:
         # https://bugs.launchpad.net/python-cinderclient/+bug/1755279
         local cinder_url
-        cinder_url=$CINDER_SERVICE_PROTOCOL://$SERVICE_HOST:$CINDER_SERVICE_PORT/v3
+        cinder_url=$CINDER_SERVICE_PROTOCOL://$SERVICE_HOST/volume/v3
         OS_USER_ID=$OS_USERNAME OS_PROJECT_ID=$OS_PROJECT_NAME cinder --os-auth-type noauth --os-endpoint=$cinder_url type-create $type_name
         OS_USER_ID=$OS_USERNAME OS_PROJECT_ID=$OS_PROJECT_NAME cinder --os-auth-type noauth --os-endpoint=$cinder_url type-key $type_name set $property_key="$property_value"
     fi
