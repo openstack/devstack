@@ -705,12 +705,11 @@ fi
 EXTRA_CACHE_URLS=""
 
 # etcd3 defaults
-ETCD_VERSION=${ETCD_VERSION:-v3.4.27}
-ETCD_SHA256_AMD64=${ETCD_SHA256_AMD64:-"a32d21e006252dbc3405b0645ba8468021ed41376974b573285927bf39b39eb9"}
-ETCD_SHA256_ARM64=${ETCD_SHA256_ARM64:-"ed7e257c225b9b9545fac22246b97f4074a4b5109676e92dbaebfb9315b69cc0"}
-ETCD_SHA256_PPC64=${ETCD_SHA256_PPC64:-"eb8825e0bc2cbaf9e55947f5ee373ebc9ca43b6a2ea5ced3b992c81855fff37e"}
-# etcd v3.2.x and later doesn't have anything for s390x
-ETCD_SHA256_S390X=${ETCD_SHA256_S390X:-""}
+ETCD_VERSION=${ETCD_VERSION:-v3.5.21}
+ETCD_SHA256_AMD64=${ETCD_SHA256_AMD64:-"adddda4b06718e68671ffabff2f8cee48488ba61ad82900e639d108f2148501c"}
+ETCD_SHA256_ARM64=${ETCD_SHA256_ARM64:-"95bf6918623a097c0385b96f139d90248614485e781ec9bee4768dbb6c79c53f"}
+ETCD_SHA256_PPC64=${ETCD_SHA256_PPC64:-"6fb6ecb3d1b331eb177dc610a8efad3aceb1f836d6aeb439ba0bfac5d5c2a38c"}
+ETCD_SHA256_S390X=${ETCD_SHA256_S390X:-"a211a83961ba8a7e94f7d6343ad769e699db21a715ba4f3b68cf31ea28f9c951"}
 # Make sure etcd3 downloads the correct architecture
 if is_arch "x86_64"; then
     ETCD_ARCH="amd64"
@@ -722,15 +721,8 @@ elif is_arch "ppc64le"; then
     ETCD_ARCH="ppc64le"
     ETCD_SHA256=${ETCD_SHA256:-$ETCD_SHA256_PPC64}
 elif is_arch "s390x"; then
-    # An etcd3 binary for s390x is not available on github like it is
-    # for other arches. Only continue if a custom download URL was
-    # provided.
-    if [[ -n "${ETCD_DOWNLOAD_URL}" ]]; then
-        ETCD_ARCH="s390x"
-        ETCD_SHA256=${ETCD_SHA256:-$ETCD_SHA256_S390X}
-    else
-        exit_distro_not_supported "etcd3. No custom ETCD_DOWNLOAD_URL provided."
-    fi
+    ETCD_ARCH="s390x"
+    ETCD_SHA256=${ETCD_SHA256:-$ETCD_SHA256_S390X}
 else
     exit_distro_not_supported "invalid hardware type - $ETCD_ARCH"
 fi
