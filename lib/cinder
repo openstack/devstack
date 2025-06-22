@@ -363,6 +363,9 @@ function configure_cinder {
             # Configure optimized volume upload
             configure_cinder_volume_upload
         fi
+        if [[ $enabled_backends =~ "ceph" && "$MULTI_CEPH" == "True" && "$ENABLE_CEPH_RBD_MIRROR" == "True" ]]; then
+            iniset $CINDER_CONF ceph replication_device "backend_id:ceph2,conf:/etc/ceph2/ceph.conf,user:cinder2,secret_uuid:$CINDER_CEPH2_UUID"
+        fi
     fi
 
     if is_service_enabled c-bak && [[ -n "$CINDER_BACKUP_DRIVER" ]]; then
@@ -652,6 +655,9 @@ function create_one_type {
     # NOTE (e0ne): openstack client doesn't work with cinder in noauth mode
     if is_service_enabled keystone; then
         openstack --os-region-name="$REGION_NAME" volume type create --property $property_key="$property_value" $type_name
+        if [[ $type_name == "ceph" && "$MULTI_CEPH" == "True" && "$ENABLE_CEPH_RBD_MIRROR" == "True" ]]; then
+            openstack --os-region-name="$REGION_NAME" volume type set --property replication_enabled="<is> True" $type_name
+        fi
     else
         # TODO (e0ne): use openstack client once it will support cinder in noauth mode:
         # https://bugs.launchpad.net/python-cinderclient/+bug/1755279
@@ -659,6 +665,9 @@ function create_one_type {
         cinder_url=$CINDER_SERVICE_PROTOCOL://$SERVICE_HOST/volume/v3
         OS_USER_ID=$OS_USERNAME OS_PROJECT_ID=$OS_PROJECT_NAME cinder --os-auth-type noauth --os-endpoint=$cinder_url type-create $type_name
         OS_USER_ID=$OS_USERNAME OS_PROJECT_ID=$OS_PROJECT_NAME cinder --os-auth-type noauth --os-endpoint=$cinder_url type-key $type_name set $property_key="$property_value"
+        if [[ $type_name == "ceph" && "$MULTI_CEPH" == "True" && "$ENABLE_CEPH_RBD_MIRROR" == "True" ]]; then
+            OS_USER_ID=$OS_USERNAME OS_PROJECT_ID=$OS_PROJECT_NAME cinder --os-auth-type noauth --os-endpoint=$cinder_url type-key $type_name set replication_enabled="<is> True"
+        fi
     fi
 }
 
