@@ -90,13 +90,10 @@ def main():
 
         if outfile:
             # We've opened outfile as a binary file to get the
-            # non-buffered behaviour.  on python3, sys.stdin was
+            # non-buffered behaviour. on python3, sys.stdin was
             # opened with the system encoding and made the line into
             # utf-8, so write the logfile out in utf-8 bytes.
-            if sys.version_info < (3,):
-                outfile.write(ts_line)
-            else:
-                outfile.write(ts_line.encode('utf-8'))
+            outfile.write(ts_line.encode('utf-8'))
             outfile.flush()
 
 
