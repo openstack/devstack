@@ -96,8 +96,9 @@ OVN_META_CONF=$NEUTRON_CONF_DIR/neutron_ovn_metadata_agent.ini
 OVN_META_DATA_HOST=${OVN_META_DATA_HOST:-$(ipv6_unquote $SERVICE_HOST)}
 
 # OVN agent configuration
+# The OVN agent is configured, by default, with the "metadata" extension.
 OVN_AGENT_CONF=$NEUTRON_CONF_DIR/plugins/ml2/ovn_agent.ini
-OVN_AGENT_EXTENSIONS=${OVN_AGENT_EXTENSIONS:-}
+OVN_AGENT_EXTENSIONS=${OVN_AGENT_EXTENSIONS:-metadata}
 
 # If True (default) the node will be considered a gateway node.
 ENABLE_CHASSIS_AS_GW=$(trueorfalse True ENABLE_CHASSIS_AS_GW)

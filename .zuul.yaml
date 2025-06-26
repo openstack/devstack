@@ -620,7 +620,7 @@
         ovsdb-server: true
         # Neutron services
         q-svc: true
-        q-ovn-metadata-agent: true
+        q-ovn-agent: true
         # Swift services
         s-account: true
         s-container: true
@@ -657,7 +657,7 @@
           ovs-vswitchd: true
           ovsdb-server: true
           # Neutron services
-          q-ovn-metadata-agent: true
+          q-ovn-agent: true
           # Cinder services
           c-bak: true
           c-vol: true
