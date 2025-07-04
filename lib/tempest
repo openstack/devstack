@@ -524,6 +524,10 @@ function configure_tempest {
         iniset $TEMPEST_CONFIG compute-feature-enabled serial_console True
     fi
 
+    # NOTE(gmaan): Since 2025.2, 'manager' role is available in nova.
+    local nova_policy_roles="admin,manager,member,reader"
+    iniset $TEMPEST_CONFIG compute-feature-enabled nova_policy_roles $nova_policy_roles
+
     # Network
     iniset $TEMPEST_CONFIG network project_networks_reachable false
     iniset $TEMPEST_CONFIG network public_network_id "$public_network_id"
