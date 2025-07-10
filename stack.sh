@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-
 # ``stack.sh`` is an opinionated OpenStack developer installation.  It
 # installs and configures various combinations of **Cinder**, **Glance**,
 # **Horizon**, **Keystone**, **Nova**, **Neutron**, and **Swift**
@@ -230,7 +229,7 @@ write_devstack_version
 
 # Warn users who aren't on an explicitly supported distro, but allow them to
 # override check and attempt installation with ``FORCE=yes ./stack``
-SUPPORTED_DISTROS="bookworm|jammy|noble|rhel9|rhel10"
+SUPPORTED_DISTROS="trixie|bookworm|jammy|noble|rhel9|rhel10"
 
 if [[ ! ${DISTRO} =~ $SUPPORTED_DISTROS ]]; then
     echo "WARNING: this script has not been tested on $DISTRO"

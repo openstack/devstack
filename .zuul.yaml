@@ -69,6 +69,16 @@
           - controller
 
 - nodeset:
+    name: devstack-single-node-debian-trixie
+    nodes:
+      - name: controller
+        label: debian-trixie-8GB
+    groups:
+      - name: tempest
+        nodes:
+          - controller
+
+- nodeset:
     name: devstack-single-node-debian-bookworm
     nodes:
       - name: controller
@@ -360,6 +370,36 @@
         label: debian-bookworm
       - name: compute1
         label: debian-bookworm
+    groups:
+      # Node where tests are executed and test results collected
+      - name: tempest
+        nodes:
+          - controller
+      # Nodes running the compute service
+      - name: compute
+        nodes:
+          - controller
+          - compute1
+      # Nodes that are not the controller
+      - name: subnode
+        nodes:
+          - compute1
+      # Switch node for multinode networking setup
+      - name: switch
+        nodes:
+          - controller
+      # Peer nodes for multinode networking setup
+      - name: peers
+        nodes:
+          - compute1
+
+- nodeset:
+    name: devstack-two-node-debian-trixie
+    nodes:
+      - name: controller
+        label: debian-trixie-8GB
+      - name: compute1
+        label: debian-trixie-8GB
     groups:
       # Node where tests are executed and test results collected
       - name: tempest
@@ -807,6 +847,15 @@
     voting: false
 
 - job:
+    name: devstack-platform-debian-trixie
+    parent: tempest-full-py3
+    description: Debian Trixie platform test
+    nodeset: devstack-single-node-debian-trixie
+    timeout: 9000
+    vars:
+      configure_swap_size: 4096
+
+- job:
     name: devstack-platform-debian-bookworm
     parent: tempest-full-py3
     description: Debian Bookworm platform test
@@ -990,6 +1039,7 @@
         - devstack-platform-centos-10-stream
         - devstack-platform-centos-9-stream
         - devstack-platform-debian-bookworm
+        - devstack-platform-debian-trixie
         - devstack-platform-rocky-blue-onyx
         - devstack-platform-rocky-red-quartz
         - devstack-platform-ubuntu-noble-ovn-source
@@ -1021,6 +1071,7 @@
         - devstack
         - devstack-ipv6
         - devstack-platform-debian-bookworm
+        - devstack-platform-debian-trixie
         - devstack-platform-ubuntu-noble
         # NOTE(danms): Disabled due to instability, see comment in the job
         # definition above.

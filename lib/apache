@@ -82,7 +82,7 @@ function install_apache_uwsgi {
     fi
 
     if is_ubuntu; then
-        local pkg_list="uwsgi uwsgi-plugin-python3 libapache2-mod-proxy-uwsgi"
+        local pkg_list="uwsgi uwsgi-plugin-python3"
         install_package ${pkg_list}
     # NOTE(ianw) 2022-02-03 : Fedora 35 needs to skip this and fall
     # into the install-from-source because the upstream packages
