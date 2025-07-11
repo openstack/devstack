@@ -843,7 +843,6 @@ function init_nova_service_user_conf {
     iniset $NOVA_CONF service_user user_domain_name "$SERVICE_DOMAIN_NAME"
     iniset $NOVA_CONF service_user project_name "$SERVICE_PROJECT_NAME"
     iniset $NOVA_CONF service_user project_domain_name "$SERVICE_DOMAIN_NAME"
-    iniset $NOVA_CONF service_user auth_strategy keystone
 }
 
 function conductor_conf {

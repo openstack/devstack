@@ -732,7 +732,6 @@ function configure_cinder_volume_upload {
 function init_cinder_service_user_conf {
     configure_keystone_authtoken_middleware $CINDER_CONF cinder service_user
     iniset $CINDER_CONF service_user send_service_user_token True
-    iniset $CINDER_CONF service_user auth_strategy keystone
 }
 
 # Restore xtrace
