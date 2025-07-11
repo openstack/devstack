@@ -460,14 +460,7 @@ function configure_neutron_nova {
 
 function create_nova_conf_neutron {
     local conf=${1:-$NOVA_CONF}
-    iniset $conf neutron auth_type "password"
-    iniset $conf neutron auth_url "$KEYSTONE_SERVICE_URI"
-    iniset $conf neutron username nova
-    iniset $conf neutron password "$SERVICE_PASSWORD"
-    iniset $conf neutron user_domain_name "$SERVICE_DOMAIN_NAME"
-    iniset $conf neutron project_name "$SERVICE_PROJECT_NAME"
-    iniset $conf neutron project_domain_name "$SERVICE_DOMAIN_NAME"
-    iniset $conf neutron auth_strategy "$Q_AUTH_STRATEGY"
+    configure_keystoneauth $conf nova neutron
     iniset $conf neutron region_name "$REGION_NAME"
 
     # optionally set options in nova_conf
@@ -1011,10 +1004,10 @@ function _configure_neutron_service {
     iniset $NEUTRON_CONF DEFAULT notify_nova_on_port_status_changes $Q_NOTIFY_NOVA_PORT_STATUS_CHANGES
     iniset $NEUTRON_CONF DEFAULT notify_nova_on_port_data_changes $Q_NOTIFY_NOVA_PORT_DATA_CHANGES
 
-    configure_keystone_authtoken_middleware $NEUTRON_CONF nova nova
+    configure_keystoneauth $NEUTRON_CONF nova nova
 
     # Configuration for placement client
-    configure_keystone_authtoken_middleware $NEUTRON_CONF placement placement
+    configure_keystoneauth $NEUTRON_CONF placement placement
 
     # Configure plugin
     neutron_plugin_configure_service

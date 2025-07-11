@@ -303,15 +303,6 @@ function configure_cinder {
 
     cp $CINDER_DIR/etc/cinder/api-paste.ini $CINDER_API_PASTE_INI
 
-    inicomment $CINDER_API_PASTE_INI filter:authtoken auth_host
-    inicomment $CINDER_API_PASTE_INI filter:authtoken auth_port
-    inicomment $CINDER_API_PASTE_INI filter:authtoken auth_protocol
-    inicomment $CINDER_API_PASTE_INI filter:authtoken cafile
-    inicomment $CINDER_API_PASTE_INI filter:authtoken admin_tenant_name
-    inicomment $CINDER_API_PASTE_INI filter:authtoken admin_user
-    inicomment $CINDER_API_PASTE_INI filter:authtoken admin_password
-    inicomment $CINDER_API_PASTE_INI filter:authtoken signing_dir
-
     configure_keystone_authtoken_middleware $CINDER_CONF cinder
 
     iniset $CINDER_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
@@ -423,7 +414,7 @@ function configure_cinder {
     configure_keystone_authtoken_middleware $CINDER_CONF glance glance
 
     # Set nova credentials (used for os-assisted-snapshots)
-    configure_keystone_authtoken_middleware $CINDER_CONF nova nova
+    configure_keystoneauth $CINDER_CONF nova nova
     iniset $CINDER_CONF nova region_name "$REGION_NAME"
     iniset $CINDER_CONF DEFAULT graceful_shutdown_timeout "$SERVICE_GRACEFUL_SHUTDOWN_TIMEOUT"
 
@@ -733,8 +724,8 @@ function configure_cinder_volume_upload {
 }
 
 function init_cinder_service_user_conf {
-    configure_keystone_authtoken_middleware $CINDER_CONF cinder service_user
     iniset $CINDER_CONF service_user send_service_user_token True
+    configure_keystoneauth $CINDER_CONF cinder service_user
 }
 
 # Restore xtrace
