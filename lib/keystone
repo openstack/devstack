@@ -608,6 +608,7 @@ function create_ldap_domain {
     iniset $KEYSTONE_LDAP_DOMAIN_FILE ldap user_name_attribute "cn"
     iniset $KEYSTONE_LDAP_DOMAIN_FILE ldap user_mail_attribute "mail"
     iniset $KEYSTONE_LDAP_DOMAIN_FILE ldap user_id_attribute "uid"
+    iniset $KEYSTONE_LDAP_DOMAIN_FILE ldap user_enabled_emulation "True"
     iniset $KEYSTONE_LDAP_DOMAIN_FILE ldap user "cn=Manager,dc=openstack,dc=org"
     iniset $KEYSTONE_LDAP_DOMAIN_FILE ldap url "ldap://localhost"
     iniset $KEYSTONE_LDAP_DOMAIN_FILE ldap suffix $LDAP_BASE_DN
