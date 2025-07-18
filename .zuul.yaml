@@ -1,14 +1,4 @@
 - nodeset:
-    name: openstack-single-node
-    nodes:
-      - name: controller
-        label: ubuntu-xenial
-    groups:
-      - name: tempest
-        nodes:
-          - controller
-
-- nodeset:
     name: openstack-single-node-jammy
     nodes:
       - name: controller
@@ -39,40 +29,10 @@
           - controller
 
 - nodeset:
-    name: openstack-single-node-xenial
-    nodes:
-      - name: controller
-        label: ubuntu-xenial
-    groups:
-      - name: tempest
-        nodes:
-          - controller
-
-- nodeset:
     name: devstack-single-node-centos-9-stream
     nodes:
       - name: controller
         label: centos-9-stream
-    groups:
-      - name: tempest
-        nodes:
-          - controller
-
-- nodeset:
-    name: devstack-single-node-opensuse-15
-    nodes:
-      - name: controller
-        label: opensuse-15
-    groups:
-      - name: tempest
-        nodes:
-          - controller
-
-- nodeset:
-    name: devstack-single-node-fedora-latest
-    nodes:
-      - name: controller
-        label: fedora-36
     groups:
       - name: tempest
         nodes:
@@ -97,36 +57,6 @@
       - name: tempest
         nodes:
           - controller
-
-- nodeset:
-    name: openstack-two-node
-    nodes:
-      - name: controller
-        label: ubuntu-xenial
-      - name: compute1
-        label: ubuntu-xenial
-    groups:
-      # Node where tests are executed and test results collected
-      - name: tempest
-        nodes:
-          - controller
-      # Nodes running the compute service
-      - name: compute
-        nodes:
-          - controller
-          - compute1
-      # Nodes that are not the controller
-      - name: subnode
-        nodes:
-          - compute1
-      # Switch node for multinode networking setup
-      - name: switch
-        nodes:
-          - controller
-      # Peer nodes for multinode networking setup
-      - name: peers
-        nodes:
-          - compute1
 
 - nodeset:
     name: openstack-two-node-centos-9-stream
@@ -225,36 +155,6 @@
         label: ubuntu-bionic
       - name: compute1
         label: ubuntu-bionic
-    groups:
-      # Node where tests are executed and test results collected
-      - name: tempest
-        nodes:
-          - controller
-      # Nodes running the compute service
-      - name: compute
-        nodes:
-          - controller
-          - compute1
-      # Nodes that are not the controller
-      - name: subnode
-        nodes:
-          - compute1
-      # Switch node for multinode networking setup
-      - name: switch
-        nodes:
-          - controller
-      # Peer nodes for multinode networking setup
-      - name: peers
-        nodes:
-          - compute1
-
-- nodeset:
-    name: openstack-two-node-xenial
-    nodes:
-      - name: controller
-        label: ubuntu-xenial
-      - name: compute1
-        label: ubuntu-xenial
     groups:
       # Node where tests are executed and test results collected
       - name: tempest
@@ -782,23 +682,6 @@
         tls-proxy: false
 
 - job:
-    name: devstack-platform-fedora-latest
-    parent: tempest-full-py3
-    description: Fedora latest platform test
-    nodeset: devstack-single-node-fedora-latest
-    voting: false
-
-- job:
-    name: devstack-platform-fedora-latest-virt-preview
-    parent: tempest-full-py3
-    description: Fedora latest platform test using the virt-preview repo.
-    nodeset: devstack-single-node-fedora-latest
-    voting: false
-    vars:
-      devstack_localrc:
-        ENABLE_FEDORA_VIRT_PREVIEW_REPO: true
-
-- job:
     name: devstack-tox-base
     parent: devstack
     description: |
@@ -871,7 +754,6 @@
         - devstack
         - devstack-ipv6
         - devstack-enforce-scope
-        - devstack-platform-fedora-latest
         - devstack-platform-centos-9-stream
         - devstack-platform-debian-bullseye
         - devstack-platform-rocky-blue-onyx
@@ -973,10 +855,6 @@
     #    Next cycle we can remove this if everything run out stable enough.
     # * nova-multi-cell: maintained by nova and currently non-voting in the
     #    check queue for nova changes but relies on devstack configuration
-    # * devstack-platform-fedora-latest-virt-preview: Maintained by lyarwood
-    #    for Nova to allow early testing of the latest versions of Libvirt and
-    #    QEMU. Should only graduate out of experimental if it ever moves into
-    #    the check queue for Nova.
 
     experimental:
       jobs:
@@ -1005,5 +883,4 @@
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
-        - devstack-platform-fedora-latest-virt-preview
         - devstack-no-tls-proxy
