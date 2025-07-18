@@ -1,14 +1,4 @@
 - nodeset:
-    name: openstack-single-node
-    nodes:
-      - name: controller
-        label: ubuntu-xenial
-    groups:
-      - name: tempest
-        nodes:
-          - controller
-
-- nodeset:
     name: openstack-single-node-jammy
     nodes:
       - name: controller
@@ -39,30 +29,10 @@
           - controller
 
 - nodeset:
-    name: openstack-single-node-xenial
-    nodes:
-      - name: controller
-        label: ubuntu-xenial
-    groups:
-      - name: tempest
-        nodes:
-          - controller
-
-- nodeset:
     name: devstack-single-node-centos-9-stream
     nodes:
       - name: controller
         label: centos-9-stream
-    groups:
-      - name: tempest
-        nodes:
-          - controller
-
-- nodeset:
-    name: devstack-single-node-opensuse-15
-    nodes:
-      - name: controller
-        label: opensuse-15
     groups:
       - name: tempest
         nodes:
@@ -77,36 +47,6 @@
       - name: tempest
         nodes:
           - controller
-
-- nodeset:
-    name: openstack-two-node
-    nodes:
-      - name: controller
-        label: ubuntu-xenial
-      - name: compute1
-        label: ubuntu-xenial
-    groups:
-      # Node where tests are executed and test results collected
-      - name: tempest
-        nodes:
-          - controller
-      # Nodes running the compute service
-      - name: compute
-        nodes:
-          - controller
-          - compute1
-      # Nodes that are not the controller
-      - name: subnode
-        nodes:
-          - compute1
-      # Switch node for multinode networking setup
-      - name: switch
-        nodes:
-          - controller
-      # Peer nodes for multinode networking setup
-      - name: peers
-        nodes:
-          - compute1
 
 - nodeset:
     name: openstack-two-node-centos-9-stream
@@ -175,36 +115,6 @@
         label: ubuntu-bionic
       - name: compute1
         label: ubuntu-bionic
-    groups:
-      # Node where tests are executed and test results collected
-      - name: tempest
-        nodes:
-          - controller
-      # Nodes running the compute service
-      - name: compute
-        nodes:
-          - controller
-          - compute1
-      # Nodes that are not the controller
-      - name: subnode
-        nodes:
-          - compute1
-      # Switch node for multinode networking setup
-      - name: switch
-        nodes:
-          - controller
-      # Peer nodes for multinode networking setup
-      - name: peers
-        nodes:
-          - compute1
-
-- nodeset:
-    name: openstack-two-node-xenial
-    nodes:
-      - name: controller
-        label: ubuntu-xenial
-      - name: compute1
-        label: ubuntu-xenial
     groups:
       # Node where tests are executed and test results collected
       - name: tempest
@@ -832,10 +742,6 @@
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
-        - openstacksdk-functional-devstack:
-            irrelevant-files:
-              - ^.*\.rst$
-              - ^doc/.*$
         - tempest-ipv6-only:
             irrelevant-files:
               - ^.*\.rst$
@@ -872,10 +778,6 @@
         # - ironic-tempest-bios-ipmi-direct-tinyipa
         - swift-dsvm-functional
         - grenade:
-            irrelevant-files:
-              - ^.*\.rst$
-              - ^doc/.*$
-        - openstacksdk-functional-devstack:
             irrelevant-files:
               - ^.*\.rst$
               - ^doc/.*$
