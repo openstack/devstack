@@ -1,14 +1,4 @@
 - nodeset:
-    name: openstack-single-node
-    nodes:
-      - name: controller
-        label: ubuntu-xenial
-    groups:
-      - name: tempest
-        nodes:
-          - controller
-
-- nodeset:
     name: openstack-single-node-focal
     nodes:
       - name: controller
@@ -29,26 +19,6 @@
           - controller
 
 - nodeset:
-    name: openstack-single-node-xenial
-    nodes:
-      - name: controller
-        label: ubuntu-xenial
-    groups:
-      - name: tempest
-        nodes:
-          - controller
-
-- nodeset:
-    name: devstack-single-node-centos-8-stream
-    nodes:
-      - name: controller
-        label: centos-8-stream
-    groups:
-      - name: tempest
-        nodes:
-          - controller
-
-- nodeset:
     name: devstack-single-node-centos-9-stream
     nodes:
       - name: controller
@@ -57,46 +27,6 @@
       - name: tempest
         nodes:
           - controller
-
-- nodeset:
-    name: devstack-single-node-opensuse-15
-    nodes:
-      - name: controller
-        label: opensuse-15
-    groups:
-      - name: tempest
-        nodes:
-          - controller
-
-- nodeset:
-    name: openstack-two-node
-    nodes:
-      - name: controller
-        label: ubuntu-xenial
-      - name: compute1
-        label: ubuntu-xenial
-    groups:
-      # Node where tests are executed and test results collected
-      - name: tempest
-        nodes:
-          - controller
-      # Nodes running the compute service
-      - name: compute
-        nodes:
-          - controller
-          - compute1
-      # Nodes that are not the controller
-      - name: subnode
-        nodes:
-          - compute1
-      # Switch node for multinode networking setup
-      - name: switch
-        nodes:
-          - controller
-      # Peer nodes for multinode networking setup
-      - name: peers
-        nodes:
-          - compute1
 
 - nodeset:
     name: openstack-two-node-focal
@@ -135,36 +65,6 @@
         label: ubuntu-bionic
       - name: compute1
         label: ubuntu-bionic
-    groups:
-      # Node where tests are executed and test results collected
-      - name: tempest
-        nodes:
-          - controller
-      # Nodes running the compute service
-      - name: compute
-        nodes:
-          - controller
-          - compute1
-      # Nodes that are not the controller
-      - name: subnode
-        nodes:
-          - compute1
-      # Switch node for multinode networking setup
-      - name: switch
-        nodes:
-          - controller
-      # Peer nodes for multinode networking setup
-      - name: peers
-        nodes:
-          - compute1
-
-- nodeset:
-    name: openstack-two-node-xenial
-    nodes:
-      - name: controller
-        label: ubuntu-xenial
-      - name: compute1
-        label: ubuntu-xenial
     groups:
       # Node where tests are executed and test results collected
       - name: tempest
@@ -768,11 +668,6 @@
     #    Next cycle we can remove this if everything run out stable enough.
     # * nova-multi-cell: maintained by nova and currently non-voting in the
     #    check queue for nova changes but relies on devstack configuration
-    # * devstack-platform-fedora-latest-virt-preview: Maintained by lyarwood
-    #    for Nova to allow early testing of the latest versions of Libvirt and
-    #    QEMU. Should only graduate out of experimental if it ever moves into
-    #    the check queue for Nova.
-
     experimental:
       jobs:
         - nova-multi-cell
