@@ -75,7 +75,7 @@ if ! isset ENABLED_SERVICES ; then
     # OVN
     ENABLED_SERVICES+=,ovn-controller,ovn-northd,ovs-vswitchd,ovsdb-server
     # Neutron
-    ENABLED_SERVICES+=,q-svc,q-ovn-metadata-agent
+    ENABLED_SERVICES+=,q-svc,q-ovn-agent
     # Dashboard
     ENABLED_SERVICES+=,horizon
     # Additional services
