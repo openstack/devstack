@@ -105,6 +105,8 @@ TEMPEST_CONCURRENCY=${TEMPEST_CONCURRENCY:-$(nproc)}
 TEMPEST_FLAVOR_RAM=${TEMPEST_FLAVOR_RAM:-192}
 TEMPEST_FLAVOR_ALT_RAM=${TEMPEST_FLAVOR_ALT_RAM:-256}
 
+TEMPEST_USE_ISO_IMAGE=$(trueorfalse False TEMPEST_USE_ISO_IMAGE)
+
 # Functions
 # ---------
 
@@ -161,12 +163,20 @@ function get_active_images {
     # start with a fresh array in case we are called multiple times
     img_array=()
 
-    while read -r IMAGE_NAME IMAGE_UUID; do
+    # NOTE(gmaan): Most of the iso image require ssh to be enabled explicitly
+    # and if we set those iso images in image_ref and image_ref_alt that can
+    # cause test to fail because many tests using image_ref and image_ref_alt
+    # to boot server also perform ssh. We skip to set iso image in tempest
+    # unless it is requested via TEMPEST_USE_ISO_IMAGE.
+    while read -r IMAGE_NAME IMAGE_UUID DISK_FORMAT; do
+        if [[ "$DISK_FORMAT" == "iso"  ]] && [[ "$TEMPEST_USE_ISO_IMAGE" == False ]]; then
+            continue
+        fi
         if [ "$IMAGE_NAME" = "$DEFAULT_IMAGE_NAME" ]; then
             img_id="$IMAGE_UUID"
         fi
         img_array+=($IMAGE_UUID)
-    done < <(openstack --os-cloud devstack-admin image list --property status=active | awk -F'|' '!/^(+--)|ID|aki|ari/ { print $3,$2 }')
+    done < <(openstack --os-cloud devstack-admin image list --long --property status=active | awk -F'|' '!/^(+--)|ID|aki|ari/ { print $3,$2,$4 }')
 }
 
 function poll_glance_images {
