@@ -43,6 +43,9 @@ declare -A -g GITREPO
 declare -A -g GITBRANCH
 declare -A -g GITDIR
 
+# Systemd service file environment variables per service
+declare -A -g SYSTEMD_ENV_VARS
+
 KILL_PATH="$(which kill)"
 
 # Save these variables to .stackenv
@@ -1642,6 +1645,9 @@ function _run_under_systemd {
         user=$STACK_USER
     fi
     local env_vars="$5"
+    if [[ -v SYSTEMD_ENV_VARS[$service] ]]; then
+        env_vars="${SYSTEMD_ENV_VARS[$service]} $env_vars"
+    fi
     if [[ "$command" =~ "uwsgi" ]] ; then
         if [[ "$GLOBAL_VENV" == "True" ]] ; then
             cmd="$cmd --venv $DEVSTACK_VENV"
