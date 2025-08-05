@@ -615,6 +615,11 @@ case "$VIRT_DRIVER" in
         LIBVIRT_TYPE=${LIBVIRT_TYPE:-kvm}
         LIBVIRT_CPU_MODE=${LIBVIRT_CPU_MODE:-custom}
         LIBVIRT_CPU_MODEL=${LIBVIRT_CPU_MODEL:-Nehalem}
+
+        if [[ -z "$os_VENDOR" ]]; then
+            GetOSVersion
+        fi
+
         if [[ "$os_VENDOR" =~ (Debian|Ubuntu) ]]; then
             # The groups change with newer libvirt. Older Ubuntu used
             # 'libvirtd', but now uses libvirt like Debian. Do a quick check
