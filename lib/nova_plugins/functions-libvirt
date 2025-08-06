@@ -71,7 +71,7 @@ function install_libvirt {
     if is_ubuntu; then
         install_package qemu-system libvirt-clients libvirt-daemon-system libvirt-dev python3-libvirt systemd-coredump
         if is_arch "aarch64"; then
-            install_package qemu-efi
+            install_package qemu-efi-aarch64
         fi
         #pip_install_gr <there-si-no-guestfs-in-pypi>
     elif is_fedora; then
