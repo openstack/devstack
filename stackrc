@@ -621,11 +621,7 @@ case "$VIRT_DRIVER" in
         fi
 
         if [[ "$os_VENDOR" =~ (Debian|Ubuntu) ]]; then
-            # The groups change with newer libvirt. Older Ubuntu used
-            # 'libvirtd', but now uses libvirt like Debian. Do a quick check
-            # to see if libvirtd group already exists to handle grenade's case.
-            LIBVIRT_GROUP=$(cut -d ':' -f 1 /etc/group | grep 'libvirtd$' || true)
-            LIBVIRT_GROUP=${LIBVIRT_GROUP:-libvirt}
+            LIBVIRT_GROUP=libvirt
         else
             LIBVIRT_GROUP=libvirtd
         fi
