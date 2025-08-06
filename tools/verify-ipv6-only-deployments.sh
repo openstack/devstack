@@ -33,28 +33,23 @@ function verify_devstack_ipv6_setting {
         echo $TUNNEL_IP_VERSION "TUNNEL_IP_VERSION is not set to 6 so TUNNEL_ENDPOINT_IP cannot be an IPv6 address."
         exit 1
     fi
-    is_service_host_ipv6=$(python3 -c 'import oslo_utils.netutils as nutils; print(nutils.is_valid_ipv6("'$_service_host'"))')
-    if [[ "$is_service_host_ipv6" != "True" ]]; then
+    if ! python3 ${TOP_DIR}/tools/verify-ipv6-address.py "$_service_host"; then
         echo $SERVICE_HOST "SERVICE_HOST is not IPv6 which means devstack cannot deploy services on IPv6 addresses."
         exit 1
     fi
-    is_host_ipv6=$(python3 -c 'import oslo_utils.netutils as nutils; print(nutils.is_valid_ipv6("'$_host_ipv6'"))')
-    if [[ "$is_host_ipv6" != "True" ]]; then
+    if ! python3 ${TOP_DIR}/tools/verify-ipv6-address.py "$_host_ipv6"; then
         echo $HOST_IPV6 "HOST_IPV6 is not IPv6 which means devstack cannot deploy services on IPv6 addresses."
         exit 1
     fi
-    is_service_listen_address=$(python3 -c 'import oslo_utils.netutils as nutils; print(nutils.is_valid_ipv6("'$_service_listen_address'"))')
-    if [[ "$is_service_listen_address" != "True" ]]; then
+    if ! python3 ${TOP_DIR}/tools/verify-ipv6-address.py "$_service_listen_address"; then
         echo $SERVICE_LISTEN_ADDRESS "SERVICE_LISTEN_ADDRESS is not IPv6 which means devstack cannot deploy services on IPv6 addresses."
         exit 1
     fi
-    is_service_local_host=$(python3 -c 'import oslo_utils.netutils as nutils; print(nutils.is_valid_ipv6("'$_service_local_host'"))')
-    if [[ "$is_service_local_host" != "True" ]]; then
+    if ! python3 ${TOP_DIR}/tools/verify-ipv6-address.py "$_service_local_host"; then
         echo $SERVICE_LOCAL_HOST "SERVICE_LOCAL_HOST is not IPv6 which means devstack cannot deploy services on IPv6 addresses."
         exit 1
     fi
-    is_tunnel_endpoint_ip=$(python3 -c 'import oslo_utils.netutils as nutils; print(nutils.is_valid_ipv6("'$_tunnel_endpoint_ip'"))')
-    if [[ "$is_tunnel_endpoint_ip" != "True" ]]; then
+    if ! python3 ${TOP_DIR}/tools/verify-ipv6-address.py "$_tunnel_endpoint_ip"; then
         echo $TUNNEL_ENDPOINT_IP "TUNNEL_ENDPOINT_IP is not IPv6 which means devstack will not deploy with an IPv6 endpoint address."
         exit 1
     fi
@@ -63,8 +58,7 @@ function verify_devstack_ipv6_setting {
 }
 
 function sanity_check_system_ipv6_enabled {
-    system_ipv6_enabled=$(python3 -c 'import oslo_utils.netutils as nutils; print(nutils.is_ipv6_enabled())')
-    if [[ $system_ipv6_enabled != "True" ]]; then
+    if [ ! -f "/proc/sys/net/ipv6/conf/default/disable_ipv6" ] || [ "$(cat /proc/sys/net/ipv6/conf/default/disable_ipv6)" -ne "0" ]; then
         echo "IPv6 is disabled in system"
         exit 1
     fi
@@ -78,10 +72,8 @@ function verify_service_listen_address_is_ipv6 {
     for endpoint in ${endpoints}; do
         local endpoint_address=''
         endpoint_address=$(echo "$endpoint" | awk -F/ '{print $3}' | awk -F] '{print $1}')
-        endpoint_address=$(echo $endpoint_address | tr -d [])
-        local is_endpoint_ipv6=''
-        is_endpoint_ipv6=$(python3 -c 'import oslo_utils.netutils as nutils; print(nutils.is_valid_ipv6("'$endpoint_address'"))')
-        if [[ "$is_endpoint_ipv6" != "True" ]]; then
+        endpoint_address=$(echo $endpoint_address | tr -d '[]')
+        if ! python3 ${TOP_DIR}/tools/verify-ipv6-address.py "$endpoint_address"; then
             all_ipv6=False
             echo $endpoint ": This is not an IPv6 endpoint which means corresponding service is not listening on an IPv6 address."
             continue
