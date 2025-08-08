@@ -352,6 +352,12 @@
       nodes (everything but the controller).
     required-projects:
       - opendev.org/openstack/devstack
+      # this is a workaround for a packaging bug in ubuntu
+      # remove when https://bugs.launchpad.net/nova/+bug/2109592
+      # is resolved and oslo.config is not a dep of the novnc deb
+      # via the defunct python3-novnc package.
+      - novnc/novnc
+
     roles:
       - zuul: opendev.org/openstack/openstack-zuul-jobs
     vars:
@@ -369,7 +375,6 @@
         LOG_COLOR: false
         VERBOSE: true
         VERBOSE_NO_TIMESTAMP: true
-        NOVNC_FROM_PACKAGE: true
         ERROR_ON_CLONE: true
         # Gate jobs can't deal with nested virt. Disable it by default.
         LIBVIRT_TYPE: '{{ devstack_libvirt_type | default("qemu") }}'
@@ -442,7 +447,6 @@
           LOG_COLOR: false
           VERBOSE: true
           VERBOSE_NO_TIMESTAMP: true
-          NOVNC_FROM_PACKAGE: true
           ERROR_ON_CLONE: true
           LIBVIRT_TYPE: qemu
         devstack_services:
