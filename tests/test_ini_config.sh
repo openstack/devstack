@@ -47,6 +47,9 @@ multi = foo2
 [fff]
 ampersand =
 
+[ggg]
+backslash =
+
 [key_with_spaces]
 rgw special key = something
 
@@ -88,7 +91,7 @@ fi
 
 # test iniget_sections
 VAL=$(iniget_sections "${TEST_INI}")
-assert_equal "$VAL" "default aaa bbb ccc ddd eee fff key_with_spaces \
+assert_equal "$VAL" "default aaa bbb ccc ddd eee fff ggg key_with_spaces \
 del_separate_options del_same_option del_missing_option \
 del_missing_option_multi del_no_options"
 
@@ -133,6 +136,16 @@ for i in `seq 3`; do
 done
 VAL=$(iniget ${TEST_INI} fff ampersand)
 assert_equal "$VAL" "&y" "iniset ampersands in option"
+
+# Test with backslash in value
+iniset ${TEST_INI} ggg backslash 'foo\bar'
+VAL=$(iniget ${TEST_INI} ggg backslash)
+assert_equal "$VAL" 'foo\bar' "iniset backslash in value"
+
+# Test with both ampersand and backslash
+iniset ${TEST_INI} ggg backslash 'foo\bar&baz'
+VAL=$(iniget ${TEST_INI} ggg backslash)
+assert_equal "$VAL" 'foo\bar&baz' "iniset ampersand and backslash in value"
 
 # test empty option
 if ini_has_option ${SUDO_ARG} ${TEST_INI} ddd empty; then
