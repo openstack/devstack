@@ -1,6 +1,6 @@
 cryptsetup
 dosfstools
-genisoimage # not:rhel9
+genisoimage # not:rhel9,rhel10
 iscsi-initiator-utils
 libosinfo
 lvm2

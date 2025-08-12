@@ -10,9 +10,10 @@ glibc-langpack-en # dist:rhel9
 graphviz # needed only for docs
 httpd
 httpd-devel
-iptables-nft # dist:rhel9
+iptables-nft # dist:rhel9,rhel10
 iptables-services
-java-1.8.0-openjdk-headless
+java-1.8.0-openjdk-headless # not:rhel10
+java-21-openjdk-headless # dist:rhel10
 libffi-devel
 libjpeg-turbo-devel # Pillow 3.0.0
 libxml2-devel # lxml
@@ -23,7 +24,8 @@ net-tools
 openssh-server
 openssl
 openssl-devel # to rebuild pyOpenSSL if needed
-pcre-devel # for python-pcre
+pcre2-devel # dist:rhel10 for python-pcre2
+pcre-devel # not:rhel10 for python-pcre
 pkgconfig
 postgresql-devel  # psycopg2
 psmisc

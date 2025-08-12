@@ -39,6 +39,16 @@
           - controller
 
 - nodeset:
+    name: devstack-single-node-centos-10-stream
+    nodes:
+      - name: controller
+        label: centos-10-stream-8GB
+    groups:
+      - name: tempest
+        nodes:
+          - controller
+
+- nodeset:
     name: devstack-single-node-centos-9-stream
     nodes:
       - name: controller
@@ -85,6 +95,36 @@
       - name: tempest
         nodes:
           - controller
+
+- nodeset:
+    name: openstack-two-node-centos-10-stream
+    nodes:
+      - name: controller
+        label: centos-10-stream-8GB
+      - name: compute1
+        label: centos-10-stream-8GB
+    groups:
+      # Node where tests are executed and test results collected
+      - name: tempest
+        nodes:
+          - controller
+      # Nodes running the compute service
+      - name: compute
+        nodes:
+          - controller
+          - compute1
+      # Nodes that are not the controller
+      - name: subnode
+        nodes:
+          - compute1
+      # Switch node for multinode networking setup
+      - name: switch
+        nodes:
+          - controller
+      # Peer nodes for multinode networking setup
+      - name: peers
+        nodes:
+          - compute1
 
 - nodeset:
     name: openstack-two-node-centos-9-stream
@@ -730,6 +770,14 @@
 # and these platforms don't have the round-the-clock support to avoid
 # becoming blockers in that situation.
 - job:
+    name: devstack-platform-centos-10-stream
+    parent: tempest-full-py3
+    description: CentOS 10 Stream platform test
+    nodeset: devstack-single-node-centos-10-stream
+    timeout: 9000
+    voting: false
+
+- job:
     name: devstack-platform-centos-9-stream
     parent: tempest-full-py3
     description: CentOS 9 Stream platform test
@@ -911,6 +959,7 @@
         - devstack
         - devstack-ipv6
         - devstack-enforce-scope
+        - devstack-platform-centos-10-stream
         - devstack-platform-centos-9-stream
         - devstack-platform-debian-bookworm
         - devstack-platform-rocky-blue-onyx
@@ -994,6 +1043,7 @@
         - devstack-no-tls-proxy
     periodic-weekly:
       jobs:
+        - devstack-platform-centos-10-stream
         - devstack-platform-centos-9-stream
         - devstack-platform-debian-bookworm
         - devstack-platform-rocky-blue-onyx
