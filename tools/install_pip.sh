@@ -38,7 +38,6 @@ FILES=$TOP_DIR/files
 # [1] https://opendev.org/openstack/project-config/src/branch/master/nodepool/elements/cache-devstack/source-repository-pip
 
 PIP_GET_PIP_URL=${PIP_GET_PIP_URL:-"https://bootstrap.pypa.io/get-pip.py"}
-PIP_GET_PIP36_URL=${PIP_GET_PIP36_URL:-"https://bootstrap.pypa.io/pip/3.6/get-pip.py"}
 
 GetDistro
 echo "Distro: $DISTRO"
@@ -57,14 +56,8 @@ function get_versions {
 
 
 function install_get_pip {
-    if [[ "$PYTHON3_VERSION" = "3.6" ]]; then
-        _pip_url=$PIP_GET_PIP36_URL
-        _local_pip="$FILES/$(basename $_pip_url)-py36"
-    else
-        _pip_url=$PIP_GET_PIP_URL
-        _local_pip="$FILES/$(basename $_pip_url)"
-    fi
-
+    _pip_url=$PIP_GET_PIP_URL
+    _local_pip="$FILES/$(basename $_pip_url)"
 
     # If get-pip.py isn't python, delete it. This was probably an
     # outage on the server.
