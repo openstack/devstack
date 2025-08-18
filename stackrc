@@ -395,6 +395,10 @@ GITBRANCH["futurist"]=${FUTURIST_BRANCH:-$TARGET_BRANCH}
 GITREPO["debtcollector"]=${DEBTCOLLECTOR_REPO:-${GIT_BASE}/openstack/debtcollector.git}
 GITBRANCH["debtcollector"]=${DEBTCOLLECTOR_BRANCH:-$TARGET_BRANCH}
 
+# etcd3gw library
+GITREPO["etcd3gw"]=${ETCD3GW_REPO:-${GIT_BASE}/openstack/etcd3gw.git}
+GITBRANCH["etcd3gw"]=${ETCD3GW_BRANCH:-$BRANCHLESS_TARGET_BRANCH}
+
 # helpful state machines
 GITREPO["automaton"]=${AUTOMATON_REPO:-${GIT_BASE}/openstack/automaton.git}
 GITBRANCH["automaton"]=${AUTOMATON_BRANCH:-$TARGET_BRANCH}
