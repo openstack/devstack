@@ -535,7 +535,7 @@ function configure_tempest {
     fi
 
     # NOTE(gmaan): Since 2025.2, 'manager' role is available in nova.
-    local nova_policy_roles="admin,manager,member,reader"
+    local nova_policy_roles="admin,manager,member,reader,service"
     iniset $TEMPEST_CONFIG compute-feature-enabled nova_policy_roles $nova_policy_roles
 
     # Network
