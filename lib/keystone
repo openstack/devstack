@@ -432,6 +432,7 @@ function configure_keystone_authtoken_middleware {
     local conf_file=$1
     local admin_user=$2
     local section=${3:-keystone_authtoken}
+    local service_type=$4
 
     iniset $conf_file $section auth_type password
     iniset $conf_file $section interface public
@@ -444,6 +445,9 @@ function configure_keystone_authtoken_middleware {
 
     iniset $conf_file $section cafile $SSL_BUNDLE_FILE
     iniset $conf_file $section memcached_servers $MEMCACHE_SERVERS
+    if [[ -n "$service_type" ]]; then
+        iniset $conf_file $section service_type $service_type
+    fi
 }
 
 # configure_auth_token_middleware conf_file admin_user IGNORED [section]
