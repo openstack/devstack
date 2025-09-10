@@ -97,6 +97,16 @@
           - controller
 
 - nodeset:
+    name: devstack-single-node-rockylinux-10
+    nodes:
+      - name: controller
+        label: rockylinux-10-8GB
+    groups:
+      - name: tempest
+        nodes:
+          - controller
+
+- nodeset:
     name: openstack-two-node-centos-10-stream
     nodes:
       - name: controller
@@ -816,6 +826,16 @@
         PYTHON3_VERSION: 3.11
 
 - job:
+    name: devstack-platform-rocky-red-quartz
+    parent: tempest-full-py3
+    description: Rocky Linux Red Quartz platform test
+    nodeset: devstack-single-node-rockylinux-10
+    timeout: 9000
+    voting: false
+    vars:
+      configure_swap_size: 4096
+
+- job:
     name: devstack-platform-ubuntu-jammy
     parent: tempest-full-py3
     description: Ubuntu 22.04 LTS (Jammy) platform test
@@ -963,6 +983,7 @@
         - devstack-platform-centos-9-stream
         - devstack-platform-debian-bookworm
         - devstack-platform-rocky-blue-onyx
+        - devstack-platform-rocky-red-quartz
         - devstack-platform-ubuntu-noble-ovn-source
         - devstack-platform-ubuntu-noble-ovs
         - devstack-platform-ubuntu-jammy
