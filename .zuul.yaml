@@ -73,19 +73,6 @@
         nodes:
           - controller
 
-# Note(sean-k-mooney): this is still used by horizon for
-# horizon-integration-tests, horizon-integration-pytest and
-# horizon-ui-pytest, remove when horizon is updated.
-- nodeset:
-    name: devstack-single-node-debian-bullseye
-    nodes:
-      - name: controller
-        label: debian-bullseye
-    groups:
-      - name: tempest
-        nodes:
-          - controller
-
 - nodeset:
     name: devstack-single-node-rockylinux-9
     nodes:
