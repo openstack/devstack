@@ -484,7 +484,9 @@ function configure_glance {
 function create_glance_accounts {
     if is_service_enabled g-api; then
 
-        create_service_user "glance"
+        # When cinder talk to glance service APIs user needs service
+        # role for RBAC checks and admin role for cinder to access images.
+        create_service_user "glance" "admin"
 
         # required for swift access
         if is_service_enabled s-proxy; then

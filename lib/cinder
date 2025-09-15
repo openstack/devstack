@@ -419,6 +419,9 @@ function configure_cinder {
         iniset $CINDER_CONF DEFAULT glance_ca_certificates_file $SSL_BUNDLE_FILE
     fi
 
+    # Set glance credentials (used for location APIs)
+    configure_keystone_authtoken_middleware $CINDER_CONF glance glance
+
     # Set nova credentials (used for os-assisted-snapshots)
     configure_keystone_authtoken_middleware $CINDER_CONF nova nova
     iniset $CINDER_CONF nova region_name "$REGION_NAME"
