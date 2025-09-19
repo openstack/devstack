@@ -4,7 +4,13 @@
     executable: /bin/bash
     cmd: |
       sudo iptables-save > {{ stage_dir }}/iptables.txt
-      df -h > {{ stage_dir }}/df.txt
+
+      # NOTE(sfernand): Run 'df' with a 60s timeout to prevent hangs from
+      # stale NFS mounts.
+      timeout -s 9 60s df -h > {{ stage_dir }}/df.txt || true
+      # If 'df' times out, the mount output helps debug which NFS share
+      # is unresponsive.
+      mount > {{ stage_dir }}/mount.txt
 
       for py_ver in 2 3; do
           if [[ `which python${py_ver}` ]]; then
