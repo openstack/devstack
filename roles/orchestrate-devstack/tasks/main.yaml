@@ -4,6 +4,7 @@
   when: inventory_hostname == 'controller'
 
 - name: Setup devstack on sub-nodes
+  any_errors_fatal: true
   block:
 
   - name: Distribute the build sshkey for the user "stack"
