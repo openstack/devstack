@@ -453,6 +453,10 @@ function create_nova_conf {
     iniset $NOVA_CONF DEFAULT metadata_listen "$NOVA_SERVICE_LISTEN_ADDRESS"
     iniset $NOVA_CONF DEFAULT shutdown_timeout $NOVA_SHUTDOWN_TIMEOUT
 
+    # Enable errors if response validation fails. We want this enabled in CI
+    # and development contexts to highlights bugs in our response schemas.
+    iniset $NOVA_CONF api response_validation error
+
     iniset $NOVA_CONF key_manager backend nova.keymgr.conf_key_mgr.ConfKeyManager
 
     iniset $NOVA_CONF DEFAULT report_interval $NOVA_SERVICE_REPORT_INTERVAL
