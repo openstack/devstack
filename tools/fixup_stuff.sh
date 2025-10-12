@@ -89,19 +89,6 @@ EOF
     if is_package_installed python3-setuptools; then
         sudo dnf reinstall -y python3-setuptools
     fi
-    # Workaround CentOS 8-stream iputils and systemd Bug
-    # https://bugzilla.redhat.com/show_bug.cgi?id=2037807
-    if [[ $os_VENDOR == "CentOSStream" && $os_RELEASE -eq 8 ]]; then
-        sudo sysctl -w net.ipv4.ping_group_range='0 2147483647'
-    fi
-}
-
-function fixup_ovn_centos {
-    if [[ $os_VENDOR != "CentOS" ]]; then
-        return
-    fi
-    # OVN packages are part of this release for CentOS
-    yum_install centos-release-openstack-victoria
 }
 
 function fixup_ubuntu {

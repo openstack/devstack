@@ -366,36 +366,7 @@ fi
 # to speed things up
 SKIP_EPEL_INSTALL=$(trueorfalse False SKIP_EPEL_INSTALL)
 
-if [[ $DISTRO == "rhel8" ]]; then
-    # If we have /etc/ci/mirror_info.sh assume we're on a OpenStack CI
-    # node, where EPEL is installed (but disabled) and already
-    # pointing at our internal mirror
-    if [[ -f /etc/ci/mirror_info.sh ]]; then
-        SKIP_EPEL_INSTALL=True
-        sudo dnf config-manager --set-enabled epel
-    fi
-
-    # PowerTools repo provides libyaml-devel required by devstack itself and
-    # EPEL packages assume that the PowerTools repository is enable.
-    sudo dnf config-manager --set-enabled PowerTools
-
-    # CentOS 8.3 changed the repository name to lower case.
-    sudo dnf config-manager --set-enabled powertools
-
-    if [[ ${SKIP_EPEL_INSTALL} != True ]]; then
-        _install_epel
-    fi
-    # Along with EPEL, CentOS (and a-likes) require some packages only
-    # available in RDO repositories (e.g. OVS, or later versions of
-    # kvm) to run.
-    _install_rdo
-
-    # NOTE(cgoncalves): workaround RHBZ#1154272
-    # dnf fails for non-privileged users when expired_repos.json doesn't exist.
-    # RHBZ: https://bugzilla.redhat.com/show_bug.cgi?id=1154272
-    # Patch: https://github.com/rpm-software-management/dnf/pull/1448
-    echo "[]" | sudo tee /var/cache/dnf/expired_repos.json
-elif [[ $DISTRO == "rhel9" ]]; then
+if [[ $DISTRO == "rhel9" ]]; then
     # for CentOS Stream 9 repository
     sudo dnf config-manager --set-enabled crb
     # for RHEL 9 repository
