@@ -1011,6 +1011,11 @@ if is_service_enabled tls-proxy; then
     fix_system_ca_bundle_path
 fi
 
+if is_service_enabled cinder || [[ "$USE_CINDER_FOR_GLANCE" == "True" ]]; then
+    # os-brick setup required by glance, cinder, and nova
+    init_os_brick
+fi
+
 # Extras Install
 # --------------
 

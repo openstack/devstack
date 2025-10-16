@@ -59,6 +59,7 @@ else
 fi
 
 CINDER_STATE_PATH=${CINDER_STATE_PATH:=$DATA_DIR/cinder}
+OS_BRICK_LOCK_PATH=${OS_BRICK_LOCK_PATH:=$DATA_DIR/os_brick}
 
 CINDER_CONF_DIR=/etc/cinder
 CINDER_CONF=$CINDER_CONF_DIR/cinder.conf
@@ -512,6 +513,21 @@ function init_cinder {
     fi
 
     mkdir -p $CINDER_STATE_PATH/volumes
+}
+
+
+function init_os_brick {
+    mkdir -p $OS_BRICK_LOCK_PATH
+    if is_service_enabled cinder; then
+        iniset $CINDER_CONF os_brick lock_path $OS_BRICK_LOCK_PATH
+    fi
+    if is_service_enabled nova; then
+        iniset $NOVA_CONF os_brick lock_path $OS_BRICK_LOCK_PATH
+    fi
+    if is_service_enabled glance; then
+        iniset $GLANCE_API_CONF os_brick lock_path $OS_BRICK_LOCK_PATH
+        iniset $GLANCE_CACHE_CONF os_brick lock_path $OS_BRICK_LOCK_PATH
+    fi
 }
 
 # install_cinder() - Collect source and prepare
