@@ -90,7 +90,6 @@ function merge_config_file {
     local real_configfile
     real_configfile=$(eval echo $configfile)
     if [ ! -f $real_configfile ]; then
-        mkdir -p $(dirname $real_configfile) || die $LINENO "could not create the directory of $real_configfile ($configfile)"
         touch $real_configfile || die $LINENO "could not create config file $real_configfile ($configfile)"
     fi
 
@@ -186,11 +185,15 @@ function merge_config_group {
                 break
             fi
             dir=$(dirname $realconfigfile)
-            if [[ -d $dir ]]; then
-                merge_config_file $localfile $group $configfile
-            else
-                die $LINENO "bogus config file specification $configfile ($configfile=$realconfigfile, $dir is not a directory)"
+
+            test -e $dir && ! test -d $dir && die $LINENO "bogus config file specification $configfile ($configfile=$realconfigfile, $dir exists but it is not a directory)"
+
+            if ! [[ -e $dir ]] ; then
+                sudo mkdir -p $dir || die $LINENO "could not create the directory of $real_configfile ($configfile)"
+                sudo chown ${STACK_USER} $dir
             fi
+
+            merge_config_file $localfile $group $configfile
         done
     done
 }

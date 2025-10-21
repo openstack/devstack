@@ -137,6 +137,9 @@ foo=bar
 [some]
 random=config
 
+[[test12|run_tests.sh/test.conf]]
+foo=bar
+
 [[test-multi-sections|test-multi-sections.conf]]
 [sec-1]
 cfg_item1 = abcd
@@ -389,13 +392,12 @@ EXPECT_VAL=0
 check_result "$VAL" "$EXPECT_VAL"
 set -e
 
-echo -n "merge_config_group test10 not directory: "
+echo -n "merge_config_group test10 create directory: "
 set +e
-# function is expected to fail and exit, running it
-# in a subprocess to let this script proceed
-(merge_config_group test.conf test10)
+STACK_USER=$(id -u -n)
+merge_config_group test.conf test10
 VAL=$?
-EXPECT_VAL=255
+EXPECT_VAL=0
 check_result "$VAL" "$EXPECT_VAL"
 set -e
 
@@ -414,9 +416,21 @@ random = config
 non = sense'
 check_result "$VAL" "$EXPECT_VAL"
 
+echo -n "merge_config_group test12 directory as file: "
+set +e
+# function is expected to fail and exit, running it
+# in a subprocess to let this script proceed
+(merge_config_group test.conf test12)
+VAL=$?
+EXPECT_VAL=255
+check_result "$VAL" "$EXPECT_VAL"
+set -e
+
 
 rm -f test.conf test1c.conf test2a.conf \
     test-space.conf test-equals.conf test-strip.conf \
     test-colon.conf test-env.conf test-multiline.conf \
     test-multi-sections.conf test-same.conf
 rm -rf test-etc
+rm -rf does-not-exist-dir
+
