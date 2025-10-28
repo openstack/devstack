@@ -1085,6 +1085,15 @@ function start_nova_compute {
             # gets its own configuration and own log file.
             local fake_conf="${NOVA_FAKE_CONF}-${i}"
             iniset $fake_conf DEFAULT host "${HOSTNAME}${i}"
+            # Ensure that each fake compute has its own state path so that it
+            # can have its own compute_id file
+            local state_path
+            state_path="$NOVA_STATE_PATH/${HOSTNAME}${i}"
+            COMPUTE_ID=$(uuidgen)
+            sudo mkdir -p "$state_path"
+            iniset $fake_conf DEFAULT state_path "$state_path"
+            # use the generated UUID as the stable compute node UUID
+            echo "$COMPUTE_ID" | sudo tee "$state_path/compute_id"
             run_process "n-cpu-${i}" "$NOVA_BIN_DIR/nova-compute --config-file $NOVA_CPU_CONF --config-file $fake_conf"
         done
     else
