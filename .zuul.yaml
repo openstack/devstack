@@ -764,7 +764,8 @@
         - devstack-enforce-scope
         - devstack-platform-centos-9-stream
         - devstack-platform-debian-bookworm
-        - devstack-platform-debian-bullseye
+        - devstack-platform-debian-bullseye:
+            voting: false
         - devstack-platform-rocky-blue-onyx:
             voting: false
         - devstack-platform-ubuntu-jammy-ovn-source
@@ -809,7 +810,6 @@
         - devstack
         - devstack-ipv6
         - devstack-platform-debian-bookworm
-        - devstack-platform-debian-bullseye
         - devstack-enforce-scope
         - devstack-multinode
         - devstack-unit-tests

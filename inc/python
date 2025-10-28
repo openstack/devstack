@@ -41,7 +41,14 @@ function setup_devstack_virtualenv {
         # This package is currently installed via the distro and not
         # available on pypi.
         python$PYTHON3_VERSION -m venv --system-site-packages $DEVSTACK_VENV
-        pip_install -U pip
+        # NOTE(stephenfin): stable-only change to prevent us pulling in newer
+        # versions of pip which removed support for legacy editable installs
+        # [1]. Some services on this stable branch still hadn't migrated to
+        # module-based configuration [2]. This is not an issue since 2025.2.
+        #
+        # [1] https://pip.pypa.io/en/stable/news/#v25-3
+        # [2] https://review.opendev.org/c/openstack/governance/+/902807
+        pip_install -U 'pip<25.3'
     fi
     if [[ ":$PATH:" != *":$DEVSTACK_VENV/bin:"* ]] ; then
         export PATH="$DEVSTACK_VENV/bin:$PATH"
