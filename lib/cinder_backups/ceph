@@ -19,6 +19,7 @@ set +o xtrace
 # Defaults
 # --------
 
+CINDER_BAK_CEPH_MAX_SNAPSHOTS=${CINDER_BAK_CEPH_MAX_SNAPSHOTS:-0}
 CINDER_BAK_CEPH_POOL=${CINDER_BAK_CEPH_POOL:-backups}
 CINDER_BAK_CEPH_POOL_PG=${CINDER_BAK_CEPH_POOL_PG:-8}
 CINDER_BAK_CEPH_POOL_PGP=${CINDER_BAK_CEPH_POOL_PGP:-8}
@@ -38,6 +39,7 @@ function configure_cinder_backup_ceph {
 
     iniset $CINDER_CONF DEFAULT backup_driver "cinder.backup.drivers.ceph.CephBackupDriver"
     iniset $CINDER_CONF DEFAULT backup_ceph_conf "$CEPH_CONF_FILE"
+    iniset $CINDER_CONF DEFAULT backup_ceph_max_snapshots "$CINDER_BAK_CEPH_MAX_SNAPSHOTS"
     iniset $CINDER_CONF DEFAULT backup_ceph_pool "$CINDER_BAK_CEPH_POOL"
     iniset $CINDER_CONF DEFAULT backup_ceph_user "$CINDER_BAK_CEPH_USER"
     iniset $CINDER_CONF DEFAULT backup_ceph_stripe_unit 0
