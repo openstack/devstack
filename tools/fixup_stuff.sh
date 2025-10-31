@@ -84,7 +84,7 @@ EOF
     # python3-setuptools RPM are deleted, it breaks some tools such as semanage
     # (used in diskimage-builder) that use the -s flag of the python
     # interpreter, enforcing the use of the packages from /usr/lib.
-    # Importing setuptools/pkg_resources in a such environment fails.
+    # Importing setuptools in a such environment fails.
     # Enforce the package re-installation to fix those applications.
     if is_package_installed python3-setuptools; then
         sudo dnf reinstall -y python3-setuptools
