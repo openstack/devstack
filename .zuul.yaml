@@ -39,10 +39,10 @@
           - controller
 
 - nodeset:
-    name: devstack-single-node-centos-10-stream
+    name: devstack-single-node-almalinux-10
     nodes:
       - name: controller
-        label: centos-10-stream-8GB
+        label: almalinux-10-8GB
     groups:
       - name: tempest
         nodes:
@@ -58,10 +58,15 @@
         nodes:
           - controller
 
-# TODO(frickler): drop this dummy nodeset once all references have been removed
 - nodeset:
-    name: devstack-single-node-opensuse-15
-    nodes: []
+    name: devstack-single-node-centos-10-stream
+    nodes:
+      - name: controller
+        label: centos-10-stream-8GB
+    groups:
+      - name: tempest
+        nodes:
+          - controller
 
 - nodeset:
     name: devstack-single-node-debian-bookworm
@@ -72,6 +77,11 @@
       - name: tempest
         nodes:
           - controller
+
+# TODO(frickler): drop this dummy nodeset once all references have been removed
+- nodeset:
+    name: devstack-single-node-opensuse-15
+    nodes: []
 
 - nodeset:
     name: devstack-single-node-rockylinux-9
@@ -767,6 +777,16 @@
 # and these platforms don't have the round-the-clock support to avoid
 # becoming blockers in that situation.
 - job:
+    name: devstack-platform-almalinux-purple-lion
+    parent: tempest-full-py3
+    description: AlmaLinux 10 platform test
+    nodeset: devstack-single-node-almalinux-10
+    timeout: 9000
+    voting: false
+    vars:
+      configure_swap_size: 4096
+
+- job:
     name: devstack-platform-centos-10-stream
     parent: tempest-full-py3
     description: CentOS 10 Stream platform test
@@ -966,6 +986,7 @@
         - devstack
         - devstack-ipv6
         - devstack-enforce-scope
+        - devstack-platform-almalinux-purple-lion
         - devstack-platform-centos-10-stream
         - devstack-platform-centos-9-stream
         - devstack-platform-debian-bookworm
@@ -1051,10 +1072,12 @@
         - devstack-no-tls-proxy
     periodic-weekly:
       jobs:
+        - devstack-platform-almalinux-purple-lion
         - devstack-platform-centos-10-stream
         - devstack-platform-centos-9-stream
         - devstack-platform-debian-bookworm
         - devstack-platform-rocky-blue-onyx
+        - devstack-platform-rocky-red-quartz
         - devstack-platform-ubuntu-noble-ovn-source
         - devstack-platform-ubuntu-noble-ovs
         - devstack-platform-ubuntu-jammy
