@@ -273,8 +273,7 @@ function use_library_from_git {
 function lib_installed_from_git {
     local name=$1
     local safe_name
-    safe_name=$(python -c "from pkg_resources import safe_name; \
-        print(safe_name('${name}'))")
+    safe_name=$(python -c "from packaging import canonicalize_name; print(canonicalize_name('${name}'))")
     # Note "pip freeze" doesn't always work here, because it tries to
     # be smart about finding the remote of the git repo the package
     # was installed from.  This doesn't work with zuul which clones
