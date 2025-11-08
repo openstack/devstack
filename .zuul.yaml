@@ -456,6 +456,7 @@
         /etc/sudoers.d: logs
         '{{ stage_dir }}/iptables.txt': logs
         '{{ stage_dir }}/df.txt': logs
+        '{{ stage_dir }}/mount.txt': logs
         '{{ stage_dir }}/pip2-freeze.txt': logs
         '{{ stage_dir }}/pip3-freeze.txt': logs
         '{{ stage_dir }}/dpkg-l.txt': logs
