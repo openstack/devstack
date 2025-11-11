@@ -20,7 +20,7 @@ if [[ -z "$MYSQL_SERVICE_NAME" ]]; then
     MYSQL_SERVICE_NAME=mysql
     if is_fedora && ! is_oraclelinux; then
         MYSQL_SERVICE_NAME=mariadb
-    elif [[ "$DISTRO" =~ bookworm|bullseye ]]; then
+    elif [[ "$DISTRO" =~ trixie|bookworm|bullseye ]]; then
         MYSQL_SERVICE_NAME=mariadb
     fi
 fi
@@ -107,7 +107,7 @@ function configure_database_mysql {
     # for Ubuntu 22.04+ because the authorization model change in
     # version 10.4 of mariadb. See
     # https://mariadb.org/authentication-in-mariadb-10-4/
-    if ! (is_ubuntu && [[ ! "$DISTRO" =~ bookworm|bullseye ]] && [ "$MYSQL_SERVICE_NAME" == "mariadb" ]); then
+    if ! (is_ubuntu && [[ ! "$DISTRO" =~ trixie|bookworm|bullseye ]] && [ "$MYSQL_SERVICE_NAME" == "mariadb" ]); then
         sudo mysqladmin -u root password $DATABASE_PASSWORD || true
     fi
 
@@ -117,6 +117,16 @@ function configure_database_mysql {
         local cmd_args="-uroot -p$DATABASE_PASSWORD "
     else
         local cmd_args="-uroot -p$DATABASE_PASSWORD -h$SERVICE_LOCAL_HOST "
+    fi
+
+    # Workaround for mariadb > 11.6.2,
+    # see https://bugs.launchpad.net/nova/+bug/2116186/comments/3
+    min_db_ver="11.6.2"
+    db_version=$(sudo mysql ${cmd_args} -e "select version();" -sN | cut -d '-' -f 1)
+    max_db_ver=$(printf '%s\n' ${min_db_ver} ${db_version} | sort -V | tail -n 1)
+    if [[ "${min_db_ver}" != "${max_db_ver}" ]]; then
+        iniset -sudo $my_conf mysqld innodb_snapshot_isolation OFF
+        restart_service $MYSQL_SERVICE_NAME
     fi
 
     # In mariadb e.g. on Ubuntu socket plugin is used for authentication
