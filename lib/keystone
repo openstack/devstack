@@ -195,6 +195,10 @@ function configure_keystone {
     iniset $KEYSTONE_CONF cache backend $CACHE_BACKEND
     iniset $KEYSTONE_CONF cache memcache_servers $MEMCACHE_SERVERS
 
+    # Enable errors if response validation fails. We want this enabled in CI
+    # and development contexts to highlights bugs in our response schemas.
+    iniset $KEYSTONE_CONF api response_validation error
+
     iniset_rpc_backend keystone $KEYSTONE_CONF oslo_messaging_notifications
 
     local service_port=$KEYSTONE_SERVICE_PORT
