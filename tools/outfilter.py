@@ -26,8 +26,8 @@ import datetime
 import re
 import sys
 
-IGNORE_LINES = re.compile('(set \+o|xtrace)')
-HAS_DATE = re.compile('^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}.\d{3} \|')
+IGNORE_LINES = re.compile(r'(set \+o|xtrace)')
+HAS_DATE = re.compile(r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}.\d{3} \|')
 
 
 def get_options():
