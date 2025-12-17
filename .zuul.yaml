@@ -818,7 +818,7 @@
 # and these platforms don't have the round-the-clock support to avoid
 # becoming blockers in that situation.
 - job:
-    name: devstack-platform-almalinux-purple-lion
+    name: devstack-platform-almalinux-purple-lion-ovn-source
     parent: tempest-full-py3
     description: AlmaLinux 10 platform test
     nodeset: devstack-single-node-almalinux-10
@@ -826,6 +826,11 @@
     voting: false
     vars:
       configure_swap_size: 4096
+      devstack_localrc:
+        OVN_BUILD_FROM_SOURCE: True
+        OVN_BRANCH: "branch-24.03"
+        OVS_BRANCH: "branch-3.3"
+        OVS_SYSCONFDIR: "/usr/local/etc/openvswitch"
 
 - job:
     name: devstack-platform-centos-10-stream
@@ -1036,7 +1041,7 @@
         - devstack
         - devstack-ipv6
         - devstack-enforce-scope
-        - devstack-platform-almalinux-purple-lion
+        - devstack-platform-almalinux-purple-lion-ovn-source
         - devstack-platform-centos-10-stream
         - devstack-platform-centos-9-stream
         - devstack-platform-debian-bookworm
@@ -1124,7 +1129,7 @@
         - devstack-no-tls-proxy
     periodic-weekly:
       jobs:
-        - devstack-platform-almalinux-purple-lion
+        - devstack-platform-almalinux-purple-lion-ovn-source
         - devstack-platform-centos-10-stream
         - devstack-platform-centos-9-stream
         - devstack-platform-debian-bookworm
