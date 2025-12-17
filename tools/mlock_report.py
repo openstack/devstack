@@ -6,7 +6,7 @@ import psutil
 
 
 LCK_SUMMARY_REGEX = re.compile(
-    "^VmLck:\s+(?P<locked>[\d]+)\s+kB", re.MULTILINE)
+    r"^VmLck:\s+(?P<locked>[\d]+)\s+kB", re.MULTILINE)
 
 
 def main():
