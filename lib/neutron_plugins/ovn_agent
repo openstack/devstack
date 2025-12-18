@@ -429,9 +429,6 @@ function install_ovn {
         sudo mkdir -p $OVS_PREFIX/var/log/ovn
         sudo chown $(whoami) $OVS_PREFIX/var/log/ovn
     else
-        # Load fixup_ovn_centos
-        source ${TOP_DIR}/tools/fixup_stuff.sh
-        fixup_ovn_centos
         install_package $(get_packages openvswitch)
         install_package $(get_packages ovn)
     fi

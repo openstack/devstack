@@ -1,10 +1,9 @@
 cryptsetup
 dosfstools
-genisoimage # not:rhel9,rhel10
 iscsi-initiator-utils
 libosinfo
 lvm2
 sg3_utils
 # Stuff for diablo volumes
 sysfsutils
-xorriso # not:rhel8
+xorriso
