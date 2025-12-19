@@ -34,7 +34,7 @@ function configure_cinder_backup_ceph {
             sudo ceph -c ${CEPH_CONF_FILE} osd pool set ${CINDER_BAK_CEPH_POOL} crush_ruleset ${RULE_ID}
         fi
         sudo ceph -c ${CEPH_CONF_FILE} auth get-or-create client.${CINDER_BAK_CEPH_USER} mon "profile rbd" osd "profile rbd pool=${CINDER_BAK_CEPH_POOL}, profile rbd pool=${CINDER_CEPH_POOL}" | sudo tee ${CEPH_CONF_DIR}/ceph.client.${CINDER_BAK_CEPH_USER}.keyring
-        sudo chown $(whoami):$(whoami) ${CEPH_CONF_DIR}/ceph.client.${CINDER_BAK_CEPH_USER}.keyring
+        sudo chown $STACK_USER ${CEPH_CONF_DIR}/ceph.client.${CINDER_BAK_CEPH_USER}.keyring
     fi
 
     iniset $CINDER_CONF DEFAULT backup_driver "cinder.backup.drivers.ceph.CephBackupDriver"
