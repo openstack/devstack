@@ -1,7 +1,6 @@
 conntrack-tools
 curl
 ebtables
-genisoimage
 iptables
 iputils
 kernel-modules # not:openEuler-22.03
@@ -11,3 +10,4 @@ polkit
 rabbitmq-server # NOPRIME
 sqlite
 sudo
+xorriso
