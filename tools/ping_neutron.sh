@@ -21,7 +21,7 @@ set -o pipefail
 
 TOP_DIR=$(cd $(dirname "$0")/.. && pwd)
 
-# This *must* be run as the admin tenant
+# This *must* be run as the admin project
 source $TOP_DIR/openrc admin admin
 
 function usage {
@@ -29,7 +29,7 @@ function usage {
 ping_neutron.sh <net_name> [ping args]
 
 This provides a wrapper to ping neutron guests that are on isolated
-tenant networks that the caller can't normally reach. It does so by
+project networks that the caller can't normally reach. It does so by
 using either the DHCP or Metadata network namespace to support both
 ML2/OVS and OVN.
 

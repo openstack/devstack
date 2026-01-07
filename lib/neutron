@@ -201,35 +201,35 @@ fi
 # --------------------------------
 
 # The following variables control the Neutron ML2 plugins' allocation
-# of tenant networks and availability of provider networks. If these
-# are not configured in ``localrc``, tenant networks will be local to
+# of project networks and availability of provider networks. If these
+# are not configured in ``localrc``, project networks will be local to
 # the host (with no remote connectivity), and no physical resources
 # will be available for the allocation of provider networks.
 
-# To disable tunnels (GRE or VXLAN) for tenant networks,
+# To disable tunnels (GRE or VXLAN) for project networks,
 # set to False in ``local.conf``.
 # GRE tunnels are only supported by the openvswitch.
 ENABLE_TENANT_TUNNELS=${ENABLE_TENANT_TUNNELS:-True}
 
-# If using GRE, VXLAN or GENEVE tunnels for tenant networks,
-# specify the range of IDs from which tenant networks are
+# If using GRE, VXLAN or GENEVE tunnels for project networks,
+# specify the range of IDs from which project networks are
 # allocated. Can be overridden in ``localrc`` if necessary.
 TENANT_TUNNEL_RANGES=${TENANT_TUNNEL_RANGES:-1:1000}
 
-# To use VLANs for tenant networks, set to True in localrc. VLANs
+# To use VLANs for project networks, set to True in localrc. VLANs
 # are supported by the ML2 plugins, requiring additional configuration
 # described below.
 ENABLE_TENANT_VLANS=${ENABLE_TENANT_VLANS:-False}
 
-# If using VLANs for tenant networks, set in ``localrc`` to specify
-# the range of VLAN VIDs from which tenant networks are
+# If using VLANs for project networks, set in ``localrc`` to specify
+# the range of VLAN VIDs from which project networks are
 # allocated. An external network switch must be configured to
 # trunk these VLANs between hosts for multi-host connectivity.
 #
 # Example: ``TENANT_VLAN_RANGE=1000:1999``
 TENANT_VLAN_RANGE=${TENANT_VLAN_RANGE:-}
 
-# If using VLANs for tenant networks, or if using flat or VLAN
+# If using VLANs for project networks, or if using flat or VLAN
 # provider networks, set in ``localrc`` to the name of the physical
 # network, and also configure ``OVS_PHYSICAL_BRIDGE`` for the
 # openvswitch agent, as described below.
@@ -237,7 +237,7 @@ TENANT_VLAN_RANGE=${TENANT_VLAN_RANGE:-}
 # Example: ``PHYSICAL_NETWORK=default``
 PHYSICAL_NETWORK=${PHYSICAL_NETWORK:-public}
 
-# With the openvswitch agent, if using VLANs for tenant networks,
+# With the openvswitch agent, if using VLANs for project networks,
 # or if using flat or VLAN provider networks, set in ``localrc`` to
 # the name of the OVS bridge to use for the physical network. The
 # bridge will be created if it does not already exist, but a
