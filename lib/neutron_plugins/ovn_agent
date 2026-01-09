@@ -798,8 +798,11 @@ function _stop_ovs_dp {
 function _stop_process {
     local service=$1
     echo "Stopping process $service"
-    if $SYSTEMCTL is-enabled $service; then
+    # Stop if running, regardless of enabled state
+    if $SYSTEMCTL is-active $service; then
         $SYSTEMCTL stop $service
+    fi
+    if $SYSTEMCTL is-enabled $service; then
         $SYSTEMCTL disable $service
     fi
 }
@@ -834,10 +837,22 @@ function stop_ovn {
         _stop_process "devstack@ovs-vtep.service"
     fi
 
+    # Clear OVS external-ids before stopping to prevent stale config on restack
+    if sudo ovs-vsctl show &>/dev/null; then
+        sudo ovs-vsctl --if-exists clear open_vswitch . external-ids
+    fi
+
     _stop_process "$OVS_VSWITCHD_SERVICE"
     _stop_process "$OVSDB_SERVER_SERVICE"
 
     _stop_ovs_dp
+
+    # Clean up runtime files that can prevent restart
+    sudo rm -f $OVS_RUNDIR/*.sock $OVS_RUNDIR/*.pid $OVS_RUNDIR/*.ctl
+    sudo rm -f $OVN_RUNDIR/*.sock $OVN_RUNDIR/*.pid $OVN_RUNDIR/*.ctl
+    # Clean up database lock files
+    sudo rm -f $OVS_DATADIR/.*.db.~lock~
+    sudo rm -f $OVN_DATADIR/.*.db.~lock~
 }
 
 function _cleanup {
