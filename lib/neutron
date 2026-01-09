@@ -348,12 +348,6 @@ function _determine_config_l3 {
     echo "$opts"
 }
 
-function _enable_ovn_maintenance {
-    if [[ $Q_AGENT == "ovn" ]]; then
-        enable_service neutron-ovn-maintenance-worker
-    fi
-}
-
 function _run_ovn_maintenance {
     if [[ $Q_AGENT == "ovn" ]]; then
         run_process neutron-ovn-maintenance-worker "$NEUTRON_BIN_DIR/neutron-ovn-maintenance-worker $cfg_file_options"
@@ -606,6 +600,39 @@ function start_ovn_services {
     fi
 }
 
+# Enable neutron server services based on configuration
+# This function determines which neutron services should be enabled
+# and adds them to ENABLED_SERVICES. It reads the neutron configuration
+# to determine if RPC workers should be enabled.
+# This must be called after configure_neutron has created the config files.
+function enable_neutron_server_services {
+    local rpc_workers
+
+    # The default value of "rpc_workers" is None (not defined). If
+    # "rpc_workers" is explicitly set to 0, the RPC workers process
+    # should not be executed.
+    if [[ -f $NEUTRON_CONF ]]; then
+        rpc_workers=$(iniget_multiline $NEUTRON_CONF DEFAULT rpc_workers)
+    else
+        # If config doesn't exist yet, assume default behavior (enable rpc workers)
+        rpc_workers=""
+    fi
+
+    # Always enable these core services
+    enable_service neutron-api
+    enable_service neutron-periodic-workers
+
+    # Conditionally enable RPC server based on configuration
+    if [[ "$rpc_workers" != "0" ]]; then
+        enable_service neutron-rpc-server
+    fi
+
+    # Enable OVN maintenance worker if using OVN
+    if [[ $Q_AGENT == "ovn" ]]; then
+        enable_service neutron-ovn-maintenance-worker
+    fi
+}
+
 # Start running processes
 function start_neutron_service_and_check {
     local service_port=$Q_PORT
@@ -620,24 +647,15 @@ function start_neutron_service_and_check {
         service_protocol="http"
     fi
 
-    # Start the Neutron service
-    # The default value of "rpc_workers" is None (not defined). If
-    # "rpc_workers" is explicitly set to 0, the RPC workers process
-    # should not be executed.
-    local rpc_workers
-    rpc_workers=$(iniget_multiline $NEUTRON_CONF DEFAULT rpc_workers)
+    # Enable neutron server services based on configuration
+    enable_neutron_server_services
 
-    enable_service neutron-api
+    # Start the Neutron service processes
     run_process neutron-api "$(which uwsgi) --procname-prefix neutron-api --ini $NEUTRON_UWSGI_CONF"
     neutron_url=$Q_PROTOCOL://$Q_HOST/
-    if [ "$rpc_workers" != "0" ]; then
-        enable_service neutron-rpc-server
-    fi
-    enable_service neutron-periodic-workers
-    _enable_ovn_maintenance
-    if [ "$rpc_workers" != "0" ]; then
-        run_process neutron-rpc-server "$NEUTRON_BIN_DIR/neutron-rpc-server $cfg_file_options"
-    fi
+
+    # Start RPC server if enabled (run_process checks is_service_enabled internally)
+    run_process neutron-rpc-server "$NEUTRON_BIN_DIR/neutron-rpc-server $cfg_file_options"
     run_process neutron-periodic-workers "$NEUTRON_BIN_DIR/neutron-periodic-workers $cfg_file_options"
     _run_ovn_maintenance
     if [ ! -z "$NEUTRON_ENDPOINT_SERVICE_NAME" ]; then

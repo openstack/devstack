@@ -87,6 +87,12 @@ fi
 
 load_plugin_settings
 
+# Enable neutron server services so they can be properly stopped
+# This replicates the service enabling logic from stack.sh
+if is_service_enabled neutron; then
+    enable_neutron_server_services
+fi
+
 set -o xtrace
 
 # Run extras
