@@ -838,6 +838,8 @@ function stop_swift {
     for type in proxy object container account; do
         stop_process s-${type}
     done
+    # Stop the container-sync daemon if it was started
+    stop_process s-container-sync
     # Blast out any stragglers
     pkill -f swift- || true
 }

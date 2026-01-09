@@ -73,6 +73,7 @@ source $TOP_DIR/lib/neutron
 source $TOP_DIR/lib/ldap
 source $TOP_DIR/lib/dstat
 source $TOP_DIR/lib/atop
+source $TOP_DIR/lib/tcpdump
 source $TOP_DIR/lib/etcd3
 
 # Extras Source
@@ -162,6 +163,11 @@ if [[ -n "$UNSTACK_ALL" ]]; then
     if is_service_enabled rabbit; then
         stop_service rabbitmq-server
     fi
+
+    # Stop LDAP server
+    if is_service_enabled ldap; then
+        stop_ldap
+    fi
 fi
 
 if is_service_enabled neutron; then
@@ -176,6 +182,10 @@ fi
 
 if is_service_enabled openstack-cli-server; then
     stop_service devstack@openstack-cli-server
+fi
+
+if is_service_enabled tcpdump; then
+    stop_tcpdump
 fi
 
 stop_dstat
