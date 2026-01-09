@@ -18,7 +18,7 @@ register_database mysql
 
 if [[ -z "$MYSQL_SERVICE_NAME" ]]; then
     MYSQL_SERVICE_NAME=mysql
-    if is_fedora && ! is_oraclelinux; then
+    if is_fedora; then
         MYSQL_SERVICE_NAME=mariadb
     elif [[ "$DISTRO" =~ trixie|bookworm|bullseye ]]; then
         MYSQL_SERVICE_NAME=mariadb
@@ -44,15 +44,9 @@ function cleanup_database_mysql {
         apt_get purge -y mysql* mariadb*
         sudo rm -rf /var/lib/mysql
         sudo rm -rf /etc/mysql
-        return
-    elif is_oraclelinux; then
-        uninstall_package mysql-community-server
-        sudo rm -rf /var/lib/mysql
     elif is_fedora; then
         uninstall_package mariadb-server
         sudo rm -rf /var/lib/mysql
-    else
-        return
     fi
 }
 
@@ -68,8 +62,6 @@ function configure_database_mysql {
 
     if is_ubuntu; then
         my_conf=/etc/mysql/my.cnf
-    elif is_oraclelinux; then
-        my_conf=/etc/my.cnf
     elif is_fedora; then
         my_conf=/etc/my.cnf
         local cracklib_conf=/etc/my.cnf.d/cracklib_password_check.cnf
@@ -101,13 +93,20 @@ function configure_database_mysql {
         restart_service $MYSQL_SERVICE_NAME
     fi
 
+    # MariaDB 10.4+ on modern Debian/Ubuntu uses unix_socket auth by default
+    # See https://mariadb.org/authentication-in-mariadb-10-4/
+    local use_mariadb_socket_auth=False
+    if is_ubuntu && [ "$MYSQL_SERVICE_NAME" == "mariadb" ]; then
+        if [[ ! "$DISTRO" =~ bookworm|bullseye ]]; then
+            use_mariadb_socket_auth=True
+        fi
+    fi
+
     # Set the root password - only works the first time. For Ubuntu, we already
     # did that with debconf before installing the package, but we still try,
     # because the package might have been installed already. We don't do this
-    # for Ubuntu 22.04+ because the authorization model change in
-    # version 10.4 of mariadb. See
-    # https://mariadb.org/authentication-in-mariadb-10-4/
-    if ! (is_ubuntu && [[ ! "$DISTRO" =~ trixie|bookworm|bullseye ]] && [ "$MYSQL_SERVICE_NAME" == "mariadb" ]); then
+    # for MariaDB with socket auth because the root password is managed differently.
+    if [[ "$use_mariadb_socket_auth" != "True" ]]; then
         sudo mysqladmin -u root password $DATABASE_PASSWORD || true
     fi
 
@@ -129,19 +128,20 @@ function configure_database_mysql {
         restart_service $MYSQL_SERVICE_NAME
     fi
 
-    # In mariadb e.g. on Ubuntu socket plugin is used for authentication
-    # as root so it works only as sudo. To restore old "mysql like" behaviour,
-    # we need to change auth plugin for root user
-    # TODO(frickler): simplify this logic
-    if is_ubuntu && [[ ! "$DISTRO" =~ bookworm|bullseye ]] && [ "$MYSQL_SERVICE_NAME" == "mariadb" ]; then
-        # For Ubuntu 22.04+ we follow the model outlined in
-        # https://mariadb.org/authentication-in-mariadb-10-4/
-        sudo mysql -e "ALTER USER $DATABASE_USER@localhost IDENTIFIED VIA mysql_native_password USING PASSWORD('$DATABASE_PASSWORD');"
+    # Configure database user authentication
+    if [[ "$use_mariadb_socket_auth" == "True" ]]; then
+        # Allow both unix_socket (for sudo mysql) and password auth
+        # Using OR allows restacking without needing to reset auth in unstack
+        sudo mysql -e "ALTER USER $DATABASE_USER@localhost IDENTIFIED VIA unix_socket OR mysql_native_password USING PASSWORD('$DATABASE_PASSWORD');"
     fi
-    if ! (is_ubuntu && [[ ! "$DISTRO" =~ bookworm|bullseye ]] && [ "$MYSQL_SERVICE_NAME" == "mariadb" ]); then
-        # Create DB user if it does not already exist
+
+    # Create remote access user and grant privileges (needed for all distros)
+    if [[ "$use_mariadb_socket_auth" == "True" ]]; then
+        # Use sudo mysql since we have socket auth
+        sudo mysql -e "CREATE USER IF NOT EXISTS '$DATABASE_USER'@'%' identified by '$DATABASE_PASSWORD';"
+        sudo mysql -e "GRANT ALL PRIVILEGES ON *.* TO '$DATABASE_USER'@'%';"
+    else
         sudo mysql $cmd_args -e "CREATE USER IF NOT EXISTS '$DATABASE_USER'@'%' identified by '$DATABASE_PASSWORD';"
-        # Update the DB to give user '$DATABASE_USER'@'%' full control of the all databases:
         sudo mysql $cmd_args -e "GRANT ALL PRIVILEGES ON *.* TO '$DATABASE_USER'@'%';"
     fi
 
@@ -226,9 +226,7 @@ EOF
     fi
     # Install mysql-server
     if [[ "$INSTALL_DATABASE_SERVER_PACKAGES" == "True" ]]; then
-        if is_oraclelinux; then
-            install_package mysql-community-server
-        elif is_fedora; then
+        if is_fedora; then
             install_package mariadb-server mariadb-devel mariadb
             sudo systemctl enable $MYSQL_SERVICE_NAME
         elif is_ubuntu; then

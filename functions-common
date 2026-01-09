@@ -517,17 +517,6 @@ function is_arch {
     [[ "$(uname -m)" == "$1" ]]
 }
 
-# Determine if current distribution is an Oracle distribution
-# is_oraclelinux
-function is_oraclelinux {
-    if [[ -z "$os_VENDOR" ]]; then
-        GetOSVersion
-    fi
-
-    [ "$os_VENDOR" = "OracleServer" ]
-}
-
-
 # Determine if current distribution is a Fedora-based distribution
 # (Fedora, RHEL, CentOS, Rocky, etc).
 # is_fedora
