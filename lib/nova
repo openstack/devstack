@@ -829,13 +829,11 @@ function configure_nova_unified_limits {
     iniset $NOVA_CONF oslo_limit username nova
     iniset $NOVA_CONF oslo_limit auth_type password
     iniset $NOVA_CONF oslo_limit auth_url $KEYSTONE_SERVICE_URI
-    iniset $NOVA_CONF oslo_limit system_scope all
-    iniset $NOVA_CONF oslo_limit endpoint_id \
-           $(openstack endpoint list --service nova -f value -c ID)
-
-    # Allow the nova service user to read quotas
-    openstack --os-cloud devstack-system-admin role add --user nova \
-        --user-domain $SERVICE_DOMAIN_NAME --system all reader
+    iniset $NOVA_CONF oslo_limit project_name service
+    iniset $NOVA_CONF oslo_limit project_domain_name $SERVICE_DOMAIN_NAME
+    iniset $NOVA_CONF oslo_limit endpoint_interface public
+    iniset $NOVA_CONF oslo_limit endpoint_service_type compute
+    iniset $NOVA_CONF oslo_limit endpoint_region_name $REGION_NAME
 }
 
 function init_nova_service_user_conf {
