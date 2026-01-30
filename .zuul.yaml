@@ -622,7 +622,8 @@
         - devstack
         - devstack-ipv6
         - devstack-enforce-scope
-        - devstack-platform-debian-bullseye
+        - devstack-platform-debian-bullseye:
+            voting: false
         - devstack-multinode
         - devstack-unit-tests
         - openstack-tox-bashate
@@ -715,8 +716,6 @@
     # * neutron-functional-with-uwsgi: maintained by neutron for functional
     #    test. Next cycle we can remove this one if things turn out to be
     #    stable engouh with uwsgi.
-    # * neutron-tempest-with-uwsgi: maintained by neutron for tempest test.
-    #    Next cycle we can remove this if everything run out stable enough.
     # * nova-multi-cell: maintained by nova and currently non-voting in the
     #    check queue for nova changes but relies on devstack configuration
 
@@ -726,7 +725,6 @@
         - nova-next
         - neutron-fullstack-with-uwsgi
         - neutron-functional-with-uwsgi
-        - neutron-tempest-with-uwsgi
         - devstack-plugin-ceph-tempest-py3:
             irrelevant-files:
               - ^.*\.rst$
