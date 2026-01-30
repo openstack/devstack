@@ -434,6 +434,13 @@ function configure_swift {
             swift_pipeline+=" s3token"
             iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:s3token auth_uri ${KEYSTONE_SERVICE_URI_V3}
             iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:s3token delay_auth_decision true
+            iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:s3token secret_cache_duration 900
+            iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:s3token auth_url ${KEYSTONE_SERVICE_URI}
+            iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:s3token project_name 'service'
+            iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:s3token project_domain_name ${SERVICE_DOMAIN_NAME}
+            iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:s3token username 'swift'
+            iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:s3token user_domain_name ${SERVICE_DOMAIN_NAME}
+            iniset ${SWIFT_CONFIG_PROXY_SERVER} filter:s3token password ${SERVICE_PASSWORD}
         fi
         swift_pipeline+=" keystoneauth"
     fi
