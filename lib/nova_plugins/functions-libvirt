@@ -70,6 +70,7 @@ function install_libvirt {
 
     if is_ubuntu; then
         install_package qemu-system libvirt-clients libvirt-daemon-system libvirt-dev python3-libvirt systemd-coredump
+        install_package ovmf
         if is_arch "aarch64"; then
             install_package qemu-efi-aarch64
         fi
@@ -94,6 +95,7 @@ function install_libvirt {
         # pre-installed these
         install_package $qemu_package
         install_package libvirt libvirt-devel
+        install_package edk2-ovmf
 
         if [[ $DISTRO =~ rhel9 ]]; then
             pip_install_gr libvirt-python
