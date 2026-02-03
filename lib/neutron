@@ -1014,13 +1014,7 @@ function _configure_neutron_plugin_agent {
 # It is called when q-svc is enabled.
 function _configure_neutron_service {
     Q_API_PASTE_FILE=$NEUTRON_CONF_DIR/api-paste.ini
-    if test -r $NEUTRON_DIR/etc/neutron/api-paste.ini; then
-        cp $NEUTRON_DIR/etc/neutron/api-paste.ini $Q_API_PASTE_FILE
-    else
-        # TODO(stephenfin): Remove this branch once [1] merges
-        # [1] https://review.opendev.org/c/openstack/neutron/+/961130
-        cp $NEUTRON_DIR/etc/api-paste.ini $Q_API_PASTE_FILE
-    fi
+    cp $NEUTRON_DIR/etc/neutron/api-paste.ini $Q_API_PASTE_FILE
 
     # Update either configuration file with plugin
     iniset $NEUTRON_CONF DEFAULT core_plugin $Q_PLUGIN_CLASS
@@ -1097,13 +1091,7 @@ function _neutron_setup_rootwrap {
 
     # Set up ``rootwrap.conf``, pointing to ``$NEUTRON_CONF_DIR/rootwrap.d``
     # location moved in newer versions, prefer new location
-    if test -r $NEUTRON_DIR/etc/neutron/rootwrap.conf; then
-        sudo install -o root -g root -m 644 $NEUTRON_DIR/etc/neutron/rootwrap.conf $Q_RR_CONF_FILE
-    else
-        # TODO(stephenfin): Remove this branch once [1] merges
-        # [1] https://review.opendev.org/c/openstack/neutron/+/961130
-        sudo install -o root -g root -m 644 $NEUTRON_DIR/etc/rootwrap.conf $Q_RR_CONF_FILE
-    fi
+    sudo install -o root -g root -m 644 $NEUTRON_DIR/etc/neutron/rootwrap.conf $Q_RR_CONF_FILE
     sudo sed -e "s:^filters_path=.*$:filters_path=$Q_CONF_ROOTWRAP_D:" -i $Q_RR_CONF_FILE
     # Rely on $PATH set by devstack to determine what is safe to execute
     # by rootwrap rather than use explicit whitelist of paths in
