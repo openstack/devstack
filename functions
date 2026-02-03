@@ -47,6 +47,10 @@ function short_source {
 # export it so child shells have access to the 'short_source' function also.
 export -f short_source
 
+EXTRA_FILES_RETRY=${EXTRA_FILES_RETRY:-3}
+EXTRA_FILES_RETRY_ERRORS=${EXTRA_FILES_RETRY_ERRORS:-"500,503"}
+EXTRA_FILES_DOWNLOAD_TIMEOUT=${EXTRA_FILES_DOWNLOAD_TIMEOUT:-2}
+EXTRA_FILES_RETRY_TIMEOUT=${EXTRA_FILES_RETRY_TIMEOUT:-10}
 # Download a file from a URL
 #
 # Will check cache (in $FILES) or download given URL.
@@ -55,17 +59,20 @@ export -f short_source
 #
 # Will echo the local path to the file as the output.  Will die on
 # failure to download.
-#
+
 # Files can be pre-cached for CI environments, see EXTRA_CACHE_URLS
 # and tools/image_list.sh
 function get_extra_file {
     local file_url=$1
-
-    file_name=$(basename "$file_url")
+    local retry_args="--retry-on-host-error --retry-on-http-error=${EXTRA_FILES_RETRY_ERRORS} "
+    retry_args+="-t ${EXTRA_FILES_DOWNLOAD_TIMEOUT} --waitretry=${EXTRA_FILES_RETRY_TIMEOUT} "
+    retry_args+="--tries=${EXTRA_FILES_RETRY} --retry-connrefused"
+    # Using Bash parameter expansion (##*/) instead of external 'basename'
+    local file_name="${file_url##*/}"
     if [[ $file_url != file* ]]; then
         # If the file isn't cache, download it
         if [[ ! -f $FILES/$file_name ]]; then
-            wget --progress=dot:giga -t 2 -c $file_url -O $FILES/$file_name
+            wget --progress=dot:giga  ${retry_args} -c $file_url -O $FILES/$file_name
             if [[ $? -ne 0 ]]; then
                 die "$file_url could not be downloaded"
             fi
@@ -74,7 +81,7 @@ function get_extra_file {
         return
     else
         # just strip the file:// bit and that's the path to the file
-        echo $file_url | sed 's/$file:\/\///g'
+        echo "${file_url#file://}"
     fi
 }
 
