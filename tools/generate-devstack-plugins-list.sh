@@ -38,6 +38,17 @@
 # current working directory, it will be prepended or appended to
 # the generated reStructuredText plugins table respectively.
 
+# Setup virtual environment
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+VENV_DIR="${SCRIPT_DIR}/.venv"
+
+if [[ ! -d "${VENV_DIR}" ]]; then
+    python3 -m venv "${VENV_DIR}"
+fi
+
+source "${VENV_DIR}/bin/activate"
+pip install -q -r "${SCRIPT_DIR}/requirements.txt"
+
 # Print the title underline for a RST table.  Argument is the length
 # of the first column, second column is assumed to be "URL"
 function title_underline {
@@ -54,7 +65,7 @@ if [[ -r data/devstack-plugins-registry.header ]]; then
     cat data/devstack-plugins-registry.header
 fi
 
-sorted_plugins=$(python3 tools/generate-devstack-plugins-list.py)
+sorted_plugins=$("${VENV_DIR}/bin/python3" tools/generate-devstack-plugins-list.py)
 
 # find the length of the name column & pad
 name_col_len=$(echo "${sorted_plugins}" | wc -L)
