@@ -41,7 +41,9 @@ function setup_devstack_virtualenv {
         # This package is currently installed via the distro and not
         # available on pypi.
         $PYTHON -m venv --system-site-packages "${DEVSTACK_VENV}"
-        pip_install -U pip setuptools[core]
+        # NOTE(stephenfin) stable-only change to pin setuptools to the last
+        # version to support pkg_resources
+        pip_install -U pip 'setuptools[core]<82.0.0'
     fi
     if [[ ":$PATH:" != *":$DEVSTACK_VENV/bin:"* ]] ; then
         export PATH="$DEVSTACK_VENV/bin:$PATH"
@@ -203,6 +205,9 @@ function pip_install {
     cmd_pip="$cmd_pip install"
     # Always apply constraints
     cmd_pip="$cmd_pip -c $REQUIREMENTS_DIR/upper-constraints.txt"
+    # NOTE(stephenfin): stable-only change to disable build-isolation so that
+    # we can pin setuptools on these old branches
+    cmd_pip="$cmd_pip --no-build-isolation"
 
     $xtrace
 
