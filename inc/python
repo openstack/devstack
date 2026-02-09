@@ -45,10 +45,11 @@ function setup_devstack_virtualenv {
         # versions of pip which removed support for legacy editable installs
         # [1]. Some services on this stable branch still hadn't migrated to
         # module-based configuration [2]. This is not an issue since 2025.2.
+        # We also pin setuptools to the last version to support pkg_resources.
         #
         # [1] https://pip.pypa.io/en/stable/news/#v25-3
         # [2] https://review.opendev.org/c/openstack/governance/+/902807
-        pip_install -U 'pip<25.3' setuptools[core]
+        pip_install -U 'pip<25.3' 'setuptools[core]<82.0.0'
     fi
     if [[ ":$PATH:" != *":$DEVSTACK_VENV/bin:"* ]] ; then
         export PATH="$DEVSTACK_VENV/bin:$PATH"
@@ -210,6 +211,9 @@ function pip_install {
     cmd_pip="$cmd_pip install"
     # Always apply constraints
     cmd_pip="$cmd_pip -c $REQUIREMENTS_DIR/upper-constraints.txt"
+    # NOTE(stephenfin): stable-only change to disable build-isolation so that
+    # we can pin setuptools on these old branches
+    cmd_pip="$cmd_pip --no-build-isolation"
 
     $xtrace
 
