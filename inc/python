@@ -207,7 +207,11 @@ function pip_install {
     cmd_pip="$cmd_pip -c $REQUIREMENTS_DIR/upper-constraints.txt"
     # NOTE(stephenfin): stable-only change to disable build-isolation so that
     # we can pin setuptools on these old branches
-    cmd_pip="$cmd_pip --no-build-isolation"
+    # NOTE(jwysogla): Gnocchi doesn't install correctly without
+    # build-isolation, so disable it only if we aren't installing Gnocchi
+    if [[ ! "$@" =~ "gnocchi" ]]; then
+        cmd_pip="$cmd_pip --no-build-isolation"
+    fi
 
     $xtrace
 
