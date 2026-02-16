@@ -229,7 +229,7 @@ write_devstack_version
 
 # Warn users who aren't on an explicitly supported distro, but allow them to
 # override check and attempt installation with ``FORCE=yes ./stack``
-SUPPORTED_DISTROS="trixie|bookworm|jammy|noble|rhel9|rhel10"
+SUPPORTED_DISTROS="trixie|bookworm|noble|rhel9|rhel10"
 
 if [[ ! ${DISTRO} =~ $SUPPORTED_DISTROS ]]; then
     echo "WARNING: this script has not been tested on $DISTRO"

@@ -898,15 +898,6 @@
       configure_swap_size: 4096
 
 - job:
-    name: devstack-platform-ubuntu-jammy
-    parent: tempest-full-py3
-    description: Ubuntu 22.04 LTS (Jammy) platform test
-    nodeset: openstack-single-node-jammy
-    timeout: 9000
-    vars:
-      configure_swap_size: 8192
-
-- job:
     name: devstack-platform-ubuntu-noble-ovn-source
     parent: devstack-platform-ubuntu-noble
     description: Ubuntu 24.04 LTS (noble) platform test (OVN from source)
@@ -1050,7 +1041,6 @@
         - devstack-platform-rocky-red-quartz
         - devstack-platform-ubuntu-noble-ovn-source
         - devstack-platform-ubuntu-noble-ovs
-        - devstack-platform-ubuntu-jammy
         - devstack-multinode
         - devstack-unit-tests
         - openstack-tox-bashate
@@ -1137,4 +1127,3 @@
         - devstack-platform-rocky-red-quartz
         - devstack-platform-ubuntu-noble-ovn-source
         - devstack-platform-ubuntu-noble-ovs
-        - devstack-platform-ubuntu-jammy
