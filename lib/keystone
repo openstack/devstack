@@ -457,6 +457,7 @@ function configure_keystone_authtoken_middleware {
     local service_type=$4
 
     configure_keystoneauth $conf_file $admin_user $section
+    iniset $conf_file $section www_authenticate_uri $KEYSTONE_SERVICE_URI
     iniset $conf_file $section cafile $SSL_BUNDLE_FILE
     iniset $conf_file $section memcached_servers $MEMCACHE_SERVERS
     if [[ -n "$service_type" ]]; then
