@@ -48,7 +48,6 @@ openstack/grian-ui                       `https://opendev.org/openstack/grian-ui
 openstack/heat                           `https://opendev.org/openstack/heat <https://opendev.org/openstack/heat>`__
 openstack/heat-dashboard                 `https://opendev.org/openstack/heat-dashboard <https://opendev.org/openstack/heat-dashboard>`__
 openstack/ironic                         `https://opendev.org/openstack/ironic <https://opendev.org/openstack/ironic>`__
-openstack/ironic-inspector               `https://opendev.org/openstack/ironic-inspector <https://opendev.org/openstack/ironic-inspector>`__
 openstack/ironic-prometheus-exporter     `https://opendev.org/openstack/ironic-prometheus-exporter <https://opendev.org/openstack/ironic-prometheus-exporter>`__
 openstack/ironic-ui                      `https://opendev.org/openstack/ironic-ui <https://opendev.org/openstack/ironic-ui>`__
 openstack/keystone                       `https://opendev.org/openstack/keystone <https://opendev.org/openstack/keystone>`__
@@ -60,9 +59,6 @@ openstack/manila-tempest-plugin          `https://opendev.org/openstack/manila-t
 openstack/manila-ui                      `https://opendev.org/openstack/manila-ui <https://opendev.org/openstack/manila-ui>`__
 openstack/masakari                       `https://opendev.org/openstack/masakari <https://opendev.org/openstack/masakari>`__
 openstack/mistral                        `https://opendev.org/openstack/mistral <https://opendev.org/openstack/mistral>`__
-openstack/monasca-api                    `https://opendev.org/openstack/monasca-api <https://opendev.org/openstack/monasca-api>`__
-openstack/monasca-events-api             `https://opendev.org/openstack/monasca-events-api <https://opendev.org/openstack/monasca-events-api>`__
-openstack/monasca-tempest-plugin         `https://opendev.org/openstack/monasca-tempest-plugin <https://opendev.org/openstack/monasca-tempest-plugin>`__
 openstack/networking-bagpipe             `https://opendev.org/openstack/networking-bagpipe <https://opendev.org/openstack/networking-bagpipe>`__
 openstack/networking-baremetal           `https://opendev.org/openstack/networking-baremetal <https://opendev.org/openstack/networking-baremetal>`__
 openstack/networking-bgpvpn              `https://opendev.org/openstack/networking-bgpvpn <https://opendev.org/openstack/networking-bgpvpn>`__
@@ -84,7 +80,6 @@ openstack/osprofiler                     `https://opendev.org/openstack/osprofil
 openstack/ovn-bgp-agent                  `https://opendev.org/openstack/ovn-bgp-agent <https://opendev.org/openstack/ovn-bgp-agent>`__
 openstack/ovn-octavia-provider           `https://opendev.org/openstack/ovn-octavia-provider <https://opendev.org/openstack/ovn-octavia-provider>`__
 openstack/rally-openstack                `https://opendev.org/openstack/rally-openstack <https://opendev.org/openstack/rally-openstack>`__
-openstack/shade                          `https://opendev.org/openstack/shade <https://opendev.org/openstack/shade>`__
 openstack/skyline-apiserver              `https://opendev.org/openstack/skyline-apiserver <https://opendev.org/openstack/skyline-apiserver>`__
 openstack/storlets                       `https://opendev.org/openstack/storlets <https://opendev.org/openstack/storlets>`__
 openstack/tacker                         `https://opendev.org/openstack/tacker <https://opendev.org/openstack/tacker>`__
@@ -114,6 +109,7 @@ starlingx/nfv                            `https://opendev.org/starlingx/nfv <htt
 starlingx/update                         `https://opendev.org/starlingx/update <https://opendev.org/starlingx/update>`__
 vexxhost/openstack-operator              `https://opendev.org/vexxhost/openstack-operator <https://opendev.org/vexxhost/openstack-operator>`__
 x/almanach                               `https://opendev.org/x/almanach <https://opendev.org/x/almanach>`__
+x/apmec                                  `https://opendev.org/x/apmec <https://opendev.org/x/apmec>`__
 x/bilean                                 `https://opendev.org/x/bilean <https://opendev.org/x/bilean>`__
 x/broadview-collector                    `https://opendev.org/x/broadview-collector <https://opendev.org/x/broadview-collector>`__
 x/collectd-openstack-plugins             `https://opendev.org/x/collectd-openstack-plugins <https://opendev.org/x/collectd-openstack-plugins>`__
