@@ -425,9 +425,27 @@ function create_service_user {
     fi
 }
 
+# Configure options for keystoneauth
+#
+# configure_keystoneauth conf_file admin_user section
+function configure_keystoneauth {
+    local conf_file=$1
+    local admin_user=$2
+    local section=$3
+
+    iniset $conf_file $section auth_type password
+    iniset $conf_file $section interface public
+    iniset $conf_file $section auth_url $KEYSTONE_SERVICE_URI
+    iniset $conf_file $section username $admin_user
+    iniset $conf_file $section password $SERVICE_PASSWORD
+    iniset $conf_file $section user_domain_name "$SERVICE_DOMAIN_NAME"
+    iniset $conf_file $section project_name $SERVICE_PROJECT_NAME
+    iniset $conf_file $section project_domain_name "$SERVICE_DOMAIN_NAME"
+}
+
 # Configure a service to use the auth token middleware.
 #
-# configure_keystone_authtoken_middleware conf_file admin_user IGNORED [section]
+# configure_keystone_authtoken_middleware conf_file admin_user [section]
 #
 # section defaults to keystone_authtoken, which is where auth_token looks in
 # the .conf file. If the paste config file is used (api-paste.ini) then
@@ -438,15 +456,7 @@ function configure_keystone_authtoken_middleware {
     local section=${3:-keystone_authtoken}
     local service_type=$4
 
-    iniset $conf_file $section auth_type password
-    iniset $conf_file $section interface public
-    iniset $conf_file $section auth_url $KEYSTONE_SERVICE_URI
-    iniset $conf_file $section username $admin_user
-    iniset $conf_file $section password $SERVICE_PASSWORD
-    iniset $conf_file $section user_domain_name "$SERVICE_DOMAIN_NAME"
-    iniset $conf_file $section project_name $SERVICE_PROJECT_NAME
-    iniset $conf_file $section project_domain_name "$SERVICE_DOMAIN_NAME"
-
+    configure_keystoneauth $conf_file $admin_user $section
     iniset $conf_file $section cafile $SSL_BUNDLE_FILE
     iniset $conf_file $section memcached_servers $MEMCACHE_SERVERS
     if [[ -n "$service_type" ]]; then

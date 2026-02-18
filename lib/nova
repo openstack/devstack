@@ -632,32 +632,19 @@ function create_nova_conf {
 function configure_placement_nova_compute {
     # Use the provided config file path or default to $NOVA_CONF.
     local conf=${1:-$NOVA_CONF}
-    iniset $conf placement auth_type "password"
-    iniset $conf placement auth_url "$KEYSTONE_SERVICE_URI"
-    iniset $conf placement username nova
-    iniset $conf placement password "$SERVICE_PASSWORD"
-    iniset $conf placement user_domain_name "$SERVICE_DOMAIN_NAME"
-    iniset $conf placement project_name "$SERVICE_TENANT_NAME"
-    iniset $conf placement project_domain_name "$SERVICE_DOMAIN_NAME"
-    iniset $conf placement region_name "$REGION_NAME"
+    configure_keystoneauth $conf nova placement
 }
 
 # Configure access to cinder.
 function configure_cinder_access {
     iniset $NOVA_CONF cinder os_region_name "$REGION_NAME"
-    iniset $NOVA_CONF cinder auth_type "password"
-    iniset $NOVA_CONF cinder auth_url "$KEYSTONE_SERVICE_URI"
     # NOTE(mriedem): This looks a bit weird but we use the nova user here
     # since it has the admin role and the cinder user does not. This is
     # similar to using the nova user in init_nova_service_user_conf. We need
     # to use a user with the admin role for background tasks in nova to
     # be able to GET block-storage API resources owned by another project
     # since cinder has low-level "is_admin" checks in its DB API.
-    iniset $NOVA_CONF cinder username nova
-    iniset $NOVA_CONF cinder password "$SERVICE_PASSWORD"
-    iniset $NOVA_CONF cinder user_domain_name "$SERVICE_DOMAIN_NAME"
-    iniset $NOVA_CONF cinder project_name "$SERVICE_TENANT_NAME"
-    iniset $NOVA_CONF cinder project_domain_name "$SERVICE_DOMAIN_NAME"
+    configure_keystoneauth $conf nova cinder
     if is_service_enabled tls-proxy; then
         CINDER_SERVICE_HOST=${CINDER_SERVICE_HOST:-$SERVICE_HOST}
         CINDER_SERVICE_PORT=${CINDER_SERVICE_PORT:-8776}
@@ -667,14 +654,7 @@ function configure_cinder_access {
 
 # Configure access to manila.
 function configure_manila_access {
-    iniset $NOVA_CONF manila os_region_name "$REGION_NAME"
-    iniset $NOVA_CONF manila auth_type "password"
-    iniset $NOVA_CONF manila auth_url "$KEYSTONE_SERVICE_URI"
-    iniset $NOVA_CONF manila username nova
-    iniset $NOVA_CONF manila password "$SERVICE_PASSWORD"
-    iniset $NOVA_CONF manila user_domain_name "$SERVICE_DOMAIN_NAME"
-    iniset $NOVA_CONF manila project_name "$SERVICE_TENANT_NAME"
-    iniset $NOVA_CONF manila project_domain_name "$SERVICE_DOMAIN_NAME"
+    configure_keystoneauth $conf nova manila
 }
 
 function configure_console_compute {
@@ -840,13 +820,7 @@ function configure_nova_unified_limits {
 
 function init_nova_service_user_conf {
     iniset $NOVA_CONF service_user send_service_user_token True
-    iniset $NOVA_CONF service_user auth_type password
-    iniset $NOVA_CONF service_user auth_url "$KEYSTONE_SERVICE_URI"
-    iniset $NOVA_CONF service_user username nova
-    iniset $NOVA_CONF service_user password "$SERVICE_PASSWORD"
-    iniset $NOVA_CONF service_user user_domain_name "$SERVICE_DOMAIN_NAME"
-    iniset $NOVA_CONF service_user project_name "$SERVICE_PROJECT_NAME"
-    iniset $NOVA_CONF service_user project_domain_name "$SERVICE_DOMAIN_NAME"
+    configure_keystoneauth $NOVA_CONF nova service_user
 }
 
 function conductor_conf {
