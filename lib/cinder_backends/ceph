@@ -40,7 +40,6 @@ function configure_cinder_backend_ceph {
     iniset $CINDER_CONF $be_name rbd_secret_uuid "$CINDER_CEPH_UUID"
     iniset $CINDER_CONF $be_name rbd_flatten_volume_from_snapshot False
     iniset $CINDER_CONF $be_name rbd_max_clone_depth 5
-    iniset $CINDER_CONF DEFAULT glance_api_version 2
 }
 
 # Restore xtrace
