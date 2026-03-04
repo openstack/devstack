@@ -212,9 +212,13 @@ function pip_install {
     # Always apply constraints
     cmd_pip="$cmd_pip -c $REQUIREMENTS_DIR/upper-constraints.txt"
     if [ "${sudo_pip}" == "env" ]; then
-        # NOTE(stephenfin): stable-only change to disable build-isolation so that
-        # we can pin setuptools on these old branches
-        cmd_pip="$cmd_pip --no-build-isolation"
+        # NOTE(stephenfin): stable-only change to disable build-isolation so
+        # that we can pin setuptools on these old branches
+        # NOTE(jwysogla): Gnocchi doesn't install correctly without
+        # build-isolation, so disable it only if we aren't installing Gnocchi
+        if [[ ! "$@" =~ "gnocchi" ]]; then
+            cmd_pip="$cmd_pip --no-build-isolation"
+        fi
     fi
 
     $xtrace
