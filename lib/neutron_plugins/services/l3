@@ -35,7 +35,7 @@ Q_PUBLIC_VETH_INT=${Q_PUBLIC_VETH_INT:-veth-pub-int}
 # The next variable is configured by plugin
 # e.g.  _configure_neutron_l3_agent or lib/neutron_plugins/*
 #
-# L3 routers exist per tenant
+# L3 routers exist per project
 Q_L3_ROUTER_PER_TENANT=${Q_L3_ROUTER_PER_TENANT:-True}
 
 
@@ -216,7 +216,7 @@ function create_neutron_initial_network {
     if is_networking_extension_supported "router" && is_networking_extension_supported "external-net"; then
         # Create a router, and add the private subnet as one of its interfaces
         if [[ "$Q_L3_ROUTER_PER_TENANT" == "True" ]]; then
-            # create a tenant-owned router.
+            # create a project-owned router.
             ROUTER_ID=$(openstack --os-cloud devstack --os-region "$REGION_NAME" router create $Q_ROUTER_NAME -f value -c id)
             die_if_not_set $LINENO ROUTER_ID "Failure creating router $Q_ROUTER_NAME"
         else
@@ -387,7 +387,7 @@ function _neutron_configure_router_v6 {
         # Override global IPV6_ROUTER_GW_IP with the true value from neutron
         # NOTE(slaweq): when enforce scopes is enabled in Neutron, router's
         # gateway ports aren't visible in API because such ports don't belongs
-        # to any tenant. Because of that, at least temporary we need to find
+        # to any project. Because of that, at least temporary we need to find
         # IPv6 address of the router's gateway in a bit different way.
         # It can be reverted when bug
         # https://bugs.launchpad.net/neutron/+bug/1959332 will be fixed
