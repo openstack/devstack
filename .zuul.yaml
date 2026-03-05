@@ -673,6 +673,8 @@
     voting: false
     vars:
       configure_swap_size: 4096
+      devstack_localrc:
+        PYTHON3_VERSION: 3.11
 
 - job:
     name: devstack-platform-ubuntu-jammy
