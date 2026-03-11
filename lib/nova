@@ -644,7 +644,7 @@ function configure_cinder_access {
     # to use a user with the admin role for background tasks in nova to
     # be able to GET block-storage API resources owned by another project
     # since cinder has low-level "is_admin" checks in its DB API.
-    configure_keystoneauth $conf nova cinder
+    configure_keystoneauth $NOVA_CONF nova cinder
     if is_service_enabled tls-proxy; then
         CINDER_SERVICE_HOST=${CINDER_SERVICE_HOST:-$SERVICE_HOST}
         CINDER_SERVICE_PORT=${CINDER_SERVICE_PORT:-8776}
@@ -654,7 +654,7 @@ function configure_cinder_access {
 
 # Configure access to manila.
 function configure_manila_access {
-    configure_keystoneauth $conf nova manila
+    configure_keystoneauth $NOVA_CONF nova manila
 }
 
 function configure_console_compute {
