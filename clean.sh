@@ -102,7 +102,7 @@ if is_service_enabled nova && [[ -r $NOVA_PLUGINS/hypervisor-$VIRT_DRIVER ]]; th
 fi
 
 # Clean out /etc
-sudo rm -rf /etc/keystone /etc/glance /etc/nova /etc/placement /etc/cinder /etc/swift /etc/neutron /etc/openstack/
+sudo rm -rf $KEYSTONE_CONF_DIR $GLANCE_CONF_DIR $NOVA_CONF_DIR $PLACEMENT_CONF_DIR $CINDER_CONF_DIR $SWIFT_CONF_DIR $NEUTRON_CONF_DIR $OPENSTACKCLIENT_CONF_DIR
 
 # Clean out tgt
 sudo rm -f /etc/tgt/conf.d/*

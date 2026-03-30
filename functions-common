@@ -54,6 +54,8 @@ STACK_ENV_VARS="BASE_SQL_CONN DATA_DIR DEST ENABLED_SERVICES HOST_IP \
     LOGFILE OS_CACERT SERVICE_HOST STACK_USER TLS_IP \
     HOST_IPV6 SERVICE_IP_VERSION TUNNEL_ENDPOINT_IP TUNNEL_IP_VERSION"
 
+OPENSTACKCLIENT_CONF_DIR=/etc/openstack
+
 
 # Saves significant environment variables to .stackenv for later use
 # Refers to a lot of globals, only TOP_DIR and STACK_ENV_VARS are required to
@@ -79,10 +81,10 @@ function write_clouds_yaml {
     # overridable. There is currently no usecase where doing so makes sense, so
     # it's not currently configurable.
 
-    CLOUDS_YAML=/etc/openstack/clouds.yaml
+    CLOUDS_YAML=${OPENSTACKCLIENT_CONF_DIR}/clouds.yaml
 
-    sudo mkdir -p $(dirname $CLOUDS_YAML)
-    sudo chown -R $STACK_USER /etc/openstack
+    sudo mkdir -p $OPENSTACKCLIENT_CONF_DIR
+    sudo chown -R $STACK_USER $OPENSTACKCLIENT_CONF_DIR
 
     CA_CERT_ARG=''
     if [ -f "$SSL_BUNDLE_FILE" ]; then
