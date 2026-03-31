@@ -551,9 +551,11 @@
       # Translations
       - ^.*/locale/.*po$
       # pre-commit config
-      - ^.pre-commit-config.yaml$
+      - ^\.pre-commit-config\.yaml$
+      # gitignore config
+      - ^\.gitignore$
       # gitreview config
-      - ^.gitreview$
+      - ^\.gitreview$
 
 - job:
     name: devstack-minimal
