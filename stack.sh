@@ -304,6 +304,9 @@ function _install_rdo {
     if [[ $DISTRO =~ "rhel" ]]; then
         VERSION=${DISTRO:4:2}
         rdo_release=${TARGET_BRANCH#*/}
+
+        install_package wget
+
         if [[ "$TARGET_BRANCH" == "master" ]]; then
             # adding delorean-deps repo to provide current master rpms
             sudo wget https://trunk.rdoproject.org/centos${VERSION}-master/delorean-deps.repo -O /etc/yum.repos.d/delorean-deps.repo
