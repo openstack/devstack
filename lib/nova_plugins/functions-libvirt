@@ -53,9 +53,33 @@ EOF
     sudo systemctl daemon-reload
 }
 
+function enable_debian_12_backports {
+    # we are using debian backport repos to work around a qemu-img bug
+    # related to luks encrypted volumes, this requires us to use newer
+    # versions of qemu libvirt and the supporting packages for vm firmware
+    # This is related to https://bugs.launchpad.net/ceph/+bug/2116852
+    # and https://gitlab.com/qemu-project/qemu/-/commit/145f12e
+    if ! grep -qr "bookworm-backports" /etc/apt/sources.list /etc/apt/sources.list.d/ 2>/dev/null; then
+        echo "deb http://deb.debian.org/debian bookworm-backports main" | \
+            sudo tee /etc/apt/sources.list.d/bookworm-backports.list
+    fi
+
+    sudo tee /etc/apt/preferences.d/99-nova-backports <<EOF
+Package: qemu* libvirt* ovmf* seabios* opensbi
+Pin: release n=bookworm-backports
+Pin-Priority: 990
+EOF
+
+    # Force apt-get update to pick up the backports repository
+    sudo apt-get update
+}
+
 
 # Installs required distro-specific libvirt packages.
 function install_libvirt {
+    if [[ ${DISTRO} =~ "bookworm" ]]; then
+        enable_debian_12_backports
+    fi
     # NOTE(yoctozepto): The common consensus [1] is that libvirt-python should
     # be installed from distro packages. However, various projects might be
     # trying to ensure it is installed using pip AND use upper-constraints
