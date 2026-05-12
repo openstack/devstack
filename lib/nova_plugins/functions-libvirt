@@ -99,6 +99,14 @@ function install_libvirt {
             install_package qemu-efi-aarch64
         fi
         #pip_install_gr <there-si-no-guestfs-in-pypi>
+
+        if [[ ${DISTRO} =~ "bookworm" ]] || [[ ${DISTRO} =~ "trixie" ]]; then
+            # Since debian 13 spice is supported in qemu through an additional
+            # package. We also enabled backports on debian 12 which makes the
+            # same change.
+            install_package qemu-system-modules-spice
+        fi
+
     elif is_fedora; then
 
         # Optionally enable the virt-preview repo when on Fedora
