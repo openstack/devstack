@@ -475,10 +475,10 @@ function filter_network_api_extensions {
         SUPPORTED_NETWORK_API_EXTENSIONS="$SUPPORTED_NETWORK_API_EXTENSIONS,qos"
     fi
     NETWORK_API_EXTENSIONS=${NETWORK_API_EXTENSIONS:-$SUPPORTED_NETWORK_API_EXTENSIONS}
-    extensions=$(echo $NETWORK_API_EXTENSIONS | tr ', ' '\n' | sort -u)
-    supported_ext=$(echo $SUPPORTED_NETWORK_API_EXTENSIONS | tr ', ' '\n' | sort -u)
-    enabled_ext=$(comm -12 <(echo -e "$extensions") <(echo -e "$supported_ext"))
-    disabled_ext=$(comm -3 <(echo -e "$extensions") <(echo -e "$enabled_ext"))
+    extensions=$(echo $NETWORK_API_EXTENSIONS | tr ', ' '\n' | LC_ALL=C sort -u)
+    supported_ext=$(echo $SUPPORTED_NETWORK_API_EXTENSIONS | tr ', ' '\n' | LC_ALL=C sort -u)
+    enabled_ext=$(LC_ALL=C comm -12 <(echo -e "$extensions") <(echo -e "$supported_ext"))
+    disabled_ext=$(LC_ALL=C comm -3 <(echo -e "$extensions") <(echo -e "$enabled_ext"))
 
     # Log a message in case some extensions had to be disabled because
     # they are not supported by the OVN driver

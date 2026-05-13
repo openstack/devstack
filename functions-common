@@ -557,6 +557,12 @@ function is_openeuler {
     fi
     [ "$os_VENDOR" = "openEuler" ]
 }
+
+# Determine if the sudo implementation is sudo-rs
+# is_sudo_rs
+function is_sudo_rs {
+    sudo --version 2>/dev/null | grep -q '^sudo-rs '
+}
 # Git Functions
 # =============
 

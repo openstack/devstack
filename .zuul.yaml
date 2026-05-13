@@ -19,6 +19,16 @@
           - controller
 
 - nodeset:
+    name: openstack-single-node-resolute
+    nodes:
+      - name: controller
+        label: ubuntu-resolute-8GB
+    groups:
+      - name: tempest
+        nodes:
+          - controller
+
+- nodeset:
     name: openstack-single-node-focal
     nodes:
       - name: controller
@@ -842,6 +852,20 @@
       configure_swap_size: 4096
 
 - job:
+    name: devstack-platform-ubuntu-resolute
+    parent: tempest-full-py3
+    description: Ubuntu 26.04 LTS (resolute) platform test
+    nodeset: openstack-single-node-resolute
+    voting: false
+    timeout: 9000
+    vars:
+      configure_swap_size: 8192
+      devstack_services:
+        n-novnc: false
+      devstack_localrc:
+        NOVA_VNC_ENABLED: false
+
+- job:
     name: devstack-platform-ubuntu-noble-ovn-source
     parent: tempest-full-py3
     description: Ubuntu 24.04 LTS (noble) platform test (OVN from source)
@@ -988,6 +1012,7 @@
         - devstack-platform-rocky-red-quartz
         - devstack-platform-ubuntu-noble-ovn-source
         - devstack-platform-ubuntu-noble-ovs
+        - devstack-platform-ubuntu-resolute
         - devstack-multinode
         - devstack-unit-tests
         - openstack-tox-bashate
@@ -1073,3 +1098,4 @@
         - devstack-platform-rocky-red-quartz
         - devstack-platform-ubuntu-noble-ovn-source
         - devstack-platform-ubuntu-noble-ovs
+        - devstack-platform-ubuntu-resolute

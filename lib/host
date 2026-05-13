@@ -11,13 +11,35 @@
 # to opt out if the CPU time is more important to them.
 ENABLE_KSM=$(trueorfalse True ENABLE_KSM)
 ENABLE_KSMTUNED=$(trueorfalse True ENABLE_KSMTUNED)
+function set_sysfs_parameter {
+    local name=$1
+    local value=$2
+    local param_file=$3
+
+    if [[ ! -e $param_file ]]; then
+        echo "WARNING: ${name} parameter ${param_file} is not present, skipping"
+        return 0
+    fi
+
+    if ! echo ${value} | sudo tee ${param_file}; then
+        echo "WARNING: failed to set ${name} parameter ${param_file}=${value}, continuing"
+    fi
+}
+
+function set_sysctl_parameter {
+    local name=$1
+    local value=$2
+
+    if ! sudo sysctl -w ${name}=${value}; then
+        echo "WARNING: failed to set sysctl parameter ${name}=${value}, continuing"
+    fi
+}
+
 function configure_ksm {
     if [[ $ENABLE_KSMTUNED == "True" ]] ; then
         install_package "ksmtuned"
     fi
-    if [[ -f /sys/kernel/mm/ksm/run ]] ; then
-        echo $(bool_to_int ENABLE_KSM) | sudo tee /sys/kernel/mm/ksm/run
-    fi
+    set_sysfs_parameter ksm $(bool_to_int ENABLE_KSM) /sys/kernel/mm/ksm/run
 }
 
 # Compressed swap (ZSWAP)
@@ -36,15 +58,22 @@ ENABLE_ZSWAP=$(trueorfalse False ENABLE_ZSWAP)
 # zstd has much better compression but more latency
 ZSWAP_COMPRESSOR=${ZSWAP_COMPRESSOR:="lz4"}
 ZSWAP_ZPOOL=${ZSWAP_ZPOOL:="zsmalloc"}
+function set_zswap_parameter {
+    local name=$1
+    local value=$2
+
+    set_sysfs_parameter zswap ${value} /sys/module/zswap/parameters/${name}
+}
+
 function configure_zswap {
     if [[ $ENABLE_ZSWAP == "True" ]] ; then
         # Centos 9 stream seems to only support enabling but not run time
         # tuning so dont try to choose better default on centos
         if is_ubuntu; then
-            echo ${ZSWAP_COMPRESSOR} | sudo tee /sys/module/zswap/parameters/compressor
-            echo ${ZSWAP_ZPOOL} | sudo tee /sys/module/zswap/parameters/zpool
+            set_zswap_parameter compressor ${ZSWAP_COMPRESSOR}
+            set_zswap_parameter zpool ${ZSWAP_ZPOOL}
         fi
-        echo 1 | sudo tee /sys/module/zswap/parameters/enabled
+        set_zswap_parameter enabled 1
         # print curent zswap kernel config
         sudo grep -R . /sys/module/zswap/parameters || /bin/true
     fi
@@ -54,14 +83,14 @@ ENABLE_SYSCTL_MEM_TUNING=$(trueorfalse False ENABLE_SYSCTL_MEM_TUNING)
 function configure_sysctl_mem_parmaters {
     if [[ $ENABLE_SYSCTL_MEM_TUNING == "True" ]] ; then
         # defer write when memory is available
-        sudo sysctl -w vm.dirty_ratio=60
-        sudo sysctl -w vm.dirty_background_ratio=10
-        sudo sysctl -w vm.vfs_cache_pressure=50
+        set_sysctl_parameter vm.dirty_ratio 60
+        set_sysctl_parameter vm.dirty_background_ratio 10
+        set_sysctl_parameter vm.vfs_cache_pressure 50
         # assume swap is compressed so on new kernels
         # give it equal priority as page cache which is
         # uncompressed. on kernels < 5.8 the max is 100
         # not 200 so it will strongly prefer swapping.
-        sudo sysctl -w vm.swappiness=100
+        set_sysctl_parameter vm.swappiness 100
         sudo grep -R . /proc/sys/vm/  || /bin/true
     fi
 }
@@ -76,15 +105,15 @@ ENABLE_SYSCTL_NET_TUNING=$(trueorfalse False ENABLE_SYSCTL_NET_TUNING)
 function configure_sysctl_net_parmaters {
     if [[ $ENABLE_SYSCTL_NET_TUNING == "True" ]] ; then
         # detect dead TCP connections after 120 seconds
-        sudo sysctl -w net.ipv4.tcp_keepalive_time=60
-        sudo sysctl -w net.ipv4.tcp_keepalive_intvl=10
-        sudo sysctl -w net.ipv4.tcp_keepalive_probes=6
+        set_sysctl_parameter net.ipv4.tcp_keepalive_time 60
+        set_sysctl_parameter net.ipv4.tcp_keepalive_intvl 10
+        set_sysctl_parameter net.ipv4.tcp_keepalive_probes 6
         # reudce network latency for new connections
-        sudo sysctl -w net.ipv4.tcp_fastopen=3
+        set_sysctl_parameter net.ipv4.tcp_fastopen 3
         # print tcp options
         sudo grep -R . /proc/sys/net/ipv4/tcp* || /bin/true
         # disable qos by default
-        sudo sysctl -w net.core.default_qdisc=pfifo_fast
+        set_sysctl_parameter net.core.default_qdisc pfifo_fast
     fi
 }
 

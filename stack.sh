@@ -229,7 +229,7 @@ write_devstack_version
 
 # Warn users who aren't on an explicitly supported distro, but allow them to
 # override check and attempt installation with ``FORCE=yes ./stack``
-SUPPORTED_DISTROS="trixie|bookworm|noble|rhel9|rhel10"
+SUPPORTED_DISTROS="trixie|bookworm|noble|resolute|rhel9|rhel10"
 
 if [[ ! ${DISTRO} =~ $SUPPORTED_DISTROS ]]; then
     echo "WARNING: this script has not been tested on $DISTRO"
@@ -275,7 +275,10 @@ echo "$STACK_USER ALL=(root) NOPASSWD:ALL" >$TEMPFILE
 # Some binaries might be under ``/sbin`` or ``/usr/sbin``, so make sure sudo will
 # see them by forcing ``PATH``
 echo "Defaults:$STACK_USER secure_path=/sbin:/usr/sbin:/usr/bin:/bin:/usr/local/sbin:/usr/local/bin" >> $TEMPFILE
-echo "Defaults:$STACK_USER !requiretty" >> $TEMPFILE
+# sudo-rs does not support the requiretty option.
+if ! is_sudo_rs; then
+    echo "Defaults:$STACK_USER !requiretty" >> $TEMPFILE
+fi
 chmod 0440 $TEMPFILE
 sudo chown root:root $TEMPFILE
 sudo mv $TEMPFILE /etc/sudoers.d/50_stack_sh
