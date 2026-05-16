@@ -680,15 +680,23 @@
     description: Ubuntu 22.04 LTS (Jammy) platform test
     nodeset: openstack-single-node-jammy
     timeout: 9000
+    required-projects:
+      - name: openstack/tempest
+        override-checkout: 46.3.0
     vars:
       configure_swap_size: 8192
+      devstack_localrc:
+        TEMPEST_VENV_UPPER_CONSTRAINTS: '/opt/stack/requirements/upper-constraints.txt'
 
 - job:
     name: devstack-platform-ubuntu-noble-ovn-source
-    parent: devstack-platform-ubuntu-noble
+    parent: tempest-full-py3
     description: Ubuntu 24.04 LTS (noble) platform test (OVN from source)
+    nodeset: openstack-single-node-noble
     voting: false
+    timeout: 9000
     vars:
+      configure_swap_size: 8192
       devstack_localrc:
         OVN_BUILD_FROM_SOURCE: True
         OVN_BRANCH: "branch-24.03"
@@ -831,8 +839,8 @@
         - swift-dsvm-functional
         - grenade:
             irrelevant-files:
-              - ^.*\.rst$
-              - ^doc/.*$
+              - ^.*$
+            voting: false
         - neutron-ovs-grenade-multinode:
             irrelevant-files:
               - ^.*\.rst$
@@ -864,7 +872,6 @@
         - devstack
         - devstack-ipv6
         - devstack-platform-debian-bookworm
-        - devstack-platform-ubuntu-noble
         # NOTE(danms): Disabled due to instability, see comment in the job
         # definition above.
         # - devstack-platform-rocky-blue-onyx
@@ -880,8 +887,8 @@
         - swift-dsvm-functional
         - grenade:
             irrelevant-files:
-              - ^.*\.rst$
-              - ^doc/.*$
+              - ^.*$
+            voting: false
         - openstacksdk-functional-devstack:
             irrelevant-files:
               - ^.*\.rst$
