@@ -701,7 +701,7 @@ function _start_ovs {
                 echo "NEUTRON_BGP_PEER_BRIDGES must be set when ovn-bgp extension is enabled"
                 return 1
             fi
-            sudo ovs-vsctl --no-wait -- set Open_vSwitch . external-ids:neutron-bgp-peer-bridges=$NEUTRON_BGP_PEER_BRIDGES
+            sudo ovs-vsctl --no-wait -- set Open_vSwitch . external-ids:neutron-bgp-peer-bridges=$NEUTRON_BGP_PEER_BRIDGES external-ids:neutron-bgp-interconnect-bridge=$OVS_PHYSICAL_BRIDGE
         elif is_provider_network || [[ $Q_USE_PROVIDERNET_FOR_PUBLIC == "True" ]]; then
             ovn_base_setup_bridge $OVS_PHYSICAL_BRIDGE
             sudo ovs-vsctl set open . external-ids:ovn-bridge-mappings=${PHYSICAL_NETWORK}:${OVS_PHYSICAL_BRIDGE}
