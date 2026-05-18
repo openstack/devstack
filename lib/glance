@@ -129,8 +129,10 @@ GLANCE_SERVICE_PROTOCOL=${GLANCE_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
 GLANCE_UWSGI=glance.wsgi.api:application
 GLANCE_UWSGI_CONF=$GLANCE_CONF_DIR/glance-uwsgi.ini
 
-# Glance default limit for Devstack
+# Glance default limits for Devstack (Keystone registered limits)
 GLANCE_LIMIT_IMAGE_SIZE_TOTAL=${GLANCE_LIMIT_IMAGE_SIZE_TOTAL:-2000}
+GLANCE_LIMIT_IMAGE_COUNT_TOTAL=${GLANCE_LIMIT_IMAGE_COUNT_TOTAL:-100}
+GLANCE_LIMIT_IMAGE_COUNT_UPLOADING=${GLANCE_LIMIT_IMAGE_COUNT_UPLOADING:-100}
 
 GLANCE_URL="$GLANCE_SERVICE_PROTOCOL://$GLANCE_SERVICE_HOST/image"
 
@@ -319,9 +321,9 @@ function configure_glance_quotas {
     openstack --os-cloud devstack-system-admin registered limit create --service glance \
         --default-limit $GLANCE_LIMIT_IMAGE_SIZE_TOTAL --region $REGION_NAME image_stage_total
     openstack --os-cloud devstack-system-admin registered limit create --service glance \
-        --default-limit 100 --region $REGION_NAME image_count_total
+        --default-limit $GLANCE_LIMIT_IMAGE_COUNT_TOTAL --region $REGION_NAME image_count_total
     openstack --os-cloud devstack-system-admin registered limit create --service glance \
-        --default-limit 100 --region $REGION_NAME image_count_uploading
+        --default-limit $GLANCE_LIMIT_IMAGE_COUNT_UPLOADING --region $REGION_NAME image_count_uploading
 
     # Tell glance to use these limits
     iniset $GLANCE_API_CONF DEFAULT use_keystone_limits True
