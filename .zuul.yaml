@@ -843,10 +843,13 @@
 
 - job:
     name: devstack-platform-ubuntu-noble-ovn-source
-    parent: devstack-platform-ubuntu-noble
+    parent: tempest-full-py3
     description: Ubuntu 24.04 LTS (noble) platform test (OVN from source)
+    nodeset: openstack-single-node-noble
     voting: false
+    timeout: 9000
     vars:
+      configure_swap_size: 8192
       devstack_localrc:
         OVN_BUILD_FROM_SOURCE: True
         OVN_BRANCH: "branch-24.03"
@@ -1012,7 +1015,6 @@
         - devstack-ipv6
         - devstack-platform-debian-bookworm
         - devstack-platform-debian-trixie
-        - devstack-platform-ubuntu-noble
         # NOTE(danms): Disabled due to instability, see comment in the job
         # definition above.
         # - devstack-platform-rocky-blue-onyx
