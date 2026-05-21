@@ -791,7 +791,7 @@ function configure_tempest {
     # API Extensions
     # Run ``verify_tempest_config -ur`` to retrieve enabled extensions on API endpoints
     # NOTE(mtreinish): This must be done after auth settings are added to the tempest config
-    tox -evenv -- tempest verify-config -uro $tmp_cfg_file
+    tox -evenv-tempest -- tempest verify-config -uro $tmp_cfg_file
 
     # Neutron API Extensions
 
