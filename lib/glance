@@ -479,7 +479,6 @@ function configure_glance {
 # ---------------------------------------------------------------------
 # SERVICE_PROJECT_NAME  glance          service
 # SERVICE_PROJECT_NAME  glance-swift    ResellerAdmin (if Swift is enabled)
-# SERVICE_PROJECT_NAME  glance-search   search (if Search is enabled)
 
 function create_glance_accounts {
     if is_service_enabled g-api; then
