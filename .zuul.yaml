@@ -860,10 +860,6 @@
     timeout: 9000
     vars:
       configure_swap_size: 8192
-      devstack_services:
-        n-novnc: false
-      devstack_localrc:
-        NOVA_VNC_ENABLED: false
 
 - job:
     name: devstack-platform-ubuntu-noble-ovn-source
