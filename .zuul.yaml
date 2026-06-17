@@ -860,6 +860,8 @@
     timeout: 9000
     vars:
       configure_swap_size: 8192
+      devstack_localrc:
+        'SYSTEMD_ENV_VARS["n-novnc-cell1"]': OS_NOVA_DISABLE_EVENTLET_PATCHING=true
 
 - job:
     name: devstack-platform-ubuntu-noble-ovn-source
