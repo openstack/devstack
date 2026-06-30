@@ -547,7 +547,7 @@ function configure_tempest {
     iniset $TEMPEST_CONFIG network-feature-enabled ipv6_subnet_attributes "$IPV6_SUBNET_ATTRIBUTES_ENABLED"
     iniset $TEMPEST_CONFIG network-feature-enabled port_security $NEUTRON_PORT_SECURITY
 
-    iniset $TEMPEST_CONFIG enforce_scope neutron "$NEUTRON_ENFORCE_SCOPE"
+    iniset $TEMPEST_CONFIG enforce_scope neutron "$NEUTRON_ENFORCE_NEW_DEFAULTS"
 
     # Scenario
     SCENARIO_IMAGE_DIR=${SCENARIO_IMAGE_DIR:-$FILES}
@@ -729,23 +729,23 @@ function configure_tempest {
     # If services enable the enforce_scope for their policy
     # we need to enable the same on Tempest side so that
     # test can be run with scoped token.
-    if [[ "$KEYSTONE_ENFORCE_SCOPE" == True || "$ENFORCE_SCOPE" == True ]] ; then
+    if [[ "$KEYSTONE_ENFORCE_NEW_DEFAULTS" == True || "$ENFORCE_NEW_DEFAULTS" == True ]] ; then
         iniset $TEMPEST_CONFIG enforce_scope keystone true
     fi
 
-    if [[ "$NOVA_ENFORCE_SCOPE" == True || "$ENFORCE_SCOPE" == True ]] ; then
+    if [[ "$NOVA_ENFORCE_NEW_DEFAULTS" == True || "$ENFORCE_NEW_DEFAULTS" == True ]] ; then
         iniset $TEMPEST_CONFIG enforce_scope nova true
     fi
 
-    if [[ "$PLACEMENT_ENFORCE_SCOPE" == True || "$ENFORCE_SCOPE" == True ]] ; then
+    if [[ "$PLACEMENT_ENFORCE_NEW_DEFAULTS" == True || "$ENFORCE_NEW_DEFAULTS" == True ]] ; then
         iniset $TEMPEST_CONFIG enforce_scope placement true
     fi
 
-    if [[ "$GLANCE_ENFORCE_SCOPE" == True || "$ENFORCE_SCOPE" == True ]] ; then
+    if [[ "$GLANCE_ENFORCE_NEW_DEFAULTS" == True || "$ENFORCE_NEW_DEFAULTS" == True ]] ; then
         iniset $TEMPEST_CONFIG enforce_scope glance true
     fi
 
-    if [[ "$CINDER_ENFORCE_SCOPE" == True || "$ENFORCE_SCOPE" == True ]] ; then
+    if [[ "$CINDER_ENFORCE_NEW_DEFAULTS" == True || "$ENFORCE_NEW_DEFAULTS" == True ]] ; then
         iniset $TEMPEST_CONFIG enforce_scope cinder true
     fi
 

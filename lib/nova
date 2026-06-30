@@ -102,11 +102,16 @@ NOVA_SERVICE_LISTEN_ADDRESS=${NOVA_SERVICE_LISTEN_ADDRESS:-$(ipv6_unquote $SERVI
 METADATA_SERVICE_PORT=${METADATA_SERVICE_PORT:-8775}
 NOVA_ENABLE_CACHE=${NOVA_ENABLE_CACHE:-True}
 
-# Flag to set the oslo_policy.enforce_scope and oslo_policy.enforce_new_defaults.
-# This is used to disable the compute API policies scope and new defaults.
+# Flag to set the oslo_policy.enforce_new_defaults.
+# This is used to disable the compute API policies new defaults.
 # By Default, it is True.
-# For more detail: https://docs.openstack.org/oslo.policy/latest/configuration/index.html#oslo_policy.enforce_scope
-NOVA_ENFORCE_SCOPE=$(trueorfalse True NOVA_ENFORCE_SCOPE)
+# For more detail: https://docs.openstack.org/oslo.policy/latest/configuration/index.html#oslo_policy.enforce_new_defaults
+# NOVA_ENFORCE_SCOPE is a deprecated alias for NOVA_ENFORCE_NEW_DEFAULTS.
+NOVA_ENFORCE_NEW_DEFAULTS=$(trueorfalse True NOVA_ENFORCE_NEW_DEFAULTS)
+# Support the deprecated NOVA_ENFORCE_SCOPE variable as a fallback.
+if [[ -n "${NOVA_ENFORCE_SCOPE}" ]]; then
+    NOVA_ENFORCE_NEW_DEFAULTS=$(trueorfalse True NOVA_ENFORCE_SCOPE)
+fi
 
 if [[ $SERVICE_IP_VERSION == 6 ]]; then
     NOVA_MY_IP="$HOST_IPV6"
@@ -501,12 +506,10 @@ function create_nova_conf {
             NOVA_ENABLED_APIS=$(echo $NOVA_ENABLED_APIS | sed "s/,metadata//")
         fi
         iniset $NOVA_CONF DEFAULT enabled_apis "$NOVA_ENABLED_APIS"
-        if [[ "$NOVA_ENFORCE_SCOPE" == "True" || "$ENFORCE_SCOPE" == "True" ]]; then
+        if [[ "$NOVA_ENFORCE_NEW_DEFAULTS" == "True" || "$ENFORCE_NEW_DEFAULTS" == "True" ]]; then
             iniset $NOVA_CONF oslo_policy enforce_new_defaults True
-            iniset $NOVA_CONF oslo_policy enforce_scope True
         else
             iniset $NOVA_CONF oslo_policy enforce_new_defaults False
-            iniset $NOVA_CONF oslo_policy enforce_scope False
         fi
 
         configure_keystone_authtoken_middleware $NOVA_CONF nova

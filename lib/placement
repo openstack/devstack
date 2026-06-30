@@ -48,11 +48,13 @@ fi
 PLACEMENT_SERVICE_PROTOCOL=${PLACEMENT_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
 PLACEMENT_SERVICE_HOST=${PLACEMENT_SERVICE_HOST:-$SERVICE_HOST}
 
-# Flag to set the oslo_policy.enforce_scope and oslo_policy.enforce_new_defaults.
-# This is used to switch the Placement API policies scope and new defaults.
-# By Default, these flag are False.
-# For more detail: https://docs.openstack.org/oslo.policy/latest/configuration/index.html#oslo_policy.enforce_scope
-PLACEMENT_ENFORCE_SCOPE=$(trueorfalse False PLACEMENT_ENFORCE_SCOPE)
+# Flag to set the oslo_policy.enforce_new_defaults.
+# This is used to switch the Placement API policies to the new defaults.
+# PLACEMENT_ENFORCE_SCOPE is a deprecated alias for PLACEMENT_ENFORCE_NEW_DEFAULTS.
+PLACEMENT_ENFORCE_NEW_DEFAULTS=$(trueorfalse False PLACEMENT_ENFORCE_NEW_DEFAULTS)
+if [[ -n "${PLACEMENT_ENFORCE_SCOPE}" ]]; then
+    PLACEMENT_ENFORCE_NEW_DEFAULTS=$(trueorfalse False PLACEMENT_ENFORCE_SCOPE)
+fi
 
 # Functions
 # ---------
@@ -87,12 +89,10 @@ function configure_placement {
     create_placement_conf
 
     write_uwsgi_config "$PLACEMENT_UWSGI_CONF" "$PLACEMENT_UWSGI" "/placement" "" "placement-api"
-    if [[ "$PLACEMENT_ENFORCE_SCOPE" == "True" || "$ENFORCE_SCOPE" == "True" ]]; then
+    if [[ "$PLACEMENT_ENFORCE_NEW_DEFAULTS" == "True" || "$ENFORCE_NEW_DEFAULTS" == "True" ]]; then
         iniset $PLACEMENT_CONF oslo_policy enforce_new_defaults True
-        iniset $PLACEMENT_CONF oslo_policy enforce_scope True
     else
         iniset $PLACEMENT_CONF oslo_policy enforce_new_defaults False
-        iniset $PLACEMENT_CONF oslo_policy enforce_scope False
     fi
 }
 

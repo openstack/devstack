@@ -97,11 +97,13 @@ GLANCE_TASKS_DIR=${GLANCE_MULTISTORE_FILE_IMAGE_DIR:=$DATA_DIR/os_glance_tasks_s
 GLANCE_USE_IMPORT_WORKFLOW=$(trueorfalse False GLANCE_USE_IMPORT_WORKFLOW)
 GLANCE_ENABLE_QUOTAS=$(trueorfalse True GLANCE_ENABLE_QUOTAS)
 
-# Flag to set the oslo_policy.enforce_scope. This is used to switch
-# This is used to disable the Image API policies scope and new defaults.
-# By Default, it is True.
-# For more detail: https://docs.openstack.org/oslo.policy/latest/configuration/index.html#oslo_policy.enforce_scope
-GLANCE_ENFORCE_SCOPE=$(trueorfalse True GLANCE_ENFORCE_SCOPE)
+# Flag to set the oslo_policy.enforce_new_defaults. This is used to switch
+# This is used to switch the Image API policies to use new defaults.
+# GLANCE_ENFORCE_SCOPE is a deprecated alias for GLANCE_ENFORCE_NEW_DEFAULTS.
+GLANCE_ENFORCE_NEW_DEFAULTS=$(trueorfalse True GLANCE_ENFORCE_NEW_DEFAULTS)
+if [[ -n "${GLANCE_ENFORCE_SCOPE}" ]]; then
+    GLANCE_ENFORCE_NEW_DEFAULTS=$(trueorfalse True GLANCE_ENFORCE_SCOPE)
+fi
 
 # Flag to disable image format inspection on upload
 GLANCE_ENFORCE_IMAGE_FORMAT=$(trueorfalse True GLANCE_ENFORCE_IMAGE_FORMAT)
@@ -464,12 +466,10 @@ function configure_glance {
     # will attempt the uwsgi binary instead.
     iniset $GLANCE_API_CONF wsgi python_interpreter $PYTHON
 
-    if [[ "$GLANCE_ENFORCE_SCOPE" == True || "$ENFORCE_SCOPE" == True ]] ; then
-        iniset $GLANCE_API_CONF oslo_policy enforce_scope true
+    if [[ "$GLANCE_ENFORCE_NEW_DEFAULTS" == True || "$ENFORCE_NEW_DEFAULTS" == True ]] ; then
         iniset $GLANCE_API_CONF oslo_policy enforce_new_defaults true
         iniset $GLANCE_API_CONF DEFAULT enforce_secure_rbac true
     else
-        iniset $GLANCE_API_CONF oslo_policy enforce_scope false
         iniset $GLANCE_API_CONF oslo_policy enforce_new_defaults false
         iniset $GLANCE_API_CONF DEFAULT enforce_secure_rbac false
     fi

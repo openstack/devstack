@@ -757,7 +757,7 @@
       This job runs the devstack with scope checks enabled.
     vars:
       devstack_localrc:
-        ENFORCE_SCOPE: true
+        ENFORCE_NEW_DEFAULTS: true
 
 - job:
     name: devstack-multinode
