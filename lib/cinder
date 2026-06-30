@@ -207,9 +207,9 @@ CINDER_UPLOAD_OPTIMIZED_BACKENDS=${CINDER_UPLOAD_OPTIMIZED_BACKENDS:-$CINDER_ENA
 # Flag to set the oslo_policy.enforce_new_defaults. This is used to switch
 # the  Volume API policies to use the new defaults.
 # CINDER_ENFORCE_SCOPE is a deprecated alias for CINDER_ENFORCE_NEW_DEFAULTS.
-CINDER_ENFORCE_NEW_DEFAULTS=$(trueorfalse False CINDER_ENFORCE_NEW_DEFAULTS)
+CINDER_ENFORCE_NEW_DEFAULTS=$(trueorfalse True CINDER_ENFORCE_NEW_DEFAULTS)
 if [[ -n "${CINDER_ENFORCE_SCOPE}" ]]; then
-    CINDER_ENFORCE_NEW_DEFAULTS=$(trueorfalse False CINDER_ENFORCE_SCOPE)
+    CINDER_ENFORCE_NEW_DEFAULTS=$(trueorfalse True CINDER_ENFORCE_SCOPE)
 fi
 
 # Functions
