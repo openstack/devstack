@@ -116,9 +116,9 @@ KEYSTONE_ADMIN_ENDPOINT=$(trueorfalse False KEYSTONE_ADMIN_ENDPOINT)
 # Flag to set the oslo_policy.enforce_new_defaults. This is used to switch
 # the Identity API policies to use the new defaults.
 # KEYSTONE_ENFORCE_SCOPE is a deprecated alias for KEYSTONE_ENFORCE_NEW_DEFAULTS.
-KEYSTONE_ENFORCE_NEW_DEFAULTS=$(trueorfalse False KEYSTONE_ENFORCE_NEW_DEFAULTS)
+KEYSTONE_ENFORCE_NEW_DEFAULTS=$(trueorfalse True KEYSTONE_ENFORCE_NEW_DEFAULTS)
 if [[ -n "${KEYSTONE_ENFORCE_SCOPE}" ]]; then
-    KEYSTONE_ENFORCE_NEW_DEFAULTS=$(trueorfalse False KEYSTONE_ENFORCE_SCOPE)
+    KEYSTONE_ENFORCE_NEW_DEFAULTS=$(trueorfalse True KEYSTONE_ENFORCE_SCOPE)
 fi
 
 # Functions
