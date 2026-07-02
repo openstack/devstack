@@ -165,9 +165,9 @@ fi
 # Global option for enforcing new defaults. If enabled, ENFORCE_NEW_DEFAULTS
 # overrides each services ${SERVICE}_ENFORCE_SCOPE variables.
 # ENFORCE_SCOPE is a deprecated alias for ENFORCE_NEW_DEFAULTS.
-ENFORCE_NEW_DEFAULTS=$(trueorfalse False ENFORCE_NEW_DEFAULTS)
+ENFORCE_NEW_DEFAULTS=$(trueorfalse True ENFORCE_NEW_DEFAULTS)
 if [[ -n "${ENFORCE_SCOPE}" ]]; then
-    ENFORCE_NEW_DEFAULTS=$(trueorfalse False ENFORCE_SCOPE)
+    ENFORCE_NEW_DEFAULTS=$(trueorfalse True ENFORCE_SCOPE)
 fi
 
 # Devstack supports the use of a global virtualenv. These variables enable

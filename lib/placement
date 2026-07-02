@@ -51,9 +51,9 @@ PLACEMENT_SERVICE_HOST=${PLACEMENT_SERVICE_HOST:-$SERVICE_HOST}
 # Flag to set the oslo_policy.enforce_new_defaults.
 # This is used to switch the Placement API policies to the new defaults.
 # PLACEMENT_ENFORCE_SCOPE is a deprecated alias for PLACEMENT_ENFORCE_NEW_DEFAULTS.
-PLACEMENT_ENFORCE_NEW_DEFAULTS=$(trueorfalse False PLACEMENT_ENFORCE_NEW_DEFAULTS)
+PLACEMENT_ENFORCE_NEW_DEFAULTS=$(trueorfalse True PLACEMENT_ENFORCE_NEW_DEFAULTS)
 if [[ -n "${PLACEMENT_ENFORCE_SCOPE}" ]]; then
-    PLACEMENT_ENFORCE_NEW_DEFAULTS=$(trueorfalse False PLACEMENT_ENFORCE_SCOPE)
+    PLACEMENT_ENFORCE_NEW_DEFAULTS=$(trueorfalse True PLACEMENT_ENFORCE_SCOPE)
 fi
 
 # Functions

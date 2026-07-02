@@ -104,7 +104,6 @@ NOVA_ENABLE_CACHE=${NOVA_ENABLE_CACHE:-True}
 
 # Flag to set the oslo_policy.enforce_new_defaults.
 # This is used to disable the compute API policies new defaults.
-# By Default, it is True.
 # For more detail: https://docs.openstack.org/oslo.policy/latest/configuration/index.html#oslo_policy.enforce_new_defaults
 # NOVA_ENFORCE_SCOPE is a deprecated alias for NOVA_ENFORCE_NEW_DEFAULTS.
 NOVA_ENFORCE_NEW_DEFAULTS=$(trueorfalse True NOVA_ENFORCE_NEW_DEFAULTS)
