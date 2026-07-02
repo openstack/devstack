@@ -445,6 +445,7 @@ function configure_cinder {
 # ------------------------------------------------------------------
 # SERVICE_PROJECT_NAME cinder     service
 # SERVICE_PROJECT_NAME cinder     creator (if Barbican is enabled)
+# SERVICE_PROJECT_NAME cinder     member  (if Barbican is enabled)
 
 # Migrated from keystone_data.sh
 function create_cinder_accounts {
@@ -453,12 +454,25 @@ function create_cinder_accounts {
 
         local extra_role=""
 
-        # cinder needs the "creator" role in order to interact with barbican
+        # cinder needs a barbican role in order to create secrets for
+        # encrypted volumes (for example the key transfer performed, as the
+        # cinder service user, during an encrypted volume transfer).
+        # Barbican's legacy policy authorized secret creation via the
+        # "creator" role (secrets:post -> rule:admin_or_creator); its new
+        # RBAC defaults require the "member" role (secrets:post ->
+        # role:member).  Grant both so the encrypted-volume key path keeps
+        # working regardless of which policy barbican is enforcing.
         if is_service_enabled barbican; then
             extra_role=$(get_or_create_role "creator")
         fi
 
         create_service_user "cinder" $extra_role
+
+        if is_service_enabled barbican; then
+            get_or_add_user_project_role "member" "cinder" \
+                "$SERVICE_PROJECT_NAME" "$SERVICE_DOMAIN_NAME" \
+                "$SERVICE_DOMAIN_NAME"
+        fi
 
         local cinder_api_url
         cinder_api_url="$CINDER_SERVICE_PROTOCOL://$CINDER_SERVICE_HOST/volume"
