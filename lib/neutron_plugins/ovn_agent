@@ -116,6 +116,12 @@ OVN_L3_CREATE_PUBLIC_NETWORK=$(trueorfalse True OVN_L3_CREATE_PUBLIC_NETWORK)
 # set to some non-empty value.
 NEUTRON_BGP_PEER_BRIDGES=${NEUTRON_BGP_PEER_BRIDGES:-}
 
+# The following variables apply when OVN_AGENT_EXTENSIONS includes "ovn-evpn".
+OVN_EVPN_BGP_AS=${OVN_EVPN_BGP_AS:-}
+OVN_EVPN_BGP_LOCAL_INTERFACE=${OVN_EVPN_BGP_LOCAL_INTERFACE:-}
+OVN_EVPN_VXLAN_PORT=${OVN_EVPN_VXLAN_PORT:-4789}
+OVN_EVPN_LOCAL_IP=${OVN_EVPN_LOCAL_IP:-}
+
 export OVSDB_SERVER_LOCAL_HOST=$SERVICE_LOCAL_HOST
 TUNNEL_IP=$TUNNEL_ENDPOINT_IP
 if [[ "$SERVICE_IP_VERSION" == 6 ]]; then
@@ -612,6 +618,10 @@ function configure_ovn {
         if [[ $config_file == $OVN_AGENT_CONF ]]; then
             iniset $config_file agent extensions $OVN_AGENT_EXTENSIONS
             iniset $config_file ovn ovn_nb_connection $OVN_NB_REMOTE
+            if [[ "$OVN_AGENT_EXTENSIONS" =~ 'ovn-evpn' ]]; then
+                iniset $config_file ovn_evpn bgp_as $OVN_EVPN_BGP_AS
+                iniset $config_file ovn_evpn bgp_local_interface $OVN_EVPN_BGP_LOCAL_INTERFACE
+            fi
         fi
     fi
 }
@@ -696,12 +706,19 @@ function _start_ovs {
             sudo ovs-vsctl --no-wait set open_vswitch . external-ids:ovn-cms-options="enable-chassis-as-gw"
         fi
 
+        # ovn-bgp and ovn-evpn extensions are not supported together so far
         if [[ "$OVN_AGENT_EXTENSIONS" =~ 'ovn-bgp' ]]; then
             if [[ -z "$NEUTRON_BGP_PEER_BRIDGES" ]]; then
                 echo "NEUTRON_BGP_PEER_BRIDGES must be set when ovn-bgp extension is enabled"
                 return 1
             fi
             sudo ovs-vsctl --no-wait -- set Open_vSwitch . external-ids:neutron-bgp-peer-bridges=$NEUTRON_BGP_PEER_BRIDGES external-ids:neutron-bgp-interconnect-bridge=$OVS_PHYSICAL_BRIDGE
+        elif [[ "$OVN_AGENT_EXTENSIONS" =~ 'ovn-evpn' ]]; then
+            if [[ -z "$OVN_EVPN_LOCAL_IP" ]]; then
+                echo "OVN_EVPN_LOCAL_IP must be set when ovn-evpn extension is enabled"
+                return 1
+            fi
+            sudo ovs-vsctl --no-wait -- set Open_vSwitch . external-ids:ovn-evpn-local-ip=$OVN_EVPN_LOCAL_IP external-ids:ovn-evpn-vxlan-ports=$OVN_EVPN_VXLAN_PORT
         elif is_provider_network || [[ $Q_USE_PROVIDERNET_FOR_PUBLIC == "True" ]]; then
             ovn_base_setup_bridge $OVS_PHYSICAL_BRIDGE
             sudo ovs-vsctl set open . external-ids:ovn-bridge-mappings=${PHYSICAL_NETWORK}:${OVS_PHYSICAL_BRIDGE}
