@@ -150,7 +150,7 @@ function configure_database_mysql {
     # Set default db type to InnoDB
     iniset -sudo $my_conf mysqld sql_mode TRADITIONAL
     iniset -sudo $my_conf mysqld default-storage-engine InnoDB
-    iniset -sudo $my_conf mysqld max_connections 1024
+    iniset -sudo $my_conf mysqld max_connections 2048
 
     if [[ "$DATABASE_QUERY_LOGGING" == "True" ]]; then
         echo_summary "Enabling MySQL query logging"
