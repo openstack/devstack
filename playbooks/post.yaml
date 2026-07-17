@@ -23,6 +23,36 @@
         cmd: |
           coredumpctl -o {{ devstack_log_dir }}/qemu.coredump dump /usr/bin/qemu-system-x86_64
       ignore_errors: yes
+    # This must run before export-devstack-journal so the reports
+    # appear in the collected service logs.
+    - name: Collect Guru Meditation Reports from OpenStack services
+      shell:
+        executable: /bin/bash
+        cmd: |
+          # Send SIGUSR2 to trigger Guru Meditation Reports (green
+          # thread stack dumps) from OpenStack services so that hangs
+          # during test runs are diagnosable from the collected
+          # service logs. The signal does not terminate the processes.
+          # Matches GMR_PROCESSES in tools/worlddump.py
+          gmr_services=(
+            nova-compute
+            neutron-dhcp-agent
+            neutron-l3-agent
+            neutron-metadata-agent
+            neutron-openvswitch-agent
+            cinder-volume
+          )
+          # Use pkill -f (not killall -e as worlddump.py does)
+          # because the process name is python3, not the service name.
+          for service in "${gmr_services[@]}"; do
+            if pgrep -f "$service" > /dev/null 2>&1; then
+              pkill -USR2 -f "$service" || true
+            fi
+          done
+          # Allow time for reports to be written to journald
+          sleep 2
+      when: not (zuul_success | bool)
+      ignore_errors: yes
   roles:
     - export-devstack-journal
     - apache-logs-conf
