@@ -537,7 +537,15 @@ function init_os_brick {
 # install_cinder() - Collect source and prepare
 function install_cinder {
     git_clone $CINDER_REPO $CINDER_DIR $CINDER_BRANCH
-    setup_develop $CINDER_DIR
+
+    local extras=""
+    if [[ $CINDER_BACKUP_DRIVER == "swift" ]]; then
+        extras="swift"
+    elif [[ $CINDER_BACKUP_DRIVER == "s3_swift" ]]; then
+        extras="s3"
+    fi
+    setup_develop $CINDER_DIR $extras
+
     if [[ "$CINDER_TARGET_HELPER" == "tgtadm" ]]; then
         install_package tgt
     elif [[ "$CINDER_TARGET_HELPER" == "lioadm" ]]; then
