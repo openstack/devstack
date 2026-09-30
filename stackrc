@@ -256,7 +256,7 @@ REQUIREMENTS_DIR=${REQUIREMENTS_DIR:-$DEST/requirements}
 # Setting the variable to 'ALL' will activate the download for all
 # libraries.
 
-DEVSTACK_SERIES="2026.2"
+DEVSTACK_SERIES="2027.1"
 
 ##############
 #
