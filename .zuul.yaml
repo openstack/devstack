@@ -898,7 +898,7 @@
         ovs-vswitchd: false
         ovsdb-server: false
         # Disable Neutron ML2/OVN services
-        q-ovn-metadata-agent: false
+        q-ovn-agent: false
         # Enable Neutron ML2/OVS services
         q-agt: true
         q-dhcp: true
@@ -913,7 +913,7 @@
           ovs-vswitchd: false
           ovsdb-server: false
           # Disable Neutron ML2/OVN services
-          q-ovn-metadata-agent: false
+          q-ovn-agent: false
           # Enable Neutron ML2/OVS services
           q-agt: true
 
