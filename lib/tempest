@@ -601,6 +601,9 @@ function configure_tempest {
     fi
     iniset $TEMPEST_CONFIG volume-feature-enabled volume_revert $(trueorfalse False TEMPEST_VOLUME_REVERT_TO_SNAPSHOT)
     iniset $TEMPEST_CONFIG volume-feature-enabled extend_attached_encrypted_volume ${TEMPEST_EXTEND_ATTACHED_ENCRYPTED_VOLUME:-False}
+    # (auniyal): bfv rebuild bug (LP#2160473). The Cinder fix is present in
+    # 2027.1, but not older stable branches, do not backport this setting.
+    iniset $TEMPEST_CONFIG volume-feature-enabled rebuild_preserves_volume_snapshots ${TEMPEST_REBUILD_PRESERVES_VOLUME_SNAPSHOTS:-True}
     if [[ "$CINDER_BACKUP_DRIVER" == *"swift"* ]]; then
         iniset $TEMPEST_CONFIG volume backup_driver swift
     fi
