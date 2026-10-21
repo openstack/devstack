@@ -36,7 +36,9 @@ openstack/designate-tempest-plugin       `https://opendev.org/openstack/designat
 openstack/devstack-plugin-amqp1          `https://opendev.org/openstack/devstack-plugin-amqp1 <https://opendev.org/openstack/devstack-plugin-amqp1>`__
 openstack/devstack-plugin-ceph           `https://opendev.org/openstack/devstack-plugin-ceph <https://opendev.org/openstack/devstack-plugin-ceph>`__
 openstack/devstack-plugin-container      `https://opendev.org/openstack/devstack-plugin-container <https://opendev.org/openstack/devstack-plugin-container>`__
+openstack/devstack-plugin-jaeger         `https://opendev.org/openstack/devstack-plugin-jaeger <https://opendev.org/openstack/devstack-plugin-jaeger>`__
 openstack/devstack-plugin-kafka          `https://opendev.org/openstack/devstack-plugin-kafka <https://opendev.org/openstack/devstack-plugin-kafka>`__
+openstack/devstack-plugin-lustre         `https://opendev.org/openstack/devstack-plugin-lustre <https://opendev.org/openstack/devstack-plugin-lustre>`__
 openstack/devstack-plugin-nfs            `https://opendev.org/openstack/devstack-plugin-nfs <https://opendev.org/openstack/devstack-plugin-nfs>`__
 openstack/devstack-plugin-open-cas       `https://opendev.org/openstack/devstack-plugin-open-cas <https://opendev.org/openstack/devstack-plugin-open-cas>`__
 openstack/devstack-plugin-prometheus     `https://opendev.org/openstack/devstack-plugin-prometheus <https://opendev.org/openstack/devstack-plugin-prometheus>`__
@@ -53,6 +55,7 @@ openstack/ironic-ui                      `https://opendev.org/openstack/ironic-u
 openstack/keystone                       `https://opendev.org/openstack/keystone <https://opendev.org/openstack/keystone>`__
 openstack/kuryr-libnetwork               `https://opendev.org/openstack/kuryr-libnetwork <https://opendev.org/openstack/kuryr-libnetwork>`__
 openstack/magnum                         `https://opendev.org/openstack/magnum <https://opendev.org/openstack/magnum>`__
+openstack/magnum-capi-helm               `https://opendev.org/openstack/magnum-capi-helm <https://opendev.org/openstack/magnum-capi-helm>`__
 openstack/magnum-ui                      `https://opendev.org/openstack/magnum-ui <https://opendev.org/openstack/magnum-ui>`__
 openstack/manila                         `https://opendev.org/openstack/manila <https://opendev.org/openstack/manila>`__
 openstack/manila-tempest-plugin          `https://opendev.org/openstack/manila-tempest-plugin <https://opendev.org/openstack/manila-tempest-plugin>`__
@@ -87,11 +90,6 @@ openstack/tap-as-a-service               `https://opendev.org/openstack/tap-as-a
 openstack/telemetry-tempest-plugin       `https://opendev.org/openstack/telemetry-tempest-plugin <https://opendev.org/openstack/telemetry-tempest-plugin>`__
 openstack/trove                          `https://opendev.org/openstack/trove <https://opendev.org/openstack/trove>`__
 openstack/trove-dashboard                `https://opendev.org/openstack/trove-dashboard <https://opendev.org/openstack/trove-dashboard>`__
-openstack/venus                          `https://opendev.org/openstack/venus <https://opendev.org/openstack/venus>`__
-openstack/venus-dashboard                `https://opendev.org/openstack/venus-dashboard <https://opendev.org/openstack/venus-dashboard>`__
-openstack/vitrage                        `https://opendev.org/openstack/vitrage <https://opendev.org/openstack/vitrage>`__
-openstack/vitrage-dashboard              `https://opendev.org/openstack/vitrage-dashboard <https://opendev.org/openstack/vitrage-dashboard>`__
-openstack/vitrage-tempest-plugin         `https://opendev.org/openstack/vitrage-tempest-plugin <https://opendev.org/openstack/vitrage-tempest-plugin>`__
 openstack/watcher                        `https://opendev.org/openstack/watcher <https://opendev.org/openstack/watcher>`__
 openstack/watcher-dashboard              `https://opendev.org/openstack/watcher-dashboard <https://opendev.org/openstack/watcher-dashboard>`__
 openstack/whitebox-tempest-plugin        `https://opendev.org/openstack/whitebox-tempest-plugin <https://opendev.org/openstack/whitebox-tempest-plugin>`__
