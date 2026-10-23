@@ -558,6 +558,10 @@ function install_glance {
         glance_store_extras=("swift" "${glance_store_extras[@]}")
     fi
 
+    if [[ "$GLANCE_USE_S3" == "True" ]]; then
+        glance_store_extras=("s3" "${glance_store_extras[@]}")
+    fi
+
     # Install glance_store from git so we make sure we're testing
     # the latest code.
     if use_library_from_git "glance_store"; then
