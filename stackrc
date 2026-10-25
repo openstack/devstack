@@ -552,12 +552,6 @@ GITBRANCH["os-vif"]=${OS_VIF_BRANCH:-$TARGET_BRANCH}
 GITREPO["osc-lib"]=${OSC_LIB_REPO:-${GIT_BASE}/openstack/osc-lib.git}
 GITBRANCH["osc-lib"]=${OSC_LIB_BRANCH:-$TARGET_BRANCH}
 
-# ironic common lib
-GITREPO["ironic-lib"]=${IRONIC_LIB_REPO:-${GIT_BASE}/openstack/ironic-lib.git}
-GITBRANCH["ironic-lib"]=${IRONIC_LIB_BRANCH:-$TARGET_BRANCH}
-# this doesn't exist in a lib file, so set it here
-GITDIR["ironic-lib"]=$DEST/ironic-lib
-
 # diskimage-builder tool
 GITREPO["diskimage-builder"]=${DIB_REPO:-${GIT_BASE}/openstack/diskimage-builder.git}
 GITBRANCH["diskimage-builder"]=${DIB_BRANCH:-$BRANCHLESS_TARGET_BRANCH}
