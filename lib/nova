@@ -452,7 +452,6 @@ function create_nova_conf {
     iniset $NOVA_CONF scheduler workers "$API_WORKERS"
     iniset $NOVA_CONF neutron default_floating_pool "$PUBLIC_NETWORK_NAME"
     iniset $NOVA_CONF DEFAULT my_ip "$NOVA_MY_IP"
-    iniset $NOVA_CONF DEFAULT instance_name_template "${INSTANCE_NAME_PREFIX}%08x"
     iniset $NOVA_CONF DEFAULT osapi_compute_listen "$NOVA_SERVICE_LISTEN_ADDRESS"
     iniset $NOVA_CONF DEFAULT metadata_listen "$NOVA_SERVICE_LISTEN_ADDRESS"
     iniset $NOVA_CONF DEFAULT shutdown_timeout $NOVA_SHUTDOWN_TIMEOUT
