@@ -75,9 +75,13 @@ def get_processes_stats(matches):
     procs = psutil.process_iter()
 
     def proc_matches(proc):
+        try:
+            cmdline = ' '.join(proc.cmdline())
+        except psutil.Error:
+            # Zombies and processes that exited since process_iter()
+            return False
         return me != proc.pid and any(
-            re.search(match, ' '.join(proc.cmdline()))
-            for match in matches)
+            re.search(match, cmdline) for match in matches)
 
     return [
         get_process_stats(proc)
