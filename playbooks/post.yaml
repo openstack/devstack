@@ -4,31 +4,18 @@
     devstack_log_dir: "{{ devstack_base_dir|default('/opt/stack') }}/logs/"
     devstack_conf_dir: "{{ devstack_base_dir|default('/opt/stack') }}/devstack/"
     devstack_full_log: "{{ devstack_early_log|default('/opt/stack/logs/devstack-early.txt') }}"
-  tasks:
-    # NOTE(andreaf) If the tempest service is enabled, a tempest.log is
-    # generated as part of lib/tempest, as a result of verify_tempest_config
-    - name: Check if a tempest log exits
-      stat:
-        path: "{{ devstack_conf_dir }}/tempest.log"
-      register: tempest_log
-    - name: Link post-devstack tempest.log
-      file:
-        src: "{{ devstack_conf_dir }}/tempest.log"
-        dest: "{{ stage_dir }}/verify_tempest_conf.log"
-        state: hard
-      when: tempest_log.stat.exists
-    - name: Capture most recent qemu crash dump, if any
-      shell:
-        executable: /bin/bash
-        cmd: |
-          coredumpctl -o {{ devstack_log_dir }}/qemu.coredump dump /usr/bin/qemu-system-x86_64
-      ignore_errors: yes
-    # This must run before export-devstack-journal so the reports
-    # appear in the collected service logs.
+  # pre_tasks run before roles, whereas tasks run after.
+  pre_tasks:
+    # The GMR signals must be sent before export-devstack-journal collects the
+    # service logs.
     - name: Collect Guru Meditation Reports from OpenStack services
       shell:
         executable: /bin/bash
         cmd: |
+          # Ignore SIGUSR2 in this shell so that pkill -f does not
+          # kill us when our own cmdline matches the service pattern.
+          trap '' USR2
+          set -x
           # Send SIGUSR2 to trigger Guru Meditation Reports (green
           # thread stack dumps) from OpenStack services so that hangs
           # during test runs are diagnosable from the collected
@@ -69,3 +56,22 @@
     # fetch-devstack-log-dir setting devstack_base_dir
     - role: fetch-devstack-log-dir
       devstack_base_dir: "{{ ansible_user_dir }}"
+  tasks:
+    # NOTE(andreaf) If the tempest service is enabled, a tempest.log is
+    # generated as part of lib/tempest, as a result of verify_tempest_config
+    - name: Check if a tempest log exits
+      stat:
+        path: "{{ devstack_conf_dir }}/tempest.log"
+      register: tempest_log
+    - name: Link post-devstack tempest.log
+      file:
+        src: "{{ devstack_conf_dir }}/tempest.log"
+        dest: "{{ stage_dir }}/verify_tempest_conf.log"
+        state: hard
+      when: tempest_log.stat.exists
+    - name: Capture most recent qemu crash dump, if any
+      shell:
+        executable: /bin/bash
+        cmd: |
+          coredumpctl -o {{ devstack_log_dir }}/qemu.coredump dump /usr/bin/qemu-system-x86_64
+      ignore_errors: yes
