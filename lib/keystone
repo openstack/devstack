@@ -400,6 +400,7 @@ function configure_keystoneauth {
     iniset $conf_file $section user_domain_name "$SERVICE_DOMAIN_NAME"
     iniset $conf_file $section project_name $SERVICE_PROJECT_NAME
     iniset $conf_file $section project_domain_name "$SERVICE_DOMAIN_NAME"
+    iniset $conf_file $section cafile $SSL_BUNDLE_FILE
 }
 
 # Configure a service to use the auth token middleware.
@@ -417,7 +418,6 @@ function configure_keystone_authtoken_middleware {
 
     configure_keystoneauth $conf_file $admin_user $section
     iniset $conf_file $section www_authenticate_uri $KEYSTONE_SERVICE_URI
-    iniset $conf_file $section cafile $SSL_BUNDLE_FILE
     iniset $conf_file $section memcached_servers $MEMCACHE_SERVERS
     if [[ -n "$service_type" ]]; then
         iniset $conf_file $section service_type $service_type
