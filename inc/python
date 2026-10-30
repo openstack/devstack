@@ -396,10 +396,15 @@ function _setup_package_with_constraints_edit {
         # Remove this package from constraints before we install it.
         # That way, later installs won't "downgrade" the install from
         # source we are about to do.
-        local name
-        name=$(awk '/^name.*=/ {print $3}' $project_dir/setup.cfg)
-        if [ -z $name ]; then
-            name=$(awk '/^name =/ {gsub(/"/, "", $3); print $3}' $project_dir/pyproject.toml)
+        local name=""
+        if [ -f "$project_dir/setup.cfg" ]; then
+            name=$(awk '/^name.*=/ {print $3}' $project_dir/setup.cfg)
+        fi
+        if [ -z "$name" ] && [ -f "$project_dir/pyproject.toml" ]; then
+            name=$("$PYTHON" -c 'import sys, tomllib; print(tomllib.load(sys.stdin.buffer).get("project", {}).get("name", ""))' < "$project_dir/pyproject.toml")
+        fi
+        if [ -z "$name" ]; then
+            die $LINENO "Unable to determine the package name for $project_dir"
         fi
         $REQUIREMENTS_DIR/.venv/bin/edit-constraints \
             $REQUIREMENTS_DIR/upper-constraints.txt -- $name
