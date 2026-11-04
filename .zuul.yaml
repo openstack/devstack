@@ -828,9 +828,7 @@
         - devstack
         - devstack-ipv6
         - devstack-enforce-scope
-        - devstack-platform-centos-9-stream
         - devstack-platform-debian-bookworm
-        - devstack-platform-rocky-blue-onyx
         - devstack-platform-ubuntu-noble-ovn-source
         - devstack-platform-ubuntu-noble-ovs
         - devstack-platform-ubuntu-jammy
@@ -838,7 +836,6 @@
         - devstack-unit-tests
         - openstack-tox-bashate
         - ironic-tempest-bios-ipmi-direct-tinyipa
-        - swift-dsvm-functional
         - grenade:
             irrelevant-files:
               - ^.*$
@@ -874,9 +871,6 @@
         - devstack
         - devstack-ipv6
         - devstack-platform-debian-bookworm
-        # NOTE(danms): Disabled due to instability, see comment in the job
-        # definition above.
-        # - devstack-platform-rocky-blue-onyx
         - devstack-enforce-scope
         - devstack-multinode
         - devstack-unit-tests
@@ -886,7 +880,6 @@
               - ^.*\.rst$
               - ^doc/.*$
         - ironic-tempest-bios-ipmi-direct-tinyipa
-        - swift-dsvm-functional
         - grenade:
             irrelevant-files:
               - ^.*$
@@ -939,14 +932,10 @@
               - ^.*\.rst$
               - ^doc/.*$
         - devstack-no-tls-proxy
-    periodic:
-      jobs:
-        - devstack-no-tls-proxy
     periodic-weekly:
       jobs:
-        - devstack-platform-centos-9-stream
+        - devstack-no-tls-proxy
         - devstack-platform-debian-bookworm
-        - devstack-platform-rocky-blue-onyx
         - devstack-platform-ubuntu-noble-ovn-source
         - devstack-platform-ubuntu-noble-ovs
         - devstack-platform-ubuntu-jammy
