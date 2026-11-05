@@ -3,8 +3,13 @@
     executable: /bin/bash
     cmd: |
       source {{ devstack_conf_dir }}/stackrc
-      source {{ devstack_conf_dir }}/inc/python
-      setup_devstack_virtualenv
+      # There is no global venv where GLOBAL_VENV is False, such as on
+      # CentOS Stream and Rocky; packages are in the system python there.
+      if [[ -d $DEVSTACK_VENV ]]; then
+          PYTHON=$DEVSTACK_VENV/bin/python3
+      else
+          PYTHON=$(which python${PYTHON3_VERSION})
+      fi
       $PYTHON {{ devstack_conf_dir }}/tools/get-stats.py \
         --db-user="$DATABASE_USER" \
         --db-pass="$DATABASE_PASSWORD" \
