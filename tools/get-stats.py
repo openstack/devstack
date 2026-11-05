@@ -222,6 +222,18 @@ def get_report_info():
 
 if __name__ == '__main__':
     process_defaults = ['privsep', 'mysqld', 'erlang', 'etcd']
+    # OpenStack services. uWSGI, oslo.service and neutron rename their
+    # processes ("nova-apiuWSGI worker 1", "nova-conductor: ServiceWrapper
+    # worker(0)", "neutron-openvswitch-agent (/opt/stack/...)"). The rest
+    # run a script from a bin directory with a config file in /etc, as
+    # tempest does not; the *-manage and *-status tools are skipped by name.
+    process_defaults += [
+        r'^[\w-]+uWSGI ',
+        r'^\w+-[\w-]+: [\w ]*\bworker\b',
+        r'^\w+-[\w-]+ \(\S*python',
+        r'^\S*python[\d.]* \S+/bin/'
+        r'(?!\S+-(manage|status|rootwrap|helper|generator)\b)\S+.*[ =]/etc/',
+    ]
     parser = argparse.ArgumentParser()
     parser.add_argument('--db-user', default='root',
                         help=('MySQL user for collecting stats '
