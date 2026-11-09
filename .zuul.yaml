@@ -791,6 +791,11 @@
     parent: tempest-full-py3
     description: CentOS 10 Stream platform test
     nodeset: devstack-single-node-centos-10-stream
+    vars:
+      # Kernel panics with zswap enabled, temporary disable
+      # https://redhat.atlassian.net/browse/RHEL-299774
+      devstack_localrc:
+        ENABLE_ZSWAP: False
     timeout: 9000
     voting: false
 
