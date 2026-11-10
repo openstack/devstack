@@ -819,8 +819,12 @@ function configure_tempest {
         network_api_extensions+=",$ADDITIONAL_NETWORK_API_EXTENSIONS"
     fi
     iniset $TEMPEST_CONFIG network-feature-enabled api_extensions $network_api_extensions
-    # Swift API Extensions
-    local object_storage_api_extensions=${OBJECT_STORAGE_API_EXTENSIONS:-"all"}
+    # Swift API Extensions, new extension will not be enabled by default,
+    # those need to added here explicitly.
+    DEFAULT_SWIFT_OPT="account_quotas,bulk_delete,bulk_upload,container_quotas"
+    DEFAULT_SWIFT_OPT+=",container_sync,crossdomain,formpost,ratelimit,slo"
+    DEFAULT_SWIFT_OPT+=",staticweb,tempauth,tempurl,versioned_writes"
+    local object_storage_api_extensions=${OBJECT_STORAGE_API_EXTENSIONS:-$DEFAULT_SWIFT_OPT}
     if [[ ! -z "$DISABLE_OBJECT_STORAGE_API_EXTENSIONS" ]]; then
         # Enabled extensions are either the ones explicitly specified or those available on the API endpoint
         object_storage_api_extensions=${OBJECT_STORAGE_API_EXTENSIONS:-$(iniget $tmp_cfg_file object-storage-feature-enabled discoverable_apis | tr -d " ")}
@@ -828,8 +832,20 @@ function configure_tempest {
         object_storage_api_extensions=$(remove_disabled_extensions $object_storage_api_extensions $DISABLE_STORAGE_API_EXTENSIONS)
     fi
     iniset $TEMPEST_CONFIG object-storage-feature-enabled discoverable_apis $object_storage_api_extensions
-    # Cinder API Extensions
-    local volume_api_extensions=${VOLUME_API_EXTENSIONS:-"all"}
+    # Cinder API Extensions, new extension will not be enabled by default,
+    # those need to added here explicitly.
+    DEFAULT_VOL_EXT="OS-SCH-HNT,backups,capabilities,cgsnapshots,consistencygroups"
+    DEFAULT_VOL_EXT+=",encryption,os-admin-actions,os-availability-zone"
+    DEFAULT_VOL_EXT+=",os-extended-services,os-extended-snapshot-attributes"
+    DEFAULT_VOL_EXT+=",os-hosts,os-quota-class-sets,os-quota-sets"
+    DEFAULT_VOL_EXT+=",os-services,os-snapshot-actions,os-snapshot-manage"
+    DEFAULT_VOL_EXT+=",os-snapshot-unmanage,os-types-extra-specs,os-types-manage"
+    DEFAULT_VOL_EXT+=",os-used-limits,os-vol-host-attr,os-vol-image-meta"
+    DEFAULT_VOL_EXT+=",os-vol-mig-status-attr,os-vol-tenant-attr,os-volume-actions"
+    DEFAULT_VOL_EXT+=",os-volume-encryption-metadata,os-volume-manage"
+    DEFAULT_VOL_EXT+=",os-volume-transfer,os-volume-type-access"
+    DEFAULT_VOL_EXT+=",os-volume-unmanage,qos-specs,scheduler-stats"
+    local volume_api_extensions=${VOLUME_API_EXTENSIONS:-$DEFAULT_VOL_EXT}
     if [[ ! -z "$DISABLE_VOLUME_API_EXTENSIONS" ]]; then
         # Enabled extensions are either the ones explicitly specified or those available on the API endpoint
         volume_api_extensions=${VOLUME_API_EXTENSIONS:-$(iniget $tmp_cfg_file volume-feature-enabled api_extensions | tr -d " ")}
