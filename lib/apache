@@ -294,6 +294,9 @@ function write_uwsgi_config {
     iniset "$conf" uwsgi add-header "Connection: close"
     # This ensures that file descriptors aren't shared between processes.
     iniset "$conf" uwsgi lazy-apps true
+    # Exit instead of serving HTTP 500 for every request when the WSGI
+    # application cannot be imported.
+    iniset "$conf" uwsgi need-app true
     # Starting time of the WSGi server
     iniset "$conf" uwsgi start-time %t
 
@@ -361,6 +364,9 @@ function write_local_uwsgi_http_config {
     iniset "$conf" uwsgi add-header "Connection: close"
     # This ensures that file descriptors aren't shared between processes.
     iniset "$conf" uwsgi lazy-apps true
+    # Exit instead of serving HTTP 500 for every request when the WSGI
+    # application cannot be imported.
+    iniset "$conf" uwsgi need-app true
     iniset "$conf" uwsgi chmod-socket 666
     iniset "$conf" uwsgi http-raw-body true
     iniset "$conf" uwsgi http-chunked-input true
