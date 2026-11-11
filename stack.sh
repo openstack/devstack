@@ -808,14 +808,11 @@ fixup_all
 
 if [[ "$GLOBAL_VENV" == "True" ]] ; then
     # TODO(frickler): find a better solution for this
-    sudo ln -sf /opt/stack/data/venv/bin/cinder-manage /usr/local/bin
-    sudo ln -sf /opt/stack/data/venv/bin/cinder-rtstool /usr/local/bin
-    sudo ln -sf /opt/stack/data/venv/bin/glance /usr/local/bin
-    sudo ln -sf /opt/stack/data/venv/bin/nova-manage /usr/local/bin
-    sudo ln -sf /opt/stack/data/venv/bin/openstack /usr/local/bin
-    sudo ln -sf /opt/stack/data/venv/bin/privsep-helper /usr/local/bin
-    sudo ln -sf /opt/stack/data/venv/bin/rally /usr/local/bin
-    sudo ln -sf /opt/stack/data/venv/bin/tox /usr/local/bin
+    for _script in cinder-manage cinder-rtstool glance nova-manage \
+        openstack privsep-helper rally tox; do
+        sudo ln -sf $DATA_DIR/venv/bin/$_script /usr/local/bin
+    done
+    unset _script
 
     setup_devstack_virtualenv
 fi
